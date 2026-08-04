@@ -20,6 +20,12 @@ import os
 import sys
 import requests
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.expanduser("~/.env"))
+except ImportError:
+    pass
+
 TOKEN_PATH = os.path.expanduser("~/.gemini/antigravity-cli/antigravity-oauth-token")
 OAUTH_CLIENT_ID = os.environ.get("AGY_OAUTH_CLIENT_ID", "")
 OAUTH_CLIENT_SECRET = os.environ.get("AGY_OAUTH_CLIENT_SECRET", "")
