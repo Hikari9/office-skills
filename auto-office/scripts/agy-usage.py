@@ -22,7 +22,14 @@ import requests
 
 try:
     from dotenv import load_dotenv
-    load_dotenv(os.path.expanduser("~/.env"))
+    # Look for .env in current script's parent directories or workspace root
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_root = os.path.abspath(os.path.join(script_dir, "..", ".."))
+    env_path = os.path.join(repo_root, ".env")
+    if os.path.exists(env_path):
+        load_dotenv(env_path)
+    else:
+        load_dotenv()
 except ImportError:
     pass
 
