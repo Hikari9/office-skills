@@ -1,0 +1,16 @@
+{
+  "name": "auto-office",
+  "version": "2.3.0",
+  "description": "Use ONLY when explicitly invoked via /auto-office. Router office — the current agent plans and interviews to 95% clarity, routes each task to a codex / agy / claude executor by capability and live quota, and runs goal-locked to closeout with no further go-aheads. Opus gates the plan and the code. Never self-triggered.",
+  "author": {
+    "name": "office-skills"
+  },
+  "keywords": [
+    "office",
+    "routing",
+    "orchestration",
+    "autonomous-loop",
+    "adversarial-review",
+    "production-safety"
+  ]
+}

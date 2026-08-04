@@ -1,5 +1,5 @@
 ---
-name: cli-response
+name: claude-cli-send-message
 description: Use when a claude --bg/background agent is blocked on a raised AskUserQuestion-style menu, a free-text/custom answer, or a permission prompt and needs an answer without forking it. Not a general steering channel and does not make --resume ... --bg safe.
 ---
 
@@ -109,12 +109,21 @@ may still paraphrase or trim what it *writes downstream* (e.g. dropping a traili
 saving to a file) — that is model behavior on the delivered text, not a delivery failure; the terminal
 transcript showed the full sent string landed in the input box intact before the model acted on it.
 
-**Multi-byte/unicode content and the trailing `\r` can arrive out of sync.** One run's text (containing
+**Long or multi-byte content and the trailing `\r` can arrive out of sync.** One run's text (containing
 an em dash, `—`) landed in the box but did **not** submit on the same `printf`'s trailing `\r` — the
 agent sat `blocked`/idle with the typed text visibly still in the box. A **second, separate** `printf
 '\r' | claude attach <id>` was required to actually submit it. Treat "text visible, state still
 blocked, no new prompt" as "not yet submitted" and resend a bare `\r`, rather than assuming the first
 send's `\r` landed.
+
+**Length alone triggers it — it is not a unicode-only effect (2026-08-02).** A ~700-character,
+pure-ASCII continuation message (parentheses, hyphens and digits; no non-ASCII whatsoever) behaved
+identically: the full text was delivered into the box, `state` stayed `blocked` across 60s of polling,
+and a bare `\r` moved it to `working` on the first try. Budget for the two-step on **any** send longer
+than a short sentence, and always verify by stripping the log and looking for your text in the box
+before concluding the send failed — "still blocked" after a long send is the expected intermediate
+state, not evidence of a lost message. Escalate to fork-and-recover only if the bare `\r` also does
+nothing.
 
 **Prefix safety — what you can safely type first:**
 

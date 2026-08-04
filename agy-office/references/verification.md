@@ -13,7 +13,7 @@ Announce: `Phase 2b: verifying executor output.`
 
 ## The pass
 
-Run all six. None is skippable, none takes long, and each one has caught a real failure.
+Run all seven. None is skippable, none takes long, and each one has caught a real failure.
 
 **1. Did it write anything?**
 

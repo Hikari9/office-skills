@@ -5,8 +5,12 @@ description: Use only when explicitly named for production-facing or irreversibl
 
 # Codex Office
 
-Use this workflow only when the caller explicitly invokes `codex-office`. It is a
-strict four-phase delivery process: plan, execute, adversarial review, closeout.
+A strict four-phase delivery process — **plan, execute, adversarial review, closeout** — for
+production-facing or irreversible repository work. The active session plans and closes out; fresh
+`codex exec` sessions execute and adversarially review. This file is orientation and dispatch only;
+procedure lives in the spokes it routes to.
+
+## Roles
 
 | Role | Owner | Default model | Responsibility |
 |---|---|---|---|
@@ -14,56 +18,80 @@ strict four-phase delivery process: plan, execute, adversarial review, closeout.
 | Executor | Fresh `codex exec` session | `gpt-5.6-terra` | implements the approved plan |
 | Reviewer | Separate fresh `codex exec` session | `gpt-5.6-sol` high effort | adversarial gate and re-review |
 
-The executor never approves its own work. The planner does not implement the
-plan. `codex exec --yolo` has no sandbox or approval stop, so a complete prompt
-and a stated blast-radius ceiling are the safety boundary.
+## Invocation gate and caller overrides
 
-## Invocation and caller overrides
+Runs **only** on explicit invocation of `codex-office` by name — never because a task "looks like"
+office work. If you are reading this file as a dispatched worker, you are **not** the planner;
+follow your brief instead, this hub does not apply to you.
 
-Start only after explicit invocation. A caller may set executor/reviewer tier,
-skip a phase with an approved plan path, add review rubric items, or skip
-closeout. Do not silently skip review or reuse the executor as reviewer.
+Caller tweaks after invocation are honored and echoed back in the kickoff line (model tier per
+role, skip a phase with an approved plan path, extra reviewer rubric items, skip closeout). No
+caller override may: skip an independent review, reuse the executor as its own reviewer, downgrade
+the reviewer below its stated floor, or widen the blast-radius ceiling implicitly.
 
-## Four phases
+## Non-bypassable safety rules
 
-1. **Plan.** Explore read-only, write an approval-ready plan with context,
-   global constraints, a verbatim blast-radius ceiling, numbered tasks with
-   dependencies and model strategy, verification, routing, and out-of-scope
-   work. Obtain explicit approval before dispatch.
-2. **Execute.** Record `BASE=$(git rev-parse HEAD)` and dispatch one executor
-   per repository (one working tree per process) using the full contract in
-   [references/task-prompt.md](references/task-prompt.md). Read its handoff and
-   resolve every Upline item before review.
-3. **Review.** Read [references/review-gate.md](references/review-gate.md) and
-   dispatch a fresh `gpt-5.6-sol` reviewer using
-   [references/reviewer-brief.md](references/reviewer-brief.md). The reviewer
-   must return `APPROVED`, `CHANGES REQUIRED`, or `PLAN DEFECT`, backed by actual
-   validation output. Fix findings with a fresh scoped executor dispatch, then
-   resume the reviewer with the fix diff and fresh gate output; cap at 5 rounds.
-4. **Closeout.** Verify the full gate, commit and create/push a PR only when
-   authorized, then report the plan, commit range, review rounds, gate result,
-   and anything unresolved. Use [references/closeout.md](references/closeout.md).
+- Explicit invocation only; never self-triggered.
+- The planner does not implement the plan; the executor never approves its own work.
+- One writer per working tree; parallel work needs separate worktrees and disjoint paths.
+- `codex exec --yolo` has no sandbox or approval stop — the prompt and the stated blast-radius
+  ceiling are the entire safety boundary.
+- Pass `-m` explicitly to every `codex exec`.
+- Executor authority is local edits and commits only; pushes, PRs, deploys, remote config,
+  messages, and credentials are forbidden unless the prompt names that exact action.
+- A successful process exit is not evidence; the gate is the repository's full validation
+  commands with real, pasted output.
+- A deployment or migration is planner-held unless explicitly authorized, and is verified by a
+  read-back of the live artifact and observable behavior.
+- Preserve pre-existing dirty worktree changes as protected paths.
+- The reviewer is fresh and separate; verdicts are `APPROVED`, `CHANGES REQUIRED`, or
+  `PLAN DEFECT`; no approval without real validation output; 5-round cap.
+- Never silently skip review or reuse the executor as reviewer.
 
-## Essential operating rules
+## Protocol version
 
-- Pass `-m` explicitly to every `codex exec`; use `gpt-5.6-terra` for ordinary
-  implementation and `gpt-5.6-sol` with high reasoning effort for difficult
-  diagnosis or review.
-- Never run two Codex processes in one working tree. Parallel work needs
-  separate worktrees and disjoint paths.
-- Executor authority is local edits and commits only unless the prompt names
-  additional actions. Pushes, PRs, deploys, remote configuration, messages and
-  credential access are forbidden by default.
-- A successful process exit is not evidence. The gate is the repository's full
-  validation command(s), with real output in the handoff.
-- A deployment/migration is planner-held unless explicitly authorized, and must
-  be verified by a read-back of the live artifact and observable behavior.
-- Preserve pre-existing dirty worktree changes; name them as protected paths.
+This plugin implements office-core protocol `1.1.0`, vendored at `office-core/` in this plugin.
+The vendored copy is authoritative for an installed plugin; the repo-root `office-core/` is the
+development source. Mandatory read: `office-core/protocol/roles-and-authority.md`.
 
-## Reference routing
+## Routing table
 
-- [Task prompt contract](references/task-prompt.md)
-- [Reviewer brief](references/reviewer-brief.md)
-- [Review gate](references/review-gate.md)
-- [Closeout](references/closeout.md)
+Never load the whole office corpus for any role — each role gets the Office Kernel plus the spokes
+below it selects, and nothing else.
 
+| Phase / need | Load | When |
+|---|---|---|
+| Plan contract | `office-core/protocol/plan-contract.md` | Planner, before writing the plan |
+| Review verdicts | `office-core/protocol/review-states.md` | Planner, before dispatching the reviewer |
+| Driving `codex exec` safely | `skills/codex-cli/SKILL.md` | Any phase that dispatches a Codex process |
+| Executor role and packet contract | `skills/codex-executor/SKILL.md` | Phase 2, building or receiving the executor dispatch |
+| Reviewer role and fix loop | `skills/codex-reviewer/SKILL.md` | Phase 3, building or receiving the reviewer dispatch |
+| Closeout and planner-held actions | `skills/codex-closeout/SKILL.md` | Phase 4, planner only |
+
+## The four phases
+
+1. **Plan.** Explore read-only, write an approval-ready plan (context, global constraints,
+   verbatim blast-radius ceiling, numbered tasks with dependencies and model strategy,
+   verification, out-of-scope). Obtain explicit approval before dispatch. Load
+   `office-core/protocol/plan-contract.md`.
+2. **Execute.** Record `BASE=$(git rev-parse HEAD)`, dispatch one executor per repository, read
+   its handoff, resolve every Upline item before review. Load `skills/codex-executor/SKILL.md`
+   (and `skills/codex-cli/SKILL.md` for the dispatch mechanics).
+3. **Review.** Dispatch a fresh reviewer; triage findings and re-dispatch fixes via a fresh scoped
+   executor; cap at 5 rounds. Load `skills/codex-reviewer/SKILL.md`.
+4. **Closeout.** Verify the gate, commit, and PR only when authorized; report plan, commit range,
+   review rounds, gate result, and anything unresolved. Load `skills/codex-closeout/SKILL.md`.
+
+## Run telemetry
+
+At each explicit dispatch, record an event per `office-core/schemas/run-event.schema.json`: the
+`codex exec` launch id, worktree id, base commit, selected spokes, model name and effort, and the
+reviewer round. This is what makes a duplicate writer or a missing review observable after the
+fact. A transcript keyword match is not an invocation and does not produce one of these events.
+
+## Maintenance and release
+
+Bump `version` in `.claude-plugin/plugin.json`, add a `CHANGELOG.md` entry, re-vendor core and run
+`scripts/check-plugins.sh` from the repo root if core changed. Record durable runtime lessons (a
+flag that misbehaved, a worktree collision, a launch quirk) in `skills/codex-cli/SKILL.md`,
+not in this hub.

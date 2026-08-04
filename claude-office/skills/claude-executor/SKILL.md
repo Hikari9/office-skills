@@ -1,0 +1,88 @@
+---
+name: claude-executor
+description: Executor packet contract — one per repo, non-conflicting prep, handoff file, Upline handling. Loaded by the claude-office hub; not invoked directly.
+---
+
+# Claude Executor
+
+Loaded by: the executor (dispatch construction is done by the planner), at Phase 2.
+Assumes: the Office Kernel is already in the packet.
+
+The full, self-contained packet the executor receives is
+[`../../references/executor-brief.md`](../../references/executor-brief.md) — the planner fills
+its `<…>` slots and passes the whole thing as the executor's prompt. This spoke states the
+contract around that brief; it does not duplicate the brief's content.
+
+## One executor per repository
+
+A multi-repo plan gets **one executor per repo**, in parallel — never one executor spanning
+several repos, and never two executors sharing one repo. Each gets its own repo path, branch,
+BASE, workspace, plan slice, and handoff path. The planner consolidates every executor's handoff
+into one picture before Phase 3.
+
+## The planner does not touch the executor's tree
+
+While the executor runs, the planner does non-conflicting prep only — reading signatures,
+drafting the reviewer dispatch. It never edits the tree the executor is writing to, and never
+runs two writers against one working tree.
+
+## Standing clauses on every brief (core 1.2.0)
+
+The planner fills these into the brief, and the executor is bound by them even if the wording drifts:
+
+1. **Verify the stated cause reproduces at `BASE` before implementing.** If it does not, return
+   `BRIEF DEFECT` rather than implementing anyway.
+2. **A task shipping a test must paste that test failing at `BASE`** (or against the reverted fix). A
+   test that passes before the change and after it has demonstrated nothing, and a green useless test
+   is invisible to review — it looks exactly like a passing test that works.
+
+## `BRIEF DEFECT` — the return only the executor can make
+
+Per `office-core/protocol/review-states.md`: the executor asserts the brief's **stated cause is
+false** — the bug does not reproduce at `BASE`, the named function is not on the code path, the
+described structure does not exist — carries **evidence gathered at `BASE`**, and **stops without
+implementing.**
+
+It routes to the **planner** (technical gap) or the **user** (scope), and **does not consume a review
+round**. A reviewer structurally cannot catch a wrong brief: it gates a diff against a plan, and a
+diff that faithfully implements a false premise looks correct. The executor is the only role that goes
+and looks, so it is the only role that can raise this. A mistaken `BRIEF DEFECT` costs one read to
+disprove; a suppressed one costs the whole task plus the rounds spent discovering the implementation
+was faithful.
+
+## In-session fan-out
+
+The executor **may fan out in-session** using this harness's built-in sub-agent mechanism — for
+parallel read-heavy work, or to keep a large read out of its own context. The limits are what matter:
+the fan-out stays inside **the brief's file scope**, and it never becomes a second writer —
+**one writer per tree, always.** A sub-agent that returns an artifact the executor applies is fine; a
+sub-agent editing the same tree in parallel is the failure this office exists to prevent.
+
+A brief that prescribes *how* to fan out is overreaching — the mechanism belongs to this office — and
+a brief that is silent about fan-out is not forbidding it.
+
+## Read the handoff file — never ask for a pasted diff
+
+The executor's output is a file at the Kernel's handoff path, not a chat summary. Per
+`office-core/protocol/evidence-and-handoff.md`, it is written to a **file** so it survives
+compaction and the `--cli` process boundary, and it follows the core handoff schema
+(`office-core/schemas/handoff.schema.json`): work items, commits, interfaces verified, validation
+output, mutation table, files created outside the work items, and the `## Upline` section. Read
+that file — don't have the executor paste its diff into your context.
+
+## Upline handling
+
+Answer everything marked `[needs-planner]`. Surface every `[needs-user]` item to the user
+**batched, with a recommendation attached** — never resolve a user-owned question by inferring
+what they'd want. Carry the `[decided]` list into the reviewer's packet **as written** — no
+editorializing, no marking entries settled: those are decisions made under uncertainty and they
+tell the reviewer where to look hardest. Full ownership rules in
+[`../../references/escalation.md`](../../references/escalation.md).
+
+## See also
+
+- [`../../references/executor-brief.md`](../../references/executor-brief.md) — the required
+  packet contract.
+- [`../../references/escalation.md`](../../references/escalation.md) — Upline ownership axes.
+- `office-core/protocol/evidence-and-handoff.md` — the handoff report contract this office
+  implements.

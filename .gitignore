@@ -1,0 +1,3 @@
+# Slug → real-repo mapping for the routing-outcomes ledger. The committed ledger carries
+# opaque slugs only; this file resolves them locally and must never ship.
+auto-office/references/routing-outcomes.local.md

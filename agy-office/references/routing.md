@@ -52,7 +52,7 @@ of each other's changes. One tree, one agy process — no exceptions.
 
 Everything below about the *cost* of a second dispatch is still true. It is now
 bounded by something that overrides it: **one `agy` run reliably completes about
-three tasks, and then stops being able to finish.** Rico, 2026-08-01, after a
+three tasks, and then stops being able to finish.** Operator observation, 2026-08-01, after a
 four-task dispatch — and the run confirms it exactly.
 
 That run committed Task 1, Task 3 and Task 2, each with a real commit and a clean

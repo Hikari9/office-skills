@@ -42,7 +42,7 @@ files in should block where the planner, still drafting, would annotate.
 
 **For a `--cli` (background) executor, a blocking `[needs-planner]`/`[needs-user]` entry raised as
 either a numbered menu or an open-ended free-text question is a cheap reply, not a fork-and-recover
-cycle** — `claude-office/skills/cli-response/SKILL.md` answers both in place with verified keystrokes
+cycle** — `claude-office/skills/claude-cli-send-message/SKILL.md` answers both in place with verified keystrokes
 (digit + Enter for a menu; select-then-type, as two separate sends, for free text), id set unchanged.
 `--resume`/`--bg` against the live session still forks (discernment.md's fork gotcha) and stays banned
 as a steering path. One prefix stays genuinely dangerous regardless of which kind of question it is:
