@@ -1,5 +1,29 @@
 # Changelog — auto-office
 
+## 2.4.4 — 2026-08-05
+
+- **The four remaining underspecified clauses are now decidable**, per operator ruling:
+  - **Liveness window is 25 minutes** (`auto-loop`). It previously said "within a **stated** window"
+    while nothing stated one, so the agent had to invent the number the rule implied it would supply.
+  - **`report-exists OR state=done` is the turn-ending condition** (`auto-loop`). "Do not end the turn
+    on a live CLI dispatch" plus "blocking blind costs the same" forbade both available actions. It
+    means: always end the turn *on the wait condition* mid-execution. Ending on a bare dispatch with no
+    condition attached is waiting for nothing, and that is the only forbidden form.
+  - **Stop condition 4 pauses via `AskUserQuestion`**, recommendation as the first option (`auto-loop`,
+    hub). "Recommend, do not infer. Then continue." read as non-blocking under a header saying the loop
+    returns to the user; the pause is the question, and the run resumes on the answer.
+  - **Headroom stays case-by-case planner discernment, explicitly and permanently** (`auto-routing`,
+    hub), with the question to answer out loud: *is it worth running this in a low-threshold agent if
+    quality will be massively lost otherwise?* Naming it as discernment stops agents hunting for the
+    threshold the old wording implied existed.
+- **Prose pruned to instructions across all four auto-office files** — 208 lines out, 171 in, every
+  rule kept. War stories that ran 8-20 lines are now the rule plus a one-line evidence tag: the
+  branch-moved-under-you incident, the 829k-token task, the 1h38m unwatched dispatch, the partial
+  329k-token brief, the property-vs-instance criterion defect, and the self-review overlap measurement.
+  This follows the repo's own maintenance rule - sharpen a principle, don't append a scenario.
+- The hub is **under its 9000-byte budget for the first time** (9068 at the start of this work).
+  `check-plugins.sh` now reports zero warnings across all four plugins.
+
 ## 2.4.3 — 2026-08-05
 
 - **"Stricter rule wins" no longer imports a sibling office's role rules.** Every dispatch loads a

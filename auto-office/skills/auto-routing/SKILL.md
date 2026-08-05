@@ -14,24 +14,19 @@ description: The discernment engine — which brand is the executor, which brand
 3. **How each unit of work is dispatched** — CLI, in-session, or inline. **Derived**, not chosen: it
    follows from who is dispatching whom (see *Dispatch form* below).
 
-Decisions 1 and 2 stay separate because they are different kinds of decision. The executor holds the
-tree for the whole run, so pinning it is what makes the run's cost predictable and its authority
-singular. A worker is a bounded, single-question spend under supervision — so buying a higher tier
-for one genuinely hard sub-question is cheap, reviewable, and often the correct call.
+Decisions 1 and 2 stay separate because they differ in kind. The executor holds the tree for the whole
+run, so pinning it makes cost predictable and authority singular. A worker is a bounded, supervised,
+single-question spend, so buying it a higher tier is cheap and reviewable. Core requires the split too:
+its [delegation test](../../office-core/protocol/roles-and-authority.md) says a delegation must buy
+**tier, isolation, or parallelism** — pin workers to the executor's tier and "buys tier" is dead.
 
-This is also what core requires. The [delegation test](../../office-core/protocol/roles-and-authority.md)
-says a delegation must buy **tier, isolation, or parallelism**. Pin a worker to the executor's tier
-and delegation can never buy tier — one of core's three legitimate reasons to delegate would be dead
-on arrival.
+**The planner assigns; the executor executes the assignment.** Reality disagreeing with it — the brand
+cannot do this, the file does not exist, the stated cause is false — is a `PLAN DEFECT` or
+`BRIEF DEFECT`, never a licence to re-decide routing. The decision lives in the plan so a bad route is
+reviewable before it is paid for.
 
-The planner assigns; the executor executes the assignment. If reality disagrees with the
-assignment — the brand cannot do this, the file does not exist, the stated cause is false — that is
-a `PLAN DEFECT` or a `BRIEF DEFECT`, **not** a licence for the executor to re-decide the routing.
-Putting the decision in the plan is what makes a bad route reviewable before it is paid for.
-
-A worker is never a second writer: it works inside the executor's tree under its supervision, or
-returns an artifact (a finding, a patch, a report) the executor applies. Getting *that* wrong is the
-failure this office exists to prevent. Fan-out is cheap; two writers corrupt a tree.
+**A worker is never a second writer.** It works inside the executor's tree under supervision, or
+returns an artifact the executor applies. Fan-out is cheap; two writers corrupt a tree.
 
 ## Route by capability role, not by model name
 
@@ -85,38 +80,31 @@ Not derived from the benchmark table, and a leaderboard movement does not change
 document the planner just wrote; same-brand is an advantage there, not the conflict of interest it
 would be on a diff. Executor and worker brand *is* routed by fit.
 
-**The executor is sonnet-tier, high effort. Full stop.** No self-escalation, no exceptions without a
-caller override. The evidence this comes from: on the run that produced this rule, both
-green-but-useless tests the reviewer caught were written by the *bigger* model, and the run's single
-largest line item was three review rounds funding fixes to a task whose brief was wrong. A bigger
-executor does not fix a wrong brief; it implements it more convincingly.
+**The executor is sonnet-tier, high effort. Full stop.** No self-escalation, no exception without a
+caller override. Evidence: on the run that produced this rule both green-but-useless tests the
+reviewer caught were written by the *bigger* model, and the largest line item was three rounds fixing
+a task whose brief was wrong. A bigger executor does not fix a wrong brief; it implements it more
+convincingly.
 
-**Workers are routed, not pinned — and the routing is a plan-time decision.** The default is the
-executor's tier, because most sub-tasks are recon, lookups, or mechanical edits that a bigger model
-finishes no better. But the planner may assign a worker a higher tier, or a different brand, when the
-sub-task is genuinely of a different kind: a Decider-grade judgement call, an ambiguity that needs
-arbitrating, a diagnosis nobody has confirmed. Three conditions, all of them non-negotiable:
+**Workers are routed, not pinned, at plan time.** The default is the executor's tier — most sub-tasks
+are recon, lookups, or mechanical edits a bigger model finishes no better. The planner may assign a
+higher tier or different brand when the sub-task is a *different kind* of question: a Decider-grade
+judgement, an ambiguity needing arbitration, an unconfirmed diagnosis. Three conditions, all binding:
 
-- **Declared in the plan's task table**, in the `Model+effort` cell, before approval. An
-  above-default worker that nobody approved is the exact defect this office was revised to fix — and
-  note the failure then was *invisibility*, not the bigger model. A declared Opus worker is fine; an
-  undeclared one is not, whatever tier it is.
-- **Recorded in telemetry** (`brand`, `model`, `effort` per dispatch) and in the closeout cost
-  retrospective, so the next run can see whether the upgrade actually paid.
-- **Never self-escalated at run time.** The executor cannot promote its own worker mid-task; that is
-  a `PLAN DEFECT` to surface, not a call to make. Reality disagreeing with the plan is reportable,
-  not re-decidable.
+- **Declared in the plan's task table** (`Model+effort` cell) before approval. A declared Opus worker
+  is fine; an undeclared one is not, whatever tier it is — the defect was invisibility, not size.
+- **Recorded in telemetry** (`brand`, `model`, `effort` per dispatch) and in the closeout
+  retrospective, so the next run can see whether the upgrade paid.
+- **Never self-escalated at run time.** An executor promoting its own worker mid-task is a
+  `PLAN DEFECT` to surface, not a call to make.
 
-**Reach for a bigger worker for a *different kind* of question, never for a harder-looking one.**
-"This task is hard" is the reasoning that produced the last run's silent over-provisioning, and it
-was wrong on the evidence. "This task needs a judgement the executor's tier cannot make" is a real
-distinction, and the plan is where you argue for it.
+**Reach for a bigger worker for a *different kind* of question, never a harder-looking one.** "This
+task is hard" produced the last run's silent over-provisioning. "This needs a judgement the executor's
+tier cannot make" is the real distinction, and the plan is where you argue it.
 
-**The PM sits at executor tier, not Opus tier, deliberately.** The plan already assigned brand and
-dispatch per task, so the PM's job is distribution and collection, not judgment. Paying Opus rates
-to hand out briefs the plan already wrote is exactly the over-provisioning this office was revised
-to stop. If a PM finds itself making routing decisions, **the plan was incomplete — that is a
-`PLAN DEFECT`, not a reason to upgrade the PM.**
+**The PM sits at executor tier deliberately.** The plan already assigned brand and dispatch per task,
+so the PM distributes and collects; it does not judge. **A PM making routing decisions means the plan
+was incomplete — a `PLAN DEFECT`, not a reason to upgrade the PM.**
 
 **Two floors, not one.** `opus` medium is the floor for the **code**-review gate. The **plan**-review
 gate's floor is `opus` low. Both are stated here explicitly because
@@ -178,8 +166,12 @@ cap is how a cap gets broken by accident.
 
 ## Headroom is a cost, not a gate
 
-**There is no hardcoded threshold.** Do not treat any percentage as an automatic veto. Read the
-number, then reason about it explicitly:
+**There is no hardcoded threshold, and there will not be one.** This is a case-by-case trade-off the
+planner discerns and states; it is not delegated to a number. The question to answer out loud:
+
+> **Is it worth running this in a low-threshold agent if quality will be massively lost otherwise?**
+
+If the answer is no, spend the scarce headroom. Read the number, then reason about it explicitly:
 
 - **What does the run actually need?** A three-task frontend plan does not consume what a
   multi-hour migration does. 14% left is plenty for one and nowhere near enough for the other.

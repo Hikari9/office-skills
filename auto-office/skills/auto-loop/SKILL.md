@@ -37,30 +37,27 @@ re-read GOAL:
 
 ## Liveness check after every CLI dispatch
 
-A dispatch that produces nothing is not a dispatch that is thinking. After every CLI launch, confirm
-the process is **producing output within a stated window** — the harness's completion notification, a
-growing log, a handoff file whose mtime moves.
+**The window is 25 minutes.** After every CLI launch, confirm the process produced output inside it —
+the harness's completion notification, a growing log, or a handoff file whose mtime moved. A dispatch
+producing nothing is not a dispatch that is thinking. (One run lost 1h38m of wall clock and zero
+tokens to an unwatched dispatch; wall clock is a first-class cost.)
 
-**No output does not authorize a re-dispatch. Confirm the process is actually dead first** — `pgrep`
-it, check the handoff mtime, or stop it explicitly. A silent-but-live process plus a replacement is
-**two writers in one tree**, which is the invariant this office exists to protect. Kill or confirm
-exit, *then* re-dispatch.
-
-Why this is a rule: one run lost **1h38m of wall clock and zero tokens** to a dispatch nobody was
-watching. Wall clock is a first-class cost — an hour of nothing costs the run an hour.
+**Silence does not authorize a re-dispatch. Confirm the process is dead first** — `pgrep`, handoff
+mtime, or stop it explicitly. A silent-but-live process plus a replacement is **two writers in one
+tree**. Kill or confirm exit, *then* re-dispatch.
 
 **A CLI executor has no return channel unless the brief builds one.** A `--bg` agent's final message
-dies with the process, and its log is raw TTY capture, not a transcript. So every CLI brief must name
-a **handoff file path** and state plainly that the report is lost without it. Then wait on
-`report-exists OR state=done`, never on state alone — an executor killed mid-round (outage, crash)
-leaves a report that state polling would step straight past, and an executor that dies before writing
-one must still wake you rather than hang. Verified both halves: a resumed-after-outage executor's
-report survived on disk and was the only record of the round. Do not end the turn on a live CLI
-dispatch; the planner blocking blind is the same cost as the unwatched dispatch above.
+dies with the process and its log is raw TTY capture, not a transcript. Every CLI brief names a
+**handoff file path** and states that the report is lost without it.
 
-**The mechanism is the sibling office's**, never this one's: launch and polling forms live in
-`codex-office/skills/codex-cli`, `claude-office/skills/claude-cli`, and `agy-office/skills/agy-cli`.
-auto-office owns the *check*, not the CLI.
+**End the turn on the wait condition: `report-exists OR state=done`.** Never on state alone — an
+executor killed mid-round (outage, crash) leaves a report that state polling steps straight past, and
+one that dies before writing a report must still wake you rather than hang. Ending the turn *on that
+condition* is correct and is what this rule requires; what is forbidden is ending it on a bare live
+dispatch with no condition attached, which is waiting for nothing.
+
+**Mechanism is the sibling office's** — `codex-office/skills/codex-cli`,
+`claude-office/skills/claude-cli`, `agy-office/skills/agy-cli`. auto-office owns the *check*.
 
 ## Every brief carries these
 
@@ -69,20 +66,17 @@ Beyond the plan path, GOAL block, blast-radius ceiling, and file scope:
 1. **Verify the stated cause reproduces at `BASE` before implementing.** If it does not, return
    `BRIEF DEFECT` with the evidence — do not implement anyway.
 2. **Any task shipping a test must paste that test failing at `BASE`** (or against the reverted fix).
-   A test that was green before the change proves nothing about the change, and a green useless test
-   is invisible to review.
-   - **Failing at `BASE` is necessary and NOT sufficient — the brief must demand mutation testing
-     too.** A new test file "fails" at `BASE` merely by importing a module that does not exist yet;
-     that proves the file is new, not that it detects anything. Require the executor to break each
-     mechanism its test claims to cover, confirm the test goes red for each, restore, and report
-     what it tried. Where the change is a *guard*, require a two-sided assertion: a guard that never
-     fires and a guard that always fires must both turn it red, or the test is satisfied by a bailout
-     that silently disables the feature.
-   - Why this is a brief clause and not a review clause: across one nine-task run, **every single
-     `CHANGES REQUIRED` verdict was a test defect, never an implementation defect** — including a
-     test whose condition was a compile-time-constant `false`, so its setter never ran and it could
-     not fail for any implementation of anything. Reviewers found all of it by mutation testing, at
-     reviewer rates, doing work the brief should have demanded up front.
+   A green useless test is invisible to review.
+   - **Failing at `BASE` is necessary, not sufficient — demand mutation testing too.** A new test file
+     "fails" at `BASE` merely by importing a module that does not exist yet. Require the executor to
+     break each mechanism its test claims to cover, confirm the test goes red for each, restore, and
+     report what it tried.
+   - **A guard needs a two-sided assertion:** a guard that never fires and one that always fires must
+     *both* turn the test red, or a bailout that silently disables the feature satisfies it.
+   - Evidence for it being a brief clause, not a review clause: across one nine-task run every
+     `CHANGES REQUIRED` verdict was a test defect, never an implementation defect — including a test
+     whose condition was a compile-time-constant `false`. Reviewers caught it all by mutation testing,
+     at reviewer rates, doing work the brief should have demanded.
 3. **You may fan out in-session** using your own harness's built-in sub-agent mechanism, within your
    file scope and under one-writer-per-tree. The brief never prescribes *how* — that is your office's
    mechanism, not this one's.
@@ -103,25 +97,17 @@ they are what keeps an autonomous run honest:
 
 ## The branch you are on is not a fact you may assume
 
-**Observed 2026-08-02, and it reached production.** The planner created a feature branch, worked on
-it for two hours, and then — after dispatching a CLI agent that needed a branch off `main` — kept
-committing without re-checking. The dispatched agent had switched the *shared* checkout to `main` on
-its way to building its own worktree. Two planner commits and a `git push … HEAD` therefore landed on
-`main`, which is a production deploy on that project. Vercel shipped it 59 seconds later.
+- **Never dispatch a CLI agent into the tree the planner is working in.** Pre-create the agent's
+  worktree and point it there, or dispatch from a tree you are not using. One writer per tree covers
+  concurrent *edits*, not an agent running `git checkout` en route to its own worktree. A brief saying
+  "make your own branch" is a request, not a control.
+- **Re-read the branch after any dispatch returns**, not only before committing.
+- **A push is `planner_held` whenever the target branch deploys.** Name the branch:
+  `git push <remote> <branch-name>`, **never** `HEAD` — `HEAD` inherits whatever you are on, so "I
+  only push feature branches" is not true by construction.
 
-The content happened to be reviewed, approved, and wanted, so nothing broke. That is luck, not a
-control.
-
-- **Never dispatch a CLI agent into the tree the planner is working in.** One writer per tree covers
-  concurrent *edits*; it did not cover an agent running `git checkout` on the way to somewhere else.
-  Pre-create the agent's worktree yourself and point it there, or dispatch from a tree you are not
-  using. The brief saying "make your own branch" is not a control — it is a request the agent
-  satisfies however it likes.
-- **Re-read the branch after any dispatch returns**, not only before committing. A dispatch is a
-  point at which the tree may have moved under you.
-- **A push is `planner_held` whenever the target branch deploys.** `git push … HEAD` inherits
-  whatever branch you are on, so "I only push feature branches" is not true by construction — make
-  it true by naming the branch explicitly: `git push <remote> <branch-name>`, never `HEAD`.
+Evidence (2026-08-02, reached production): a dispatched agent left the shared checkout on `main`; two
+planner commits and a `git push … HEAD` landed there and deployed in 59 seconds.
 
 ## Hard caps
 
@@ -147,16 +133,14 @@ task. Route per `office-core/protocol/review-states.md`:
 - **Technical gap** → the planner amends the plan and re-dispatches **only the affected tasks**.
 - **Tradeoff, scope, or cost** → the user's call, with the reviewer's reasoning presented.
 
-**No agent is recalled.** The plan-reviewer retired after its single pass and does not come back to
-adjudicate work it approved. **Bound: a second amendment to the same task stops the loop for the
-user** — a planner amending its own plan is a self-gate, and that bound is what keeps it honest. The
-independent code-review gate still holds on whatever the amendment produces, so nothing is
-self-approved.
+- **No agent is recalled.** The plan-reviewer retired after its single pass and never adjudicates work
+  it approved.
+- **A second amendment to the same task stops the loop for the user.** A planner amending its own plan
+  repeatedly is a self-gate. The independent code-review gate still holds on whatever the amendment
+  produces, so nothing is self-approved.
 
-This replaced a dead rule ("2 same-tool failures → reroute to the Decider tier"), which was a no-op
-once the executor was already at the tier it was going to be at. It is the direct fix for the run
-where one task burned 829k tokens over three review rounds: **the loop stops funding at round 2
-instead of round 5.**
+Evidence: one task burned 829k tokens over three review rounds. The loop now stops funding at round 2
+instead of 5.
 
 ## The four stop conditions
 
@@ -168,7 +152,9 @@ The loop returns to the user for exactly these, and nothing else:
 3. **An external send** — email, message, public post, bulk outreach. Surface audience and draft;
    get approval in the current session.
 4. **A genuinely user-owned decision** — a fork the plan did not anticipate where different choices
-   produce materially different work. Recommend, do not infer. Then continue.
+   produce materially different work. **Ask it as an `AskUserQuestion` with your recommendation as
+   the first option, and wait for the answer.** That is the pause; the run resumes on the answer, not
+   on your inference. Recommend, never infer.
 
 Everything else the loop decides itself: which tool to use, how to fix a review finding, whether to
 re-route, how to sequence remaining tasks, when to fan out scouts.
@@ -200,38 +186,30 @@ triaged), mid-conflict-resolution, or holding an empirical result — a measured
 rationale — that is not yet written down.
 
 **A live executor is not a reason to withhold a `yes`.** A background executor has its own context
-window; planner compaction is invisible to it. That makes a dispatch the *ideal* compaction window,
-since the planner is otherwise idle-waiting on it.
+window, so planner compaction is invisible to it — a dispatch is the *ideal* compaction window, since
+the planner is otherwise idle-waiting.
 
-### Why the field earns its place
+**A `no` is a defect report, not a wait instruction.** It means something real exists only in a
+context window, which a compaction, a crash, or a window boundary deletes. The correct response is
+*write that state to a file now*, which turns the answer into `yes`. Where it goes:
 
-The value is not the yes/no — it is that **"no, I am still holding state" is a defect report.** It
-means something real exists only in a context window, which a compaction, a crash, or a window
-boundary deletes. So the honest response to a `no` is never "wait." It is *write the state to a file
-now*, which turns the answer into `yes`. The field is a durability audit that runs at every task
-boundary, and it costs one clause.
-
-Two constraints on where that file goes:
-
-- **Outside the repo while an executor is live in that tree.** Committing run state alongside a
-  running executor orphaned two commits in one run. The session scratchpad survives compaction just
-  as well as a commit does, and races nothing.
-- It records what the plan does not already hold: what is in flight and from which `BASE`, standing
-  tooling rules learned the hard way, headroom per window, and the stop conditions. Anything already
-  committed to the plan or a handoff is not repeated.
+- **Outside the repo while an executor is live in that tree** — committing run state alongside a
+  running executor orphaned two commits in one run. The session scratchpad survives compaction just as
+  well and races nothing.
+- **Only what the plan does not already hold:** what is in flight and from which `BASE`, standing
+  tooling rules, headroom per window, the stop conditions. Never repeat the plan or a handoff.
 
 ### Brief sizing is the same problem, one level down
 
-A subagent has a context window too, and it cannot ask the user to compact it. An oversized brief
-does not fail loudly — it comes back **partial**, having done the early work well and stopped at a
-boundary, which reads as an executor shortfall and is not one.
+A subagent cannot ask to be compacted, and an oversized brief does not fail loudly — it returns
+**partial**, which reads as an executor shortfall and is not one.
 
-Observed: a brief covering ten call sites across three unrelated surfaces returned four, at 329k
-tokens and 142 tool calls, with a handoff naming exactly what it skipped. The executor behaved
-correctly. The planner had written a brief that no single window could hold. **Size a brief to one
-surface, and split on surface boundaries rather than on total file count** — and when a brief does
-come back partial with a clean handoff, resume it as a scoped continuation; that is not a review
-round and does not consume one.
+- **Size a brief to one surface. Split on surface boundaries, never on file count.**
+- **A partial return with a clean handoff resumes as a scoped continuation** — not a review round, and
+  it consumes none.
+- Evidence: a brief spanning ten call sites across three surfaces returned four, at 329k tokens and
+  142 tool calls, with a handoff naming exactly what it skipped. The executor was correct; the brief
+  was unholdable.
 
 ## Safety rules the loop cannot relax
 

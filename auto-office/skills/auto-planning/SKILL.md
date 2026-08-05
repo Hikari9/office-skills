@@ -150,24 +150,18 @@ Rules for done-criteria:
 - **Binary.** No "mostly working." A criterion that cannot be red or green is not a criterion.
 - **Complete.** The loop exits when all of them are green — so anything missing here will not get
   done, and anything vague here will get argued about at 2am with no one to ask.
-- **State the PROPERTY, never the vivid instance.** This is the criterion defect that recurs, and
-  it is invisible at write time because the instance is always something real you just thought of.
-  A criterion that names one case a bug could take is satisfiable by an implementation that is
-  broken in every *other* case. Observed three times in one run: "no-op when `sections` is empty"
-  should have been "pruning must never be driven by a filtered view" — the empty case was the edge,
-  filtered narrowing was the common case, and the shipped code wiped user data on every search
-  keystroke while the criterion read green. Test yourself with: *what is the general property, and
-  is my wording the property or one example of it?*
-- **A criterion whose tests all move state from empty is not testing the update path.** The
-  sibling failure of the rule above, and the reason it survives review: populating from nothing is
-  the easy case to imagine and to write. If every case goes 0 → N, then any comparison that only
-  looks at *size* passes all of them. Always require at least one N → N transition with a changed
-  value, and at least one N → fewer.
-- **Never make the agent's own identity a discriminator.** A verify command that filters on comment
+- **State the PROPERTY, never the vivid instance.** A criterion naming one case a bug could take is
+  satisfiable by an implementation broken in every *other* case. Ask: *is my wording the general
+  property, or one example of it?* Observed three times in one run — "no-op when `sections` is empty"
+  should have been "pruning must never be driven by a filtered view"; the shipped code wiped user data
+  on every search keystroke while the criterion read green.
+- **Require at least one N → N transition with a changed value, and one N → fewer.** If every case
+  goes 0 → N, any comparison that only looks at *size* passes all of them, so the update path is
+  untested.
+- **Never make the agent's own identity a discriminator.** A verify command filtering on comment
   author, commit author, or reviewer login is unsatisfiable when the agent acts under the user's
-  credentials — which is the normal case for `gh`, `git`, and every MCP write. Discriminate on the
-  *content* that only real work produces (a millisecond figure, a SHA, a pasted command output),
-  never on who appears to have written it.
+  credentials — the normal case for `gh`, `git`, and every MCP write. Discriminate on *content* only
+  real work produces: a millisecond figure, a SHA, pasted command output.
 
 ## Step 7.4 — planner self-review (mandatory)
 
@@ -179,11 +173,10 @@ Before any hand-off, re-read your own plan hunting for:
   gate that can no longer be reached, a budget you asserted instead of measuring;
 - **anything you hand-waved** — every "should be fine", "roughly", and "pays for itself".
 
-You are cache-warm on this document, so this pass is nearly free. **It is not a substitute for step
-7.5 and may not be used to skip it.** Measured on the plan that produced this rule: self-review found
-**10** findings, the fresh gate found **12**, and they overlapped on only **4**. Self-review finds what
-the author knows it hand-waved; the fresh gate finds what the author could not see. Neither
-substitutes for the other, which is exactly why both exist.
+You are cache-warm on this document, so the pass is nearly free. **It is not a substitute for step 7.5
+and may not be used to skip it.** Measured: self-review found 10 findings, the fresh gate 12,
+overlapping on only 4. Self-review finds what the author knows it hand-waved; the fresh gate finds what
+the author could not see.
 
 ## Step 7.5 — one adversarial plan-review (mandatory)
 
@@ -211,14 +204,14 @@ rejected and why, and moves on.
 file (`docs/plans/<slug>.md`), the GOAL block inside it, the briefs, diff packages, evidence, and the
 run report. The planner writes them where the work is, **never** into the `office-skills` workspace.
 
-**`references/routing-outcomes.md` is the sole exception.** It is cross-run and workspace-local, so it
-lives in this plugin because it must survive any single target repo. Closeout appends a summary row to
-it *in addition to* writing the full run report into the target repo.
+**`references/routing-outcomes.md` is the sole exception** — cross-run and workspace-local, so it must
+survive any single target repo. Closeout appends a summary row there *in addition to* writing the full
+run report into the target repo.
 
-- Corollary: a ledger row cites the target repo (as an opaque slug) and the plan path, so it is
-  traceable back to artifacts that live elsewhere.
-- Corollary: a run whose target repo *is* `office-skills` puts its plan and report here as normal —
-  because that is the target, not because this is home.
+- A ledger row cites the target repo (opaque slug) and plan path, staying traceable to artifacts held
+  elsewhere.
+- A run whose target repo *is* `office-skills` puts its plan and report here as normal — because that
+  is the target, not because this is home.
 
 ## Approval
 
