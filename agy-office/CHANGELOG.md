@@ -1,5 +1,19 @@
 # Changelog — agy-office
 
+## 1.2.1 — 2026-08-05
+
+- **Protocol version corrected to `1.2.0`.** The hub claimed `1.1.0` while `office-core/VERSION` and
+  every vendored protocol file were already `1.2.0`. A reader could not tell whether the vendored
+  copy was ahead of spec, and therefore whether core `1.2.0`'s clauses bound this office.
+- **The "planner never implements" rule is now declared as a narrowing of core.** Core `1.2.0` states
+  the opposite and calls an absolute prohibition a mistake — while this hub makes that same core file
+  a mandatory read. The rule is unchanged and still correct here; it is now labelled as a deliberate
+  local narrowing so the two documents no longer read as a flat contradiction.
+- `references/routing.md` — the 3-task dispatch ceiling was written as `~3` / "roughly three" in the
+  same corpus where the hub calls it a hard cap; a tilde is what an agent at task 3 uses to justify
+  task 4. Now the bare integer, marked as a cap. The "hard debugging → *consider* not using agy" cell
+  is now an instruction: do not route it through agy, recommend `claude-office` out loud.
+
 ## 1.2.0 - 2026-08-01
 
 ### Changed

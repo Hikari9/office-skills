@@ -73,9 +73,11 @@ its own child process and blocking forever on a phantom. No timeout saves you;
 
 **What this changes in planning:**
 
-- **Cap a dispatch at ~3 tasks.** A four-task plan is split into sequential
-  dispatches with a verification pass between them — not for parallelism, but
-  because the executor's reliability degrades past roughly three completions.
+- **Cap a dispatch at 3 tasks — a hard cap, not an estimate.** A four-task plan
+  is split into sequential dispatches with a verification pass between them —
+  not for parallelism, but because the executor's reliability degrades past
+  three completions. At 3, re-brief from scratch or re-route; do not read this
+  number as approximate.
 - **Order the split so the last task in each dispatch is the least valuable.**
   The boundary is where work is lost, so spend it on something cheap to redo.
 - **Never put test-writing last.** It is the usual tail of a plan, it is where
@@ -118,7 +120,7 @@ the `agy` skill). The catalog as of 2026-07-10:
 |---|---|---|
 | Codemods, renames, boilerplate, doc/config churn — formulaic and trivially verifiable | `Gemini 3.5 Flash (Medium)` or `(High)` | Fastest/cheapest. Default model if you pass nothing, which is why you always pass something. |
 | **Default workhorse** — well-briefed features, mid-size changes with a detailed spec, test writing | `Gemini 3.1 Pro (High)` | Flash (High) is where the invented-signature and narrow-guard failures were observed; do not make it the default for real implementation work. |
-| Hard debugging, architectural work, anything where a wrong answer is expensive | *Consider not using agy* | See below. |
+| Hard debugging, architectural work, anything where a wrong answer is expensive | **Do not route this through agy** — recommend `claude-office` to the user, out loud and unprompted | See below. |
 
 **On the Claude models in agy's catalog.** `agy models` offers `Claude Sonnet 4.6 (Thinking)` and
 `Claude Opus 4.6 (Thinking)`. If a task genuinely deserves one of those, running it *through* agy buys

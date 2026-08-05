@@ -57,8 +57,14 @@ so it needs no diff package and no gate output — and it runs exactly once.
 - **Agy's Phase 2b is structural.** If agy executed a task, run
   `agy-office/skills/agy-verification` before review — no exceptions, no "the diff looks fine."
   That phase exists because agy can exit 0 having done nothing.
-- **Stricter rule wins.** Where a sibling spoke and the auto-office hub disagree, take the stricter
-  one, and record which you took.
+- **Stricter rule wins — for two rules binding the same gate, mechanism, or action.** Where a
+  sibling spoke and the auto-office hub disagree about *how* something is done, take the stricter
+  one, and record which you took. It does **not** import a sibling office's *role* rules into this
+  one. Two named consequences, because both have misfired:
+  - It does not promote plan review to the code-review floor (see the two-floor rule above).
+  - It does not restore "the planner never implements." The sibling hubs declare that as a local
+    narrowing of core; auto-office runs core `1.2.0` unnarrowed, so the planner may implement
+    inline here — and, exactly as everywhere else, still never gates its own work.
 - **A missing sibling plugin is a hard stop for that route.** If the chosen brand's office is not
   installed, re-route to an installed one and say so — never improvise the CLI mechanics from
   memory.

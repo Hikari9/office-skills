@@ -1,5 +1,22 @@
 # Changelog — auto-office
 
+## 2.4.3 — 2026-08-05
+
+- **"Stricter rule wins" no longer imports a sibling office's role rules.** Every dispatch loads a
+  sibling spoke, and `agy-office` / `claude-office` / `codex-office` all state "the planner never
+  implements" as a local narrowing. Read literally, the unscoped clause therefore deleted
+  auto-office's own central lifted rule — while the hub, `auto-loop`, and `auto-planning`'s task
+  table all assume the planner *may* implement inline. The clause is now scoped to two rules binding
+  the **same** gate, mechanism, or action, with both known misfires named (the plan-review floor and
+  planner-implements). `delegation-map.md` and the hub say it the same way.
+- `auto-routing` — the delegation test now carries its operative discriminator instead of leaving it
+  in prose two sections away: a CLI dispatch always technically buys isolation, so "if writing the
+  brief takes more thought than making the change, the delegation buys nothing." The near-tie ladder
+  gains a terminal rung (**still tied → codex**); a ladder that can run out invites the deliberation
+  the section exists to refuse. The agy ceiling is stated as a hard `3`, not `~3`.
+- `auto-planning` — the 95% interview floor now carries core's definition of 95% (the stranger
+  standard) rather than the bare number, matching how the sibling planning spokes state it.
+
 ## 2.4.2 — 2026-08-05
 
 - **Fixes the reason auto-office plans came out thin.** Everything that makes a plan comprehensive —

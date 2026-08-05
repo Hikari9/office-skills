@@ -50,9 +50,13 @@ the reviewer below its stated floor, or widen the blast-radius ceiling implicitl
 
 ## Protocol version
 
-This plugin implements office-core protocol `1.1.0`, vendored at `office-core/` in this plugin.
+This plugin implements office-core protocol `1.2.0`, vendored at `office-core/` in this plugin.
 The vendored copy is authoritative for an installed plugin; the repo-root `office-core/` is the
 development source. Mandatory read: `office-core/protocol/roles-and-authority.md`.
+
+**Declared narrowing of core.** Core `1.2.0` lets the planner implement inline; this office
+does **not** — the planner never implements the plan here. Narrowing is legal, and it is stated so a
+reader of both files need not guess which governs.
 
 ## Routing table
 

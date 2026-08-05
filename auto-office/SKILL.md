@@ -99,7 +99,8 @@ write, an external send, or a genuinely user-owned decision. Everything else it 
 | Doubt about core — the plan/evidence/verdict floor | `office-core/protocol/*` |
 
 auto-office owns **routing and the loop** and no CLI or sub-agent mechanics of its own — every phase
-loads the sibling spoke for the chosen brand, and the stricter rule always wins.
+loads the sibling spoke for the chosen brand. Where two rules bind the **same** gate, the stricter
+wins; a sibling's *role* narrowing is never imported ([delegation-map.md](references/delegation-map.md)).
 
 ## Run telemetry
 

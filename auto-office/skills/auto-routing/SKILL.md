@@ -43,7 +43,7 @@ row, and refresh it when stale — never route from memory of a leaderboard.
 |---|---|---|---|
 | **Decider** | claude (Opus) | Plans, arbitration, gate-holding, resolving contradictions, ambiguous cross-cutting work | Slow and expensive per token — spend it on decisions, not typing |
 | **Backend builder** | codex | Backend, data, migrations, infra, refactors, long-horizon implementation | Weekly quota is finite — price it in, don't ignore it |
-| **Fast scout / bulk hand** | agy | Web search, docs research, codebase recon, high-volume mechanical edits, frontend/UI | Drifts off-instruction past ~3 chained tasks; can be confidently wrong and internally consistent |
+| **Fast scout / bulk hand** | agy | Web search, docs research, codebase recon, high-volume mechanical edits, frontend/UI | Drifts off-instruction past 3 chained tasks — a hard cap, not an estimate; can be confidently wrong and internally consistent |
 
 Agy's weakness is **duration**, not capability. So give it breadth, never depth: many parallel
 single-shot tasks, each returning a cheaply verifiable artifact. Give claude the opposite shape —
@@ -149,7 +149,9 @@ last run shipped a task assignment that was impossible to execute as written.
 
 Core's [delegation test](../../office-core/protocol/roles-and-authority.md) still governs *whether* to
 delegate at all: a delegation must buy tier, isolation, or parallelism, and if it buys none of the
-three, the work is done inline — by the planner, if that is who is holding it. The counterweight is
+three, the work is done inline. **The operative test, since a CLI dispatch technically always buys
+isolation: if writing the brief takes more thought than making the change, the delegation buys
+nothing — do the change.** That is the discriminator; "it could be isolated" is not one — by the planner, if that is who is holding it. The counterweight is
 unchanged: **never collapse the task carrying the run's main correctness or security risk** into
 inline work, because inline work gets no independent per-task review.
 
@@ -164,6 +166,8 @@ first:
 1. **Live headroom** — who has room, per window.
 2. **The operator's standing preference for codex.**
 3. **Spread across brands**, so one window is not drained by a run that did not need to.
+4. **Still tied? Take codex.** A ladder with no terminal rung is an invitation to deliberate, which
+   is the exact cost this section exists to refuse.
 
 Then commit. A suboptimal-but-fitting brand costs at most one extra review round; deliberation costs
 planner tokens on **every** task, and the code reviewer is the safety net either way.

@@ -1,5 +1,15 @@
 # Changelog — claude-office
 
+## 1.3.2 — 2026-08-05
+
+- **Protocol version corrected to `1.2.0`** (was `1.1.0`, while the vendored core was already
+  `1.2.0`), and **"the planner never implements" is now declared as a narrowing of core** — core
+  `1.2.0` explicitly permits inline planner implementation and this hub makes that file a mandatory
+  read, so the pair read as a contradiction with no indication which governed. The rule is unchanged.
+- The Executor role cell said "review every task itself", two lines above "the executor never
+  approves its own work". Now "self-check every task before handoff" — same behavior, no longer
+  phrased as a warrant to self-approve.
+
 ## 1.3.1 — 2026-08-05
 
 - `claude-planning` — the reference to core's plan contract was a **bare backtick path**, which does

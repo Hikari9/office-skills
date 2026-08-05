@@ -3,6 +3,13 @@
 All notable changes to the `codex-office` plugin are documented in this file. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 1.3.1 — 2026-08-05
+
+- **Protocol version corrected to `1.2.0`** (was `1.1.0`, while the vendored core was already
+  `1.2.0`), and **"the planner does not implement the plan" is now declared as a narrowing of core** —
+  core `1.2.0` permits inline planner implementation and this hub makes that file a mandatory read.
+  The rule is unchanged; it is labelled so the two documents no longer contradict each other silently.
+
 ## 1.3.0 — 2026-08-02
 
 - `codex-cli` — new **"Watching it run — never pipe the dispatch"** section. Launch as a background

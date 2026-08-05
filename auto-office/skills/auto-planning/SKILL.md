@@ -65,7 +65,10 @@ If the benchmark snapshot was refreshed, or a capability role changed hands, add
 
 ## Interview floor — 95% clear
 
-Do not write a plan until every one of these is answered or explicitly deferred by the user:
+"95%" is not a feeling: it is core's standard — clear enough that a stranger with no access to this
+conversation could build the right thing from the plan alone. Here that stranger is literal and
+routed, in a separate process, unable to ask a follow-up mid-run. The checklist below is the test;
+do not write a plan until every item is answered or explicitly deferred by the user:
 
 - **Outcome** — what is true when this is done, in the user's words.
 - **Done-criteria** — the exact commands, reads, or observations that prove it. If you cannot name

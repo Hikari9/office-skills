@@ -10,7 +10,7 @@ Three roles, one session, for irreversible or production-facing work.
 | Role | Who | Default model | Job |
 |---|---|---|---|
 | **Planner** | The current agent (you) | session default | Interview → plan → approval; triage/apply review fixes; close out |
-| **Executor** | One dispatched subagent | `sonnet`, high | Implement the whole plan via subagents; review every task itself |
+| **Executor** | One dispatched subagent | `sonnet`, high | Implement the whole plan via subagents; self-check every task before handoff |
 | **Reviewer** | One fresh dispatched subagent | `opus`, medium | Adversarial final review + each fix round; holds the approval gate |
 
 **Core principle:** the planner never implements; the executor never approves its own work. Each
@@ -62,8 +62,12 @@ fork-and-recover cycle. Mechanism: [claude-cli](skills/claude-cli/SKILL.md); ans
 
 ## Protocol version
 
-Implements office-core `1.1.0`, vendored at `office-core/` (authoritative once installed; the
+Implements office-core `1.2.0`, vendored at `office-core/` (authoritative once installed; the
 repo-root copy is the dev source). Mandatory read: `office-core/protocol/roles-and-authority.md`.
+
+**Declared narrowing of core.** Core `1.2.0` lets the planner implement inline; this office
+does **not** — the planner never implements the plan here. Narrowing is legal, and it is stated so a
+reader of both files need not guess which governs.
 
 ## Routing table
 

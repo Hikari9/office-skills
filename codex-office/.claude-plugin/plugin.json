@@ -1,6 +1,6 @@
 {
   "name": "codex-office",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Use only when explicitly named for production-facing or irreversible repository work. The active Codex session plans and closes out; fresh Codex CLI sessions execute and adversarially review.",
   "author": { "name": "office-skills" },
   "keywords": ["office", "codex", "orchestration", "review-gate", "production-safety"]
