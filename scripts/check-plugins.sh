@@ -93,7 +93,26 @@ PY
     fail "$p missing COMPATIBILITY.md"
   fi
 
-  [ -f "$dir/CHANGELOG.md" ] && ok "CHANGELOG.md present" || fail "$p missing CHANGELOG.md"
+  # changelog present, and its newest heading matches the declared plugin version.
+  # Drift here is silent: the maintenance step says "bump version, add a CHANGELOG
+  # entry" and nothing previously checked that the two agreed.
+  chg="$dir/CHANGELOG.md"
+  if [ -f "$chg" ]; then
+    ok "CHANGELOG.md present"
+    top_ver="$(grep -m1 -oE '^## [0-9]+\.[0-9]+\.[0-9]+' "$chg" | awk '{print $2}')"
+    if [ -z "$top_ver" ]; then
+      fail "$p CHANGELOG.md newest heading is not '## X.Y.Z — YYYY-MM-DD'"
+    elif [ -f "$desc" ]; then
+      dec_ver="$(python3 -c "import json;print(json.load(open('$desc'))['version'])" 2>/dev/null)"
+      if [ "$top_ver" = "$dec_ver" ]; then
+        ok "version $dec_ver matches newest CHANGELOG entry"
+      else
+        fail "$p version drift: plugin.json is $dec_ver, newest CHANGELOG entry is $top_ver"
+      fi
+    fi
+  else
+    fail "$p missing CHANGELOG.md"
+  fi
 
   # spokes exist and each declares a hub-routed description
   spokes=$(find "$dir/skills" -name SKILL.md 2>/dev/null | wc -l | tr -d ' ')
@@ -140,6 +159,47 @@ RULES
              | sed -E 's/^\]\(//; s/\)$//; s/#.*$//')
   done < <(find "$dir" -name '*.md' -not -path '*/office-core/*')
   [ "$broken" -eq 0 ] && ok "markdown links resolve"
+
+  # Referenced helper scripts must resolve. A doc that says "run scripts/foo.sh"
+  # without saying which root it is relative to sent a planner hunting in the
+  # plugin's own scripts/ dir, concluding the script did not exist at all, and
+  # reporting a maintenance step as unrunnable. Accept a hit at the workspace
+  # root OR in the plugin, and fail only when it is nowhere.
+  missing_scripts=0
+  while IFS= read -r ref; do
+    [ -z "$ref" ] && continue
+    base="$(basename "$ref")"
+    if [ ! -f "$ROOT/scripts/$base" ] && [ ! -f "$dir/scripts/$base" ]; then
+      fail "$p references a script that exists nowhere: $ref"
+      missing_scripts=$((missing_scripts + 1))
+    fi
+  done < <(grep -rhoE '\bscripts/[A-Za-z0-9_.-]+\.(sh|py)\b' \
+             "$dir" --include='*.md' 2>/dev/null | sort -u)
+  [ "$missing_scripts" -eq 0 ] && ok "referenced scripts resolve"
+
+  # The planning spoke must carry core's plan-contract INTO the planner's context:
+  # a resolvable relative link (bare plugin-root paths do not resolve from inside a
+  # spoke) AND the five required section names spelled out. auto-office had neither,
+  # so its planners wrote the GOAL block and task table — both inline here — and
+  # silently skipped the required sections. Nothing caught it: the link check only
+  # inspects [](...) links, and a bare backtick path passes it.
+  planspoke="$(find "$dir/skills" -name SKILL.md -path '*planning*' 2>/dev/null | head -1)"
+  if [ -n "$planspoke" ]; then
+    contract_ok=1
+    grep -qE '\]\((\.\./)+office-core/protocol/plan-contract\.md\)' "$planspoke" \
+      || { fail "${planspoke#$ROOT/} has no resolvable link to plan-contract.md (a bare path does not resolve from a spoke)"; contract_ok=0; }
+    for section in Context "Global Constraints" "Numbered tasks" "Dependency graph" "Out of scope"; do
+      grep -qiF "$section" "$planspoke" \
+        || { fail "${planspoke#$ROOT/} never names required plan section: $section"; contract_ok=0; }
+    done
+    [ "$contract_ok" -eq 1 ] && ok "planning spoke carries the plan contract"
+  elif grep -q 'office-core/protocol/plan-contract\.md' "$hub" 2>/dev/null; then
+    # codex-office plans from the hub itself. A bare plugin-root path is fine there:
+    # the hub is the file in context, so the path resolves from where it is read.
+    ok "hub carries the plan contract (no planning spoke)"
+  else
+    fail "$p neither has a planning spoke nor cites plan-contract.md in its hub"
+  fi
 done
 
 echo

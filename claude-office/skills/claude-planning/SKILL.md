@@ -8,7 +8,7 @@ description: Interview to 95% clarity, write the plan, get approval. Loaded by t
 Loaded by: the planner, at Phase 1.
 Assumes: the Office Kernel is already in the packet.
 
-Narrows `office-core/protocol/plan-contract.md` — the shared floor every office's plan must
+Narrows [`office-core/protocol/plan-contract.md`](../../office-core/protocol/plan-contract.md) — the shared floor every office's plan must
 clear. This file adds Claude-specific detail (the strategy/effort tag, explorer-dispatch rules,
 the routing summary line format); it never drops a core requirement.
 

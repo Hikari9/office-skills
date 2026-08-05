@@ -68,9 +68,9 @@ are **user-invoked only**.
   `CHANGES REQUIRED` on one task, presume `PLAN DEFECT` and re-plan it.
 - A successful exit is **not evidence** — the gate is the plan's validation commands with real
   output, and live-system writes need a read-back.
-- Irreversible production work is `PLANNER-HELD`, excluded from every brief, and the one thing the
-  loop **stops** for. The loop never widens its blast radius or adds a repo or environment, and
-  user-owned decisions get a recommendation, never inference.
+- Irreversible production work is `PLANNER-HELD` and excluded from every brief. The loop never widens
+  its blast radius or adds a repo or environment, and user-owned decisions get a recommendation,
+  never inference.
 
 Implements office-core `1.2.0`, vendored at `office-core/`. Mandatory read:
 `office-core/protocol/roles-and-authority.md`.
@@ -103,17 +103,17 @@ loads the sibling spoke for the chosen brand, and the stricter rule always wins.
 
 ## Run telemetry
 
-One event per `office-core/schemas/run-event.schema.json` at each explicit dispatch — core 1.2.0
-carries `brand`, `effort`, `dispatch_form`, `review_rounds`, `plan_review_rounds`, `brief_defects`,
-`tokens_out`, `wall_clock_s` — plus `routing_reason`, `headroom_percent` per tool **per window**,
+One event per `office-core/schemas/run-event.schema.json` at each explicit dispatch. Beyond the
+schema's own fields, record `routing_reason`, `headroom_percent` per tool **per window**,
 `benchmark_snapshot_date`, `loop_iteration`, `reroute_from`. Match on session/worktree identity, not
 a display label.
 
 ## Maintenance
 
-Bump `version`, add a `CHANGELOG.md` entry, re-vendor core if it changed, run
-`scripts/check-plugins.sh`. A shared invariant is a proposed core change, never a local edit, and
-editing these skills at all is Opus-planner-only.
+Bump `.claude-plugin/plugin.json` `version` to match the new `CHANGELOG.md` heading, re-vendor core
+if changed, run `check-plugins.sh` from the **office-skills root** (this plugin's `scripts/` holds
+only quota probes). A shared invariant is a proposed core change, never a local edit; editing these
+skills is Opus-planner-only.
 
 ## Red Flags — stop and correct
 
@@ -127,6 +127,7 @@ editing these skills at all is Opus-planner-only.
 | "Agy is on task 5 and doing fine" | It forgets past 3. Re-brief or re-route. |
 | "The plan's done, I'll ask before executing" | You have approval. The run is end-to-end. |
 | "It's autonomous, so I'll deploy too" | Irreversible prod is `PLANNER-HELD`. The loop stops. |
+| "CLI was blocked last time" | A past denial is not evidence about now, and the plan's dispatch form is an assignment. Attempt it. |
 | "Executor says done" | It cannot approve its own work. Review is not optional. |
 | "Agy wrote it, agy can review it" | The **code** gate is a fresh Opus reviewer. |
 | "Round 6 will converge" | Past the cap the failure is structural. Report the deadlock. |

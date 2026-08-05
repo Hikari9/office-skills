@@ -1,6 +1,6 @@
 ---
 name: auto-loop
-description: Phase 2–3 — the goal-locked autonomous loop that runs dispatch → liveness → verify → review → fix per task until every done-criterion is green, with hard caps, the 2-round plan-defect presumption, and four stop conditions. Loaded by the auto-office hub; not invoked directly.
+description: Phase 2–3 — the goal-locked autonomous loop that runs dispatch → liveness → verify → review → fix per task until every done-criterion is green, with hard caps, the 2-round plan-defect presumption, four stop conditions, and the per-task compaction recommendation. Loaded by the auto-office hub; not invoked directly.
 ---
 
 # Auto Loop
@@ -179,9 +179,59 @@ not a stop, it is a verification. A slow tool is not a stop, it is a reroute.
 ## Progress reporting without blocking
 
 Post a one-line status per task completion — task, brand, dispatch form, review rounds, **wall
-clock**, verdict, criteria now green. It informs; it does not ask. Never end a status line with a
-question the run's continuation depends on. Wall clock goes on the line because it is the cost that
-is invisible in a token count and the one a silent dispatch spends.
+clock**, verdict, criteria now green, **`compact:`**. It informs; it does not ask. Never end a status
+line with a question the run's continuation depends on. Wall clock goes on the line because it is the
+cost that is invisible in a token count and the one a silent dispatch spends.
+
+## The compaction recommendation, every task boundary
+
+The last field of every status line is `compact: yes | no — <reason>`. **The planner cannot compact
+itself** — only the user can invoke it — so this is a recommendation surfaced on a line the user is
+already reading, never an action and never a question that blocks.
+
+Recommend **yes** when all three hold:
+
+1. A task just reached `APPROVED` — a clean boundary, no half-verified state in flight.
+2. Its evidence is **on disk**: handoff file, verdict record, plan amendment. Not only in chat.
+3. The next brief is a file, not a memory.
+
+Recommend **no** while mid-review (the reviewer's findings live in the planner's context until
+triaged), mid-conflict-resolution, or holding an empirical result — a measured baseline, a decision
+rationale — that is not yet written down.
+
+**A live executor is not a reason to withhold a `yes`.** A background executor has its own context
+window; planner compaction is invisible to it. That makes a dispatch the *ideal* compaction window,
+since the planner is otherwise idle-waiting on it.
+
+### Why the field earns its place
+
+The value is not the yes/no — it is that **"no, I am still holding state" is a defect report.** It
+means something real exists only in a context window, which a compaction, a crash, or a window
+boundary deletes. So the honest response to a `no` is never "wait." It is *write the state to a file
+now*, which turns the answer into `yes`. The field is a durability audit that runs at every task
+boundary, and it costs one clause.
+
+Two constraints on where that file goes:
+
+- **Outside the repo while an executor is live in that tree.** Committing run state alongside a
+  running executor orphaned two commits in one run. The session scratchpad survives compaction just
+  as well as a commit does, and races nothing.
+- It records what the plan does not already hold: what is in flight and from which `BASE`, standing
+  tooling rules learned the hard way, headroom per window, and the stop conditions. Anything already
+  committed to the plan or a handoff is not repeated.
+
+### Brief sizing is the same problem, one level down
+
+A subagent has a context window too, and it cannot ask the user to compact it. An oversized brief
+does not fail loudly — it comes back **partial**, having done the early work well and stopped at a
+boundary, which reads as an executor shortfall and is not one.
+
+Observed: a brief covering ten call sites across three unrelated surfaces returned four, at 329k
+tokens and 142 tool calls, with a handoff naming exactly what it skipped. The executor behaved
+correctly. The planner had written a brief that no single window could hold. **Size a brief to one
+surface, and split on surface boundaries rather than on total file count** — and when a brief does
+come back partial with a clean handoff, resume it as a scoped continuation; that is not a review
+round and does not consume one.
 
 ## Safety rules the loop cannot relax
 

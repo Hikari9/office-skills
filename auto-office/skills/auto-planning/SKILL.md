@@ -5,6 +5,11 @@ description: Phase 1 — interview to 95% clarity, probe quota, route by brand, 
 
 # Auto Planning
 
+Narrows [`office-core/protocol/plan-contract.md`](../../office-core/protocol/plan-contract.md) — the
+shared floor every office's plan must clear, including its **Claims discipline** section. Read it;
+this file adds the router's specifics (brand per task, the GOAL block, the two plan-review passes)
+and never drops a core requirement.
+
 Phase 1 carries more weight here than in the sibling offices, because it is the **last** point at
 which the user is asked anything routine. One approval authorizes everything through closeout, so
 the plan and the done-criteria have to be good enough to be executed without you asking again.
@@ -40,8 +45,18 @@ If the benchmark snapshot was refreshed, or a capability role changed hands, add
 5. **Route, fully** ([auto-routing](../auto-routing/SKILL.md)) — **every task's brand**, and how many
    executors the run needs. Model and effort are fixed by role, so they are filled in, not decided.
    Do not leave routing "to be decided during execution"; an unassigned task is an unreviewable cost.
-6. **Write the plan** to `docs/plans/<slug>.md` **in the target repo** per
-   `office-core/protocol/plan-contract.md` — see *Where a run's files live* below.
+6. **Write the plan** to `docs/plans/<slug>.md` **in the target repo** — see *Where a run's files
+   live* below. The five required sections are core's
+   ([`plan-contract.md`](../../office-core/protocol/plan-contract.md)) and none may be dropped:
+   - **Context** — why this work exists.
+   - **Global Constraints** — verbatim binding values, protected paths, environment target,
+     validation commands, and the blast-radius ceiling as its own named block.
+   - **Numbered tasks** — each with files touched, exact behavior, verification, strategy tag.
+   - **Dependency graph** — every task declares `Depends on:` / `Touches:`, grouped into waves.
+   - **Out of scope** — explicit.
+
+   The GOAL block and the task assignment table below are additions to those sections, never
+   substitutes for them.
 7. **Write the GOAL block** into the plan (below). This is what the loop is measured against.
 7.4 **Self-review the plan** (below). Mandatory, before any hand-off.
 7.5 **One adversarial plan-review** (below). Mandatory, before user approval.

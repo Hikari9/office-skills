@@ -17,8 +17,40 @@ execution-mode contract, and is where a **new** mechanism gotcha gets written fi
 ## `--cli` vs `--in-session`
 
 **`--cli` is the default.** The executor launches as a `claude --bg --remote-control` background
-agent (see discernment.md's invocation section for the exact command, model/effort flags,
-`--add-dir`, and `--dangerously-skip-permissions` vs. a scoped `--allowedTools` allowlist).
+agent (see discernment.md's invocation section for the exact command, model/effort flags, and
+`--add-dir`).
+
+**The default permission form is a scoped `--allowedTools` allowlist, never the blanket flag.**
+`--dangerously-skip-permissions` is the *fallback*, because the auto-mode classifier denies it
+outright in this workspace. Verified working launch shape, 2026-08-04:
+
+```bash
+echo "<brief>" | SHELL=/bin/bash claude --bg --remote-control "<label>" \
+  --model sonnet --add-dir "<pre-created worktree>" \
+  --allowedTools "Read Write Edit Grep Glob Bash(git *) Bash(corepack pnpm *)"
+```
+
+**The prompt must be piped on stdin.** Passing it as a positional argument returns
+`idle — send a prompt to start`: the agent registers but never begins, and a planner that reports the
+launch id without checking `state` will wait forever on an agent that was never given work.
+
+### Never pre-emptively downgrade to `--in-session`
+
+discernment.md's two-refusals rule means **two refusals observed in the current run**. A denial
+recorded in a past run, a ledger row, or this file is *not* evidence about now — classifier behavior
+and settings change, and `permissions.allow` in this workspace already carries `Bash(claude*)`.
+
+- **Attempt the CLI launch. Read the actual result.** Only a real refusal in this run authorizes the
+  fallback.
+- A plan that assigned `cli` is an **assignment**. Substituting `--in-session` because CLI "was
+  blocked before" is the executor re-deciding its own routing, which is a `PLAN DEFECT` to surface,
+  not a call the dispatcher makes.
+- If you do fall back, say which form you used and why in one line — a too-narrow allowlist stalls
+  silently, so the caller needs to know which one is running.
+
+Evidence this rule exists: on 2026-08-04 a planner skipped straight to `--in-session`, citing a
+2026-08-03 ledger row. A probe run minutes later launched, ran, and wrote its output file with the
+allowlist form on the first try. The stale note cost a correct dispatch form for no reason.
 
 **`--in-session` is the opt-out**, passed by the caller at invocation. It restores an in-session
 Agent-tool subagent as the executor instead. The reviewer is **always** in-session regardless of

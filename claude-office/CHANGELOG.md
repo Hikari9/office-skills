@@ -1,5 +1,17 @@
 # Changelog — claude-office
 
+## 1.3.1 — 2026-08-05
+
+- `claude-planning` — the reference to core's plan contract was a **bare backtick path**, which does
+  not resolve from inside a spoke (only from the plugin root). Now a working relative link. The
+  five required section names were already spelled out inline here, so the practical damage was
+  limited to a dead pointer — unlike auto-office, where the same bare path was the *only* carrier of
+  those sections. `scripts/check-plugins.sh` now enforces both halves.
+- `claude-cli` — records the scoped `--allowedTools` allowlist as the default permission form, that
+  the prompt must be piped on stdin (a positional prompt yields a registered-but-`idle` agent), and
+  that the two-refusals fallback requires two refusals **in the current run**. Written while fixing
+  the auto-office 2.3.1 stale-denial defect; see that entry.
+
 ## 1.3.0 — 2026-08-02
 
 - `claude-cli` — new section: `--add-dir <your own working tree>` is **not** isolation. A dispatched

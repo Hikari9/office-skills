@@ -1,5 +1,92 @@
 # Changelog — auto-office
 
+## 2.4.2 — 2026-08-05
+
+- **Fixes the reason auto-office plans came out thin.** Everything that makes a plan comprehensive —
+  Context, Global Constraints, Numbered tasks with files/behavior/verification, the dependency graph,
+  Out of scope, and the whole *Claims discipline* section — lives in
+  `office-core/protocol/plan-contract.md`, and `auto-planning` cited it as a **bare backtick path** at
+  step 6. That path resolves from the plugin root, **not** from inside a spoke, so from the planner's
+  position it pointed at nothing; the hub made only `roles-and-authority.md` a mandatory read and
+  listed the contract solely in its "Doubt about core" fallback table. A planner therefore wrote the
+  two things `auto-planning` states inline — the GOAL block and the task assignment table — and
+  skipped the required sections entirely. Nothing was broken; the requirements were simply
+  unreachable, and had been since the initial release.
+- `auto-planning` now opens with a `Narrows [plan-contract.md](…)` link, as `agy-planning` already
+  did, and step 6 spells out all five required sections with a note that the GOAL block and task
+  table are **additions to** them, never substitutes.
+- `claude-planning` carried the same bare path (harmless there — it already listed the five sections
+  inline). Fixed; see claude-office `1.3.1`.
+- `scripts/check-plugins.sh` gains **planning spoke carries the plan contract**: a planning spoke must
+  have a *resolvable relative link* to `plan-contract.md` and must name all five required sections.
+  Neither existing check could see this — the link check only inspects `[](…)` links, so a bare
+  backtick path passed it clean. `codex-office` has no planning spoke and plans from its hub, where a
+  plugin-root path does resolve; that case is accepted explicitly rather than special-cased silently.
+- **Known warning, unchanged:** the hub is still 9068 bytes against a 9000 budget. This change adds
+  nothing to it — the fix belongs in the spoke, which is where the planner actually reads.
+
+## 2.4.1 — 2026-08-04
+
+- **The maintenance step was unrunnable as written, and a planner reported it as missing.** `SKILL.md`
+  said "run `scripts/check-plugins.sh`" without naming a root. The script lives at the **office-skills
+  workspace root**; the plugin's own `scripts/` holds only the three quota probes. A planner looked in
+  the plugin, searched `~/.claude`, found nothing, and reported the script as non-existent — twice
+  wrong, since it exists and the installed plugins are symlinks into the workspace. Maintenance now
+  names the root explicitly and ties the `version` bump to the CHANGELOG heading.
+- `scripts/check-plugins.sh` gains two checks, both targeting failures observed today:
+  - **version drift** — the newest `## X.Y.Z` CHANGELOG heading must equal `.claude-plugin/plugin.json`'s
+    `version`. The maintenance step said "bump version, add a CHANGELOG entry" and nothing verified
+    the two agreed.
+  - **referenced scripts resolve** — any `scripts/<name>.sh|.py` mentioned in a plugin's markdown must
+    exist at the workspace root or in the plugin. This is the check that would have prevented the
+    false "missing script" report outright.
+- Fixes a contradiction in the hub: the safety rules called `PLANNER-HELD` "the one thing the loop
+  stops for" while *The autonomous run* lists **four** stop conditions. The four-condition list is
+  authoritative; the stale clause is removed.
+- **Known warning, left deliberately:** the auto-office hub is 9068 bytes against a 9000 budget. It was
+  already at 8984 before this change — 16 bytes of headroom — so any new rule overruns it. Shaving the
+  new Red Flag row to fit would gut it; cutting further office content to fit is a judgement call for
+  the owner. Either raise the budget or cut content deliberately.
+
+## 2.4.0 — 2026-08-04
+
+- `auto-loop` — **the per-task compaction recommendation.** The status line gains a final
+  `compact: yes | no — <reason>` field. The planner cannot compact itself; only the user can invoke
+  it, so this is a recommendation on a line the user already reads, never an action and never a
+  blocking question. `yes` requires a clean `APPROVED` boundary, evidence already **on disk**, and a
+  next brief that is a file rather than a memory; `no` covers mid-review, mid-conflict-resolution,
+  and any empirical result not yet written down.
+- The field's real value is that **a `no` is a defect report** — it means something exists only in a
+  context window, which a compaction, a crash, or a window boundary deletes. The correct response to
+  a `no` is to write the state to a file, not to wait. It is a durability audit at every task
+  boundary for the cost of one clause.
+- Records that **a live executor is not a reason to withhold a `yes`** (a background executor has its
+  own window and is unaffected), and that run-state files go **outside the repo while an executor is
+  live in that tree** — committing beside a running executor orphaned two commits in one run.
+- Adds **brief sizing** as the same problem one level down: a subagent cannot ask to be compacted, so
+  an oversized brief returns *partial* rather than failing loudly, which misreads as an executor
+  shortfall. Observed: a ten-call-site brief spanning three unrelated surfaces returned four at 329k
+  tokens / 142 tool calls, with a correct handoff. Size briefs to one surface; split on surface
+  boundaries, not file count. A scoped resume of a partial handoff is not a review round.
+
+## 2.3.1 — 2026-08-04
+
+- **"A past denial is not evidence about now."** A planner assigned `cli` dispatch in its own
+  approved plan, then substituted an in-session subagent at dispatch time, citing a 2026-08-03
+  ledger row where the classifier had denied `--dangerously-skip-permissions`. Rico's correction:
+  don't pre-decide against CLI, especially when the caller asked for it. A probe minutes later
+  launched a background agent with the scoped `--allowedTools` form, piped the prompt on stdin, and
+  got the expected output file on the first attempt — CLI was never blocked.
+- Two failures compounded: a **stale environment observation treated as a standing fact**, and the
+  **dispatcher overriding its own plan's assignment** instead of surfacing a `PLAN DEFECT`.
+- Changes: `SKILL.md` gains two Red Flag rows (stale-denial reasoning, and substituting a plan's
+  dispatch form). `references/routing-outcomes.md`'s misleading ledger lesson is corrected in place —
+  it read as licence to skip CLI. `claude-office/skills/claude-cli` now states the **scoped
+  allowlist as the default** permission form with a verified launch command, documents that the
+  prompt **must** be piped on stdin (a positional prompt yields a registered-but-`idle` agent), and
+  adds a hard rule that the two-refusals fallback requires two refusals **in the current run**.
+- Does not change: the executor tier, the review gates, or `PLANNER-HELD`.
+
 ## 2.3.0 — 2026-08-02
 
 - `auto-closeout` — **"Closeout lands the work; it does not park it."** A run fixed the connect-week
