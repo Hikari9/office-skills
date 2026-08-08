@@ -62,10 +62,10 @@ fork-and-recover cycle. Mechanism: [claude-cli](skills/claude-cli/SKILL.md); ans
 
 ## Protocol version
 
-Implements office-core `1.2.0`, vendored at `office-core/` (authoritative once installed; the
+Implements office-core `1.3.0`, vendored at `office-core/` (authoritative once installed; the
 repo-root copy is the dev source). Mandatory read: `office-core/protocol/roles-and-authority.md`.
 
-**Declared narrowing of core.** Core `1.2.0` lets the planner implement inline; this office
+**Declared narrowing of core.** Core `1.3.0` lets the planner implement inline; this office
 does **not** — the planner never implements the plan here. Narrowing is legal, and it is stated so a
 reader of both files need not guess which governs.
 
@@ -102,6 +102,11 @@ plan, Global Constraints, handoff, and a diff-package file. Triage/fix `CHANGES 
 **Phase 4 — Closeout (Planner).** Commit, verify the gate, PR + automerge, sync main, remove the
 worktree, close every open Upline entry. Skipped only on `skip cleanup`. Load
 [claude-closeout](skills/claude-closeout/SKILL.md).
+
+**At the close of every phase**, end the status post with `compact: yes | no — <reason>` per
+[`evidence-and-handoff.md` § Run-state durability](office-core/protocol/evidence-and-handoff.md).
+It informs; it never asks, and it never blocks the phase transition. A `no` means run state lives
+only in your context — write it to a file, which turns it into a `yes`.
 
 ## Composing with other skills
 

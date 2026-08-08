@@ -50,11 +50,11 @@ the reviewer below its stated floor, or widen the blast-radius ceiling implicitl
 
 ## Protocol version
 
-This plugin implements office-core protocol `1.2.0`, vendored at `office-core/` in this plugin.
+This plugin implements office-core protocol `1.3.0`, vendored at `office-core/` in this plugin.
 The vendored copy is authoritative for an installed plugin; the repo-root `office-core/` is the
 development source. Mandatory read: `office-core/protocol/roles-and-authority.md`.
 
-**Declared narrowing of core.** Core `1.2.0` lets the planner implement inline; this office
+**Declared narrowing of core.** Core `1.3.0` lets the planner implement inline; this office
 does **not** — the planner never implements the plan here. Narrowing is legal, and it is stated so a
 reader of both files need not guess which governs.
 
@@ -85,6 +85,11 @@ below it selects, and nothing else.
    executor; cap at 5 rounds. Load `skills/codex-reviewer/SKILL.md`.
 4. **Closeout.** Verify the gate, commit, and PR only when authorized; report plan, commit range,
    review rounds, gate result, and anything unresolved. Load `skills/codex-closeout/SKILL.md`.
+
+**At the close of every phase**, end the status post with `compact: yes | no — <reason>` per
+`office-core/protocol/evidence-and-handoff.md` § Run-state durability. It informs; it never asks,
+and it never blocks the phase transition. A `no` means run state lives only in your context —
+write it to a file, which turns it into a `yes`.
 
 ## Run telemetry
 

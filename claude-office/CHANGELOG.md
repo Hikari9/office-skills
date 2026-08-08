@@ -1,5 +1,24 @@
 # Changelog — claude-office
 
+## 1.3.3 — 2026-08-08
+
+- **Core `1.3.0`: the compaction recommendation is now a shared rule.** `evidence-and-handoff.md`
+  gains **§ Run-state durability and the compaction recommendation** — at every phase or task
+  boundary the planner posts `compact: yes | no — <reason>`, because the planner cannot compact
+  itself and only the user can invoke it. It carries the three `yes` conditions, the rule that a
+  live executor never withholds a `yes` (a dispatch is the ideal compaction window), and the rule
+  that a **`no` is a defect report, not a wait instruction** — run state living only in a context
+  window must be written to a file, which turns the answer into `yes`. Previously this existed only
+  in `auto-office/skills/auto-loop`, so the three linear offices lost planner state at every window
+  boundary with nothing telling them to.
+- The hub's Four Phases section now requires the field at the close of every phase.
+- **The recommendation is now cost-driven, not just state-driven.** A clean boundary makes
+  compaction *safe*; it does not make it *worth it*. Core states both tests and the arithmetic:
+  saving scales with context held × turns remaining, while cost is the summary plus everything
+  **re-read afterward at the current model's input rate**. Two inversions follow — a small context
+  at a clean boundary is a `no`, and a heavier planner should compact earlier than a lighter one
+  holding the identical context. The reason field must name the driver, not say "clean boundary".
+
 ## 1.3.2 — 2026-08-05
 
 - **Protocol version corrected to `1.2.0`** (was `1.1.0`, while the vendored core was already

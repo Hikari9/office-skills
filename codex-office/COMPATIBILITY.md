@@ -9,7 +9,7 @@
 
 ## Exceptions
 
-Codex Office has no office-specific additions that fall outside core at `1.2.0`.
+Codex Office has no office-specific additions that fall outside core at `1.3.0`.
 
 ```yaml
 exceptions: []

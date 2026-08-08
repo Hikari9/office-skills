@@ -171,45 +171,22 @@ cost that is invisible in a token count and the one a silent dispatch spends.
 
 ## The compaction recommendation, every task boundary
 
-The last field of every status line is `compact: yes | no — <reason>`. **The planner cannot compact
-itself** — only the user can invoke it — so this is a recommendation surfaced on a line the user is
-already reading, never an action and never a question that blocks.
+Core owns this rule:
+[`evidence-and-handoff.md` § Run-state durability](../../office-core/protocol/evidence-and-handoff.md).
+Read it for when `yes` is warranted, what a `no` obliges, and why a live executor never withholds a
+`yes`. This office narrows it in exactly two ways:
 
-Recommend **yes** when all three hold:
-
-1. A task just reached `APPROVED` — a clean boundary, no half-verified state in flight.
-2. Its evidence is **on disk**: handoff file, verdict record, plan amendment. Not only in chat.
-3. The next brief is a file, not a memory.
-
-Recommend **no** while mid-review (the reviewer's findings live in the planner's context until
-triaged), mid-conflict-resolution, or holding an empirical result — a measured baseline, a decision
-rationale — that is not yet written down.
-
-**A live executor is not a reason to withhold a `yes`.** A background executor has its own context
-window, so planner compaction is invisible to it — a dispatch is the *ideal* compaction window, since
-the planner is otherwise idle-waiting.
-
-**A `no` is a defect report, not a wait instruction.** It means something real exists only in a
-context window, which a compaction, a crash, or a window boundary deletes. The correct response is
-*write that state to a file now*, which turns the answer into `yes`. Where it goes:
-
-- **Outside the repo while an executor is live in that tree** — committing run state alongside a
-  running executor orphaned two commits in one run. The session scratchpad survives compaction just as
-  well and races nothing.
-- **Only what the plan does not already hold:** what is in flight and from which `BASE`, standing
-  tooling rules, headroom per window, the stop conditions. Never repeat the plan or a handoff.
+- **The boundary is a task reaching `APPROVED`**, not merely a phase closing — this office runs a
+  loop, so it has more boundaries than a linear office and each one is a real offer.
+- **The field is the last one on the status line above**, so it rides a line the user is already
+  reading and never becomes a message of its own.
 
 ### Brief sizing is the same problem, one level down
 
-A subagent cannot ask to be compacted, and an oversized brief does not fail loudly — it returns
-**partial**, which reads as an executor shortfall and is not one.
-
-- **Size a brief to one surface. Split on surface boundaries, never on file count.**
-- **A partial return with a clean handoff resumes as a scoped continuation** — not a review round, and
-  it consumes none.
-- Evidence: a brief spanning ten call sites across three surfaces returned four, at 329k tokens and
-  142 tool calls, with a handoff naming exactly what it skipped. The executor was correct; the brief
-  was unholdable.
+Core states the principle; the evidence for it came from this office. A brief spanning ten call
+sites across three surfaces returned four, at 329k tokens and 142 tool calls, with a handoff naming
+exactly what it skipped. **The executor was correct; the brief was unholdable.** Size a brief to one
+surface, and split on surface boundaries, never on file count.
 
 ## Safety rules the loop cannot relax
 

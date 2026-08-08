@@ -44,6 +44,15 @@ a diff you know already fails one of these seven.
 - **Not a reason to compress Phase 3.** A clean pass means the diff is real, not that it is right.
 - **Not delegatable to the executor.** Asking agy to verify agy is the failure mode, restated.
 
+## Phase 2b is this office's characteristic `compact: no`
+
+At the 2b boundary the run's freshest evidence is **yours, not the executor's** — seven checks you
+ran, in your context, with nothing on disk unless you put it there. So the compaction
+recommendation is a `no` here more often than at any other boundary in any office, and per
+[core](../../office-core/protocol/evidence-and-handoff.md) that `no` is a defect report: write the
+seven-check result to the handoff or a scratch file, and it becomes a `yes`. Do that before
+dispatching Phase 3 anyway — the reviewer's packet needs it.
+
 ## Links
 
 - [`../../references/verification.md`](../../references/verification.md) — full detail per check,

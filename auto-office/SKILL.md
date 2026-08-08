@@ -72,7 +72,7 @@ are **user-invoked only**.
 - Irreversible production work is `PLANNER-HELD`, excluded from every brief. The loop never widens
   blast radius or adds a repo/environment; user-owned decisions get a recommendation, never inference.
 
-Implements office-core `1.2.0`, vendored at `office-core/`. Mandatory read:
+Implements office-core `1.3.0`, vendored at `office-core/`. Mandatory read:
 `office-core/protocol/roles-and-authority.md`.
 
 ## The autonomous run
