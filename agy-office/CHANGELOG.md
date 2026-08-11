@@ -1,5 +1,43 @@
 # Changelog — agy-office
 
+## 1.3.0 — 2026-08-11
+
+Core `1.4.0`. Five changes from live-run failures: planners holding work inline that the executor
+should have bought, agents losing the protocol past Phase 2, code review running long because
+findings named defects but not fixes, unreadable spawned sessions, and a hub budget the router had
+already outgrown.
+
+- **The delegation test buys a fourth thing: price.** `roles-and-authority.md` — the planner is the
+  office's most expensive writer and the executor is sonnet-tier by fixture, so implementation
+  *volume* is itself a purchase: two to six times cheaper per output token, in parallel, at the same
+  gated quality. Task count is still never the reason to delegate; the tokens those tasks would cost
+  at planner rates are. Without this line a nine-task run held inline read as compliant.
+- **The justification clause is inverted, so the bias has to be written down.** `plan-contract.md`
+  already demanded a one-clause reason per *delegation*. Now an **inline** row must also state what a
+  delegation would have bought and why the brief costs more than the edit — and an inline row that
+  cannot be justified in a clause is one to delegate. The plan-reviewer checks it like any other
+  claim. Every file-count threshold (`1–3 files` / `>3 files`) is deleted rather than retuned: three
+  files inside one function and three files across three surfaces are not the same work.
+- **Re-read the protocol at every phase boundary and after every compaction.** Nothing previously
+  told the survivor of a compaction to reload; the loop recommends compacting at every task boundary,
+  so a run reliably kept its GOAL and lost its gates. The rule binds whoever holds the phase — the
+  same agent across a boundary as much as a fresh one.
+- **Code review moves to `opus` high and its findings carry a fix guide.** Each numbered finding adds
+  `Fix:` (the approach, not a patch), `Where:` (the address), and `Rejected:` (the plausible-but-wrong
+  fix and why it fails) — the last of these because a finding whose obvious remedy targets the wrong
+  term ships a freeze as a fix for a lag. Two guardrails travel with it: the reviewer still never
+  writes the fix, and on follow-up rounds it judges the result on correctness, never on whether its
+  own suggestion was followed. **Plan review stays at `opus` low** — the ledger records it returning
+  the best value per token in the run five times running, and the two-floor design is unchanged.
+- **The plan-defect presumption tightens from 2 consecutive to 2 total.** An `APPROVED`-then-rejected
+  sequence no longer resets the count: a task that needed two rounds of findings is a task whose
+  instruction was wrong, whatever landed between them.
+- **Every dispatch announces its role in its first brief line** — `[ROLE] <repo> — <task>`, with the
+  same string passed to any label flag the brand exposes. The first line is the carrier because codex
+  and agy expose no naming flag at all. The prefix stays a display convenience: matching is still on
+  session or worktree identity, never on a label.
+- **Hub byte budget 9000 → 12000** (`scripts/check-plugins.sh`), still a warning, not a failure.
+
 ## 1.2.2 — 2026-08-08
 
 - **Core `1.3.0`: the compaction recommendation is now a shared rule.** `evidence-and-handoff.md`

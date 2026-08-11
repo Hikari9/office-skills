@@ -29,7 +29,7 @@ Keep emitting `executor` as the role id in schema fields (`office-kernel`, `run-
 | Independent verification pass | — | — | `agy-office/skills/agy-verification` (**mandatory**) |
 | **Plan-review** gate | `codex-office/skills/codex-reviewer` at `codex-sol` **low** | `claude-office/skills/claude-reviewer` at `opus` **low** | `agy-office/skills/agy-reviewer` at `agy` **high** |
 | **Code-review** gate | `codex-office/skills/codex-reviewer` | `claude-office/skills/claude-reviewer` | **never** — agy does not hold this gate |
-| **PM** (≥2 executors only) | the planner's brand at **executor tier**, dispatched by **CLI** per that office's `*-cli` spoke | ← | ← |
+| **PM** (≥2 executors only) | the planner's brand at **executor tier**, dispatched by **CLI** per that office's `*-cli` spoke — for claude that is `claude --bg --remote-control`, **never** an in-session Agent (see auto-routing: an in-session PM returns instead of monitoring) | ← | ← |
 | Answering a blocked background agent | — | `claude-office/skills/claude-cli-send-message` | — |
 | Closeout mechanics | `codex-office/skills/codex-closeout` | `claude-office/skills/claude-closeout` | `agy-office/skills/agy-closeout` |
 
@@ -46,7 +46,7 @@ so it needs no diff package and no gate output — and it runs exactly once.
   Opus, which is the default regardless of who executed. The `codex-reviewer` / `agy-reviewer` spokes
   are loaded only when a caller override, the Codex-as-planner case, or a **plan** review puts that
   brand in the chair.
-- **Two floors, and neither overrides the other.** The **code**-review floor is `opus` medium; the
+- **Two floors, and neither overrides the other.** The **code**-review floor is `opus` high; the
   **plan**-review floor is `opus` low. The "stricter rule wins" clause below is about conflicting
   rules for the *same* gate — it does not promote plan review to the code-review floor. Applying it
   that way doubles the cost of the cheap gate and strengthens nothing.

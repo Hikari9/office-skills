@@ -11,8 +11,23 @@ obligations; it may never widen authority, remove a gate, or reassign a role.
 | **Executor** | a fresh worker process/subagent | implementing the approved plan inside its stated scope; the handoff report | approve its own work; act outside the blast-radius ceiling |
 | **Reviewer** | a fresh agent that did not do the work | the approval gate, numbered findings, the review verdict | write the fix it is gating; approve without evidence |
 
+A finding **recommends** a fix; it never writes one. A `Fix:` line is a hypothesis the implementer
+may reject with evidence, and on follow-up rounds the reviewer judges the result on correctness,
+never on whether its own suggestion was followed.
+
 Offices may add roles (Agy's mandatory independent **verifier** is the planner wearing a
 distinct, non-judging hat). An added role never absorbs an existing role's gate.
+
+### Every dispatch announces its role in its first line
+
+A spawned session's first brief line is `[ROLE] <repo> — <task>`, with `ROLE` one of `PLANNER`,
+`PM`, `EXECUTOR`, `WORKER`, `REVIEW`, `PLAN-REVIEW`. The repo is named because executors are one per
+repo, so the role alone does not identify a parallel run. Where a brand also exposes a label flag
+(`--remote-control` / `--name`), pass the same string; where it does not, the brief's first line is
+the whole mechanism.
+
+This is for a human reading a job list. **It is never an identifier**: match on session or worktree
+identity, never on a display label.
 
 **Every gate is held by someone who did not do the work being gated.** That single sentence
 generates the rest of this file; when a novel situation is not covered, decide by it.
@@ -20,7 +35,7 @@ generates the rest of this file; when a novel situation is not covered, decide b
 ### The planner may implement inline; it may never gate what it wrote
 
 The planner's forbidden act is removing work from independent review, **not** typing. When the
-[delegation test](#delegation-test) buys nothing — no tier, no isolation, no parallelism — the
+[delegation test](#delegation-test) buys nothing — no tier, no isolation, no parallelism, no price — the
 planner does the work inline, and **that inline work is still gated by a fresh reviewer.** An
 office that made this an absolute prohibition was narrowing core, and the narrowing cost more
 than it bought: a dispatch written to avoid touching a file is a brief, a spawn, and a round-trip
@@ -94,9 +109,15 @@ Pre-existing dirty changes are preserved and named as **protected paths** in the
 
 ## Delegation test
 
-A delegation must buy **tier, isolation, or parallelism**. If it buys none of the three, do the
-work inline. Task count is never a reason to delegate, and a linear dependency chain cannot be
+A delegation must buy **tier, isolation, parallelism, or price**. If it buys none of the four, do
+the work inline. Task count is never a reason to delegate, and a linear dependency chain cannot be
 parallelized however many tasks it holds.
+
+**Price is why the executor exists.** The planner is the office's most expensive writer and the
+executor is sonnet-tier by fixture, so implementation *volume* is itself a purchase — two to six
+times cheaper per output token, in parallel, at the same gated quality. Task count is still never
+the reason to delegate; the tokens those tasks would cost at planner rates are. The planner types
+when a brief would cost more thought than the edit — not when there is simply a lot to type.
 
 The counterweight: inline work gets no independent per-task review, so **never collapse the
 task carrying the run's main correctness or security risk.**

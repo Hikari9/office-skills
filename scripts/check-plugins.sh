@@ -60,8 +60,8 @@ PY
     bytes=$(wc -c < "$hub" | tr -d ' ')
     head -1 "$hub" | grep -q -- '---' || fail "$p hub has no YAML frontmatter"
     grep -q "^name: $p\$" "$hub" || fail "$p hub frontmatter name is not $p"
-    if [ "$bytes" -gt 9000 ]; then
-      warn "$p hub is $bytes bytes (budget 9000; the hub is a dispatch surface, not a manual)"
+    if [ "$bytes" -gt 12000 ]; then
+      warn "$p hub is $bytes bytes (budget 12000; the hub is a dispatch surface, not a manual)"
     else
       ok "hub $bytes bytes"
     fi

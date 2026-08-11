@@ -7,6 +7,9 @@ description: Phase 4 — verify the GOAL is actually green, commit, PR, sync, cl
 
 Planner-only. Runs unless the caller said `skip cleanup`.
 
+**Entering this phase, re-read the [auto-office hub](../../SKILL.md) and this spoke before acting** —
+including after any compaction. Whoever holds the phase re-reads, same agent or fresh.
+
 Mechanics come from the sibling office of the executor that did the work — see
 [delegation-map.md](../../references/delegation-map.md). This spoke adds only what is specific to a
 routed, autonomous run.
@@ -22,6 +25,32 @@ Closeout does not begin because the loop *thinks* it finished.
    the declared repos and file scope.
 4. **Confirm every `planner_held` step is either done with explicit approval, or still open and
    named as such.** A `PLANNER-HELD` step must never be quietly absorbed into "done."
+5. **Read the promotion chain out of the repo before opening the PR**, not after. `gh pr list --state
+   merged --json number,headRefName,baseRefName` shows where feature branches actually land; a base
+   picked from the repo's *default* branch is a guess. Getting this wrong late means merging the
+   target back in, which invalidates the run's green gate (see below) and costs more than the lookup.
+6. **If the run bumps a version, prove the value is unclaimed across EVERY ref** — by reading the
+   file per-ref, **not** with the pickaxe:
+
+   ```bash
+   git fetch origin --prune
+   for r in $(git for-each-ref --format='%(refname)' refs/remotes/origin | sed 's|refs/remotes/||'); do
+     v=$(git show "$r:package.json" 2>/dev/null | grep -m1 '"version"' | sed 's/.*"version": "\([^"]*\)".*/\1/')
+     [ "$v" = "X.Y.Z" ] && echo "claims X.Y.Z: $r"
+   done
+   ```
+
+   `git log --all -S'"version": "X.Y.Z"'` **does not work for this** and will hand you a false all-clear:
+   `git log` defaults to `--diff-merges=off`, so the pickaxe never looks inside merge commits — and the
+   bump is habitually authored *inside* one, as part of resolving the `package.json` conflict when the
+   target branch is merged into the feature branch. Observed 2026-08-11: the pickaxe reported 0 claimants
+   for `2.28.4` while three promotion branches were sitting on it. Comparing `>` against the promotion
+   branches is **not this check** either: an unmerged branch already holding your value passes it. A version is the one field
+   where "both sides agree" is evidence of a bug rather than of safety — matching strings merge with
+   **no conflict**, so two changesets ship under one number with zero signal, and the *silent* case is
+   a branch that shares no code with yours, because nothing else conflicts to catch your attention.
+   Re-run the check immediately before the merge, not only when choosing the number; a claimant can
+   land in between.
 
 ## Then, the standard closeout
 
@@ -57,6 +86,38 @@ for the user to click is an **incomplete run**, not a courtesy.
   in the run report and to the user which verification did not happen. Never let an unrun check
   read as a passed one.
 
+### A branch behind its target must be merged, re-gated, and re-reviewed
+
+Promotion assumes the branch was built against the tree it is landing on. Once it is behind, that
+assumption is dead and the run's green gate describes a tree that no longer exists.
+
+- **Re-run the full gate on the MERGED tree.** The pre-merge run is evidence about a different tree.
+  This is a *cause* to re-run under any validation budget, not an exception to it.
+- **A clean auto-merge is the hazard; a conflict is the reassurance.** A conflict is a question git
+  asks out loud. A clean merge of files both sides edited produces a tree nobody has tested, silently.
+  Never treat `git merge-tree`'s "no conflict" as clearance — it can simply be wrong.
+- **Resolve to the union of intents, never to a redesign.** Where both sides edited one region for
+  different reasons, take the other side's *position and structure* with your *content*. Preserve the
+  other side's shipped behaviour **verbatim even when it is wrong**, and file the defect: a fix made
+  inside a merge is attributed by `git blame` to your PR, sending the next debugger to the wrong one.
+- **Diff the result against BOTH parents, TWO-dot, never three-dot** — `git diff <parent> HEAD`, not
+  `git diff <parent>...HEAD`. That is the only check that catches a silently dropped hunk, and the
+  three-dot form **cannot** find one: it diffs from the merge-base, so content the parent added after
+  that base and the merge then dropped reads as "not in scope" rather than as missing. Observed: a
+  three-dot diff showed exactly the 6 intended feature files while 47 lines of the target's own test
+  mocks had been dropped from a 7th file the branch never touched. The result should differ from the
+  target parent by **only** the files the run intended; anything else is a dropped hunk or scope creep.
+  To prove completeness rather than infer it, hash every path the parent changed since the merge-base:
+  `git diff --name-only <base> <parent> | while read f; do [ "$(git show <parent>:"$f"|shasum)" = \
+  "$(git show HEAD:"$f"|shasum)" ] || echo "DIFFERS: $f"; done`
+- **Re-review the resolution, and re-run the task's own mutations against the merged file.** Tests
+  passing after a merge proves they still run, not that they would still catch the regression they
+  were written for.
+- **The deploy check is the authority on anything the local toolchain cannot observe.** Install and
+  lockfile consistency, route/prerender behaviour, and env-dependent config can all be green locally
+  and broken on the platform. If a deploy check fails where every local gate passed, suspect a
+  local-toolchain blind spot before suspecting the check.
+
 ## Run report
 
 An autonomous run must be auditable after the fact, because nobody watched it happen. **The run
@@ -80,6 +141,39 @@ report is written into the target repo**, not into this plugin — see the artif
 
 **"Still open" is never empty by default.** If it genuinely is, say so explicitly rather than
 omitting the row.
+
+### Close the issue loop — file the carries, close what is actually done
+
+A run report is a record; the issue tracker is what the team reads. Closeout updates both.
+
+**File every deferred carry as a real issue, at closeout, not as a draft file.** A carry that is
+neither fixed nor filed has been dropped — the plan doc it lives in is read by nobody after the run
+ends. Filing is cheap: an issue costs a minute and buys the finding a name, a URL, and a place in
+triage.
+
+- **Filing an issue is not a `PLANNER-HELD` action.** Push, PR, merge, deploy and remote config are
+  held because they are irreversible or user-facing. An issue is neither — it is reversible, internal,
+  and the alternative is losing the finding. Do not let a hold on *shipping* silently expand into a
+  hold on *recording*. (Observed: a planner treated a caller's "you may not push/PR/merge/deploy"
+  hold as covering issue creation, and left eight findings in a draft file.)
+- **Split by triage destination, not by count.** A defect that needs design work does not belong in
+  the same issue as a doc-wording nit — one issue's severity becomes the other's, and the important
+  one gets triaged as tidy-up. Two or three focused issues beat one grab-bag and beat one-per-item.
+- **Use labels that exist.** `gh label list` first; inventing a label silently fails or creates one.
+- **Cross-link both directions** — comment the new issue numbers onto the originating issue, and
+  reference the originating issue from each new one.
+
+**Close an issue only when the work is on the branch users actually get.** Not when the branch is
+ready, not when the reviewer approved, not when the run report says green.
+
+- **Verify it, do not assume it:** `git merge-base --is-ancestor <sha> origin/<default-branch>`.
+- **A promotion-chain merge usually will NOT auto-close it.** `Closes #N` fires only for the default
+  branch, so a `preview`- or `staging`-base merge leaves the issue open and it must be closed by hand
+  after the final hop.
+- **If the run ends with the work unmerged — because a hold stopped it — say so in the report and
+  leave the issue open.** Closing it would tell the team a fix has shipped that nobody can use. State
+  what would make it closable.
+- Close any *dependency* issues the run genuinely resolved, under the same merged-to-default test.
 
 ### Cost retrospective
 

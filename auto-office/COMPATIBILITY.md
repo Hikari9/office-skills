@@ -48,7 +48,7 @@ exceptions:
   - id: auto-opus-reviewer-floor
     owner: auto-office
     reason: >
-      The code-review floor is a fresh Opus subagent at medium regardless of which brand executed.
+      The code-review floor is a fresh Opus subagent at high regardless of which brand executed.
       The Codex Sol reviewer path applies only when Codex is the planner. This is strictly narrower
       than core, which permits any independent reviewer. Core 1.2.0 states that a declared floor
       binds the gate it was declared for, so this floor is the code-review gate's alone.

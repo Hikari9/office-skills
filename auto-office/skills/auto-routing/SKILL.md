@@ -44,6 +44,15 @@ Agy's weakness is **duration**, not capability. So give it breadth, never depth:
 single-shot tasks, each returning a cheaply verifiable artifact. Give claude the opposite shape —
 one long chain where holding context is the value.
 
+**Breadth-fit is the wrong axis when the deliverable is EVIDENCE.** Before routing on shape, ask
+what the task actually produces. A task that ships *tests, gates, verifiers, or migrations* is
+judged by whether it can FAIL correctly — and a brand that writes plausible code writes equally
+plausible tests, which are worthless in a way working code is not. Route those to the strongest
+brand available regardless of how broad or short the task looks; "frontend" and "mechanical" do
+not override it. Measured 2026-08-08: an agy frontend lane produced working blocks and 79 harness
+checks that passed against deliberately broken code. The bad *evidence* — not the code — cost two
+review rounds, and the fix lane sent to repair it introduced two page-blanking blockers of its own.
+
 ## Brand selection
 
 Probe all three tools' headroom first ([quota-probe.md](../../references/quota-probe.md)). Then
@@ -74,7 +83,7 @@ Not derived from the benchmark table, and a leaderboard movement does not change
 | **PM** (≥2 executors) | `sonnet` **high** | `codex-terra` **high** | `agy` **high** | fixed |
 | Executor | `sonnet` **high** | `codex-terra` **high** | `agy` **high** | **fixed** |
 | Worker | `sonnet` high *default* | `codex-terra` high *default* | `agy` **high** | **planner-assigned** |
-| Reviewer (code) | `opus` **medium** | `codex-sol` high *(only when codex is planner)* | never reviews | fixed |
+| Reviewer (code) | `opus` **high** | `codex-sol` high *(only when codex is planner)* | never reviews | fixed |
 
 **The plan-reviewer's brand is always the planner's brand** — it is not routed by fit. It reads one
 document the planner just wrote; same-brand is an advantage there, not the conflict of interest it
@@ -106,10 +115,10 @@ tier cannot make" is the real distinction, and the plan is where you argue it.
 so the PM distributes and collects; it does not judge. **A PM making routing decisions means the plan
 was incomplete — a `PLAN DEFECT`, not a reason to upgrade the PM.**
 
-**Two floors, not one.** `opus` medium is the floor for the **code**-review gate. The **plan**-review
+**Two floors, not one.** `opus` high is the floor for the **code**-review gate. The **plan**-review
 gate's floor is `opus` low. Both are stated here explicitly because
 [delegation-map.md](../../references/delegation-map.md)'s "stricter rule wins" clause would otherwise
-promote plan review to medium and quietly double its cost for no extra gate strength. A floor binds
+promote plan review to high and quietly double its cost for no extra gate strength. A floor binds
 the gate it was declared for.
 
 **High is the ceiling. `xhigh`, `ultra`, and `max` are user-invoked only.** Never escalate an effort
@@ -125,10 +134,54 @@ No arithmetic. The form follows from who is dispatching whom:
 | Who dispatches whom | Form | What the delegation buys |
 |---|---|---|
 | Planner → executor | **CLI, own worktree** | Isolation and unattended running |
-| Planner → PM (≥2 executors only) | **CLI** | The same, plus parallel distribution |
+| Planner → PM (≥2 executors only) | **CLI — `claude --bg --remote-control`, never an in-session Agent** | The same, plus parallel distribution |
 | Executor → worker | **in-session / inline** | Reuse of the executor's live context — the value being spent |
 | Executor → worker of a **different brand** | **CLI**, necessarily | The only exception in the table |
 | Planner → itself, for a review fix or a change a delegation buys nothing for | **inline** | Nothing — which is the point |
+
+### The PM is always a background CLI agent. Never an in-session subagent
+
+**Spawn the PM with `claude --bg --remote-control`, prompt piped on stdin**, per
+`claude-office/skills/claude-cli`. This is not a preference — an in-session PM cannot do the job it
+exists for.
+
+**State the effort flag explicitly on every CLI launch. `--model` alone is not the assignment.**
+This table fixes *model and effort* per role; a launch that passes only `--model sonnet` silently
+runs at the CLI's default (medium), so the plan says high and the process runs medium, and nothing
+in the output says so. Observed 2026-08-08 on a PM launch; the user caught it, not the run.
+
+```bash
+--model sonnet --effort high      # PM and executor
+--model opus   --effort high      # code reviewer
+--model opus   --effort low       # plan reviewer
+```
+
+Treat a missing `--effort` as a defect in the dispatch, not a detail — the whole point of pinning
+tiers in a table is defeated if the flag that carries them is optional in practice. Read the
+launched agent's actual model **and** effort back before reporting a dispatch, exactly as you would
+read back a live-system write.
+
+An in-session Agent-tool subagent **returns to its caller every time it stops having live children**,
+and a monitoring loop stops constantly by nature. Observed 2026-08-08: a sonnet PM launched all three
+executor lanes correctly, then returned `"Monitoring started"` and exited — three times in a row,
+each firing a task-notification that woke the planner, burned ~55k subagent tokens per wake, and
+monitored nothing. The planner ended up taking monitoring over directly and stopping the PM.
+
+- **The symptom to recognise**: a PM that reports "monitoring started / continuing to monitor" as its
+  *final result*. That is not a progress update, it is a return. The PM is finished and nothing is
+  watching the lanes.
+- **Why the CLI form fixes it**: a `--bg` agent owns its own process and its own event loop, so a
+  poll-sleep loop keeps running instead of unwinding to a caller that has to be re-invoked.
+- **The test is whether the delegate's work CONTAINS A BLOCKING WAIT — not whether its role is
+  "watcher".** Any in-session subagent unwinds the moment it has no live children, so a delegate that
+  must sit through a long command returns mid-task with the work unfinished, exactly as a monitoring
+  PM does. Route such a step to a background process, or keep it. Observed 2026-08-09 on an ordinary
+  *worker*, not a PM: a `sonnet` subagent told to apply, clear cache and read back a deployment spent
+  63k tokens, armed a Monitor for the long verifier, reported "still running — I'll report back when
+  it lands", and stopped. Nothing was watching, and the planner re-ran every step itself. Read
+  "I'll report back" in a subagent's **final** message as the return it is.
+- If the CLI launch genuinely refuses in the current run, the fallback is **the planner monitors
+  directly** — not an in-session PM. A PM that cannot block buys nothing and costs a wake per poll.
 
 **Every brand has a built-in in-session sub-agent mechanism.** The brief *prompts* the executor that
 it may fan out; **it never prescribes how.** Sub-agent mechanics belong to the sibling office, exactly
@@ -232,7 +285,7 @@ Rules that make this safe:
 - **Agy: 3 consecutive tasks, hard cap.** At the cap, either re-brief from scratch with full context
   restated, or hand the next task to codex/claude. Track the count.
 - **Quick fixes may go to agy** — but the reviewer rubric then gains the agy miss-list below.
-- **Two consecutive `CHANGES REQUIRED` on one task is a plan signal, not a routing signal.** Presume
+- **Two `CHANGES REQUIRED` on one task — consecutive or not — is a plan signal, not a routing signal.** Presume
   `PLAN DEFECT` and re-plan the task ([auto-loop](../auto-loop/SKILL.md)). There is no
   "escalate to a bigger model" path left, and there never really was one once the executor tier was
   already the best fit. Record `reroute_from` if the re-plan does change brand.
@@ -251,7 +304,7 @@ The reviewer must explicitly check, with evidence, that agy did not:
 
 ## Reviewer selection
 
-**Code review: fresh Opus, medium, by default, always.** The `codex-sol` reviewer path applies only
+**Code review: fresh Opus, high, by default, always.** The `codex-sol` reviewer path applies only
 when **Codex is the planner** (i.e. a Codex session invoked this workflow), not merely when codex
 executed. A caller may add a second opinion; a caller may not drop below the floor. **agy never holds
 the code-review gate** — long, adversarial, multi-round work against a diff is its documented

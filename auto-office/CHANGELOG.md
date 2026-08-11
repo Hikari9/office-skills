@@ -1,5 +1,171 @@
 # Changelog — auto-office
 
+## 2.9.0 — 2026-08-11
+
+Core `1.4.0`. Five changes from live-run failures: planners holding work inline that the executor
+should have bought, agents losing the protocol past Phase 2, code review running long because
+findings named defects but not fixes, unreadable spawned sessions, and a hub budget the router had
+already outgrown.
+
+- **The delegation test buys a fourth thing: price.** `roles-and-authority.md` — the planner is the
+  office's most expensive writer and the executor is sonnet-tier by fixture, so implementation
+  *volume* is itself a purchase: two to six times cheaper per output token, in parallel, at the same
+  gated quality. Task count is still never the reason to delegate; the tokens those tasks would cost
+  at planner rates are. Without this line a nine-task run held inline read as compliant.
+- **The justification clause is inverted, so the bias has to be written down.** `plan-contract.md`
+  already demanded a one-clause reason per *delegation*. Now an **inline** row must also state what a
+  delegation would have bought and why the brief costs more than the edit — and an inline row that
+  cannot be justified in a clause is one to delegate. The plan-reviewer checks it like any other
+  claim. Every file-count threshold (`1–3 files` / `>3 files`) is deleted rather than retuned: three
+  files inside one function and three files across three surfaces are not the same work.
+- **Re-read the protocol at every phase boundary and after every compaction.** Nothing previously
+  told the survivor of a compaction to reload; the loop recommends compacting at every task boundary,
+  so a run reliably kept its GOAL and lost its gates. The rule binds whoever holds the phase — the
+  same agent across a boundary as much as a fresh one.
+- **Code review moves to `opus` high and its findings carry a fix guide.** Each numbered finding adds
+  `Fix:` (the approach, not a patch), `Where:` (the address), and `Rejected:` (the plausible-but-wrong
+  fix and why it fails) — the last of these because a finding whose obvious remedy targets the wrong
+  term ships a freeze as a fix for a lag. Two guardrails travel with it: the reviewer still never
+  writes the fix, and on follow-up rounds it judges the result on correctness, never on whether its
+  own suggestion was followed. **Plan review stays at `opus` low** — the ledger records it returning
+  the best value per token in the run five times running, and the two-floor design is unchanged.
+- **The plan-defect presumption tightens from 2 consecutive to 2 total.** An `APPROVED`-then-rejected
+  sequence no longer resets the count: a task that needed two rounds of findings is a task whose
+  instruction was wrong, whatever landed between them.
+- **Every dispatch announces its role in its first brief line** — `[ROLE] <repo> — <task>`, with the
+  same string passed to any label flag the brand exposes. The first line is the carrier because codex
+  and agy expose no naming flag at all. The prefix stays a display convenience: matching is still on
+  session or worktree identity, never on a label.
+- **Hub byte budget 9000 → 12000** (`scripts/check-plugins.sh`), still a warning, not a failure.
+
+## 2.8.0 — 2026-08-11
+
+- **The both-parents diff must be TWO-dot** (`auto-closeout`, merge rules). The three-dot form
+  **cannot** find a dropped hunk — it diffs from the merge-base, so content the parent added after that
+  base and the merge then dropped reads as "out of scope" rather than as missing. Observed this run: a
+  three-dot diff showed exactly the 6 intended feature files while 47 lines of the target's own test
+  mocks had been silently dropped from a 7th file the branch never touched, reddening 8 tests in a page
+  the run never edited. The rule now names the form, states the expected result (differ from the target
+  parent by *only* the intended files), and adds a hash sweep over every path the parent changed since
+  the merge-base, so completeness is proven rather than inferred.
+- **Read the promotion chain out of the repo before opening the PR** (`auto-closeout`, gate item 5).
+  A base picked from the repo's *default* branch is a guess. Getting it wrong late forces a merge of the
+  target, which invalidates the run's green gate under 2.7.0's rule — strictly more expensive than one
+  `gh pr list --state merged` lookup.
+- **A version bump must be proven unclaimed across every ref** (`auto-closeout`, gate item 6, new).
+  Comparing `>` against the promotion branches is not this check: an unmerged branch already holding the
+  value passes it. Observed: 2.28.2 claimed by *three* branches at once, and a `git merge-tree` probe
+  showed the dangerous one was the branch sharing **no** code with ours — it merged completely clean,
+  two changesets under one version with zero signal. Requires `git log --all -S`, re-run immediately
+  before the merge since a claimant can land in between.
+
+## 2.7.0 — 2026-08-11
+
+- **Closeout: a branch behind its target must be merged, re-gated, and re-reviewed**
+  (`auto-closeout`, new subsection under "Closeout lands the work"). Promotion assumes the branch was
+  built against the tree it lands on; once it is behind, the run's green gate describes a tree that no
+  longer exists, so the full gate re-runs on the MERGED tree as a *cause*, not an exception to the
+  validation budget. Four rules carry the lesson. **A clean auto-merge is the hazard and a conflict is
+  the reassurance** — a conflict is a question git asks out loud, while a clean merge of a file both
+  sides edited yields an untested tree silently; `git merge-tree`'s "no conflict" is not clearance and
+  can simply be wrong (observed: it predicted none, the real merge produced three, and the naive result
+  contained two copies of one JSX block, one referencing deleted state). **Resolve to the union of
+  intents, never to a redesign** — take the other side's position/structure with your content, and
+  preserve their shipped behaviour verbatim *even when it is wrong*, filing the defect instead, because
+  a fix made inside a merge is attributed by `git blame` to your PR and sends the next debugger to the
+  wrong one. **Diff against BOTH parents**, the only check that catches a silently dropped hunk. And
+  **re-run the task's own mutations against the merged file** — tests passing after a merge proves they
+  still run, not that they would still catch what they were written for.
+- **Closeout: the deploy check outranks the local gate for anything the toolchain cannot observe.**
+  Install/lockfile consistency, route and prerender behaviour, and env-dependent config can all be
+  green locally and broken on the platform. When a deploy check fails where every local gate passed,
+  suspect a local-toolchain blind spot before suspecting the check (observed: local pnpm silently
+  ignores `pnpm.overrides` and rewrote the lockfile without it; lint, tsc, the full suite and a
+  production build were all green while the deploy could not install at all).
+
+## 2.6.0 — 2026-08-11
+
+- **Closeout: file the carries as real issues, and close only what is actually merged**
+  (`auto-closeout`, new "Close the issue loop" section). A run report is a record; the issue tracker
+  is what the team reads, and closeout owes both. Two rules: **filing an issue is not a
+  `PLANNER-HELD` action** — push/PR/merge/deploy are held because they are irreversible or
+  user-facing, an issue is neither, and a hold on *shipping* must not silently expand into a hold on
+  *recording* (observed: a planner read "you may not push/PR/merge/deploy" as covering issue
+  creation and left eight findings in a draft file nobody would read again). And **close an issue
+  only when the work is on the default branch**, verified with
+  `git merge-base --is-ancestor <sha> origin/<default>` — not when the branch is ready, not when the
+  reviewer approved. A promotion-chain merge usually will not auto-close it, since `Closes #N` fires
+  only for the default branch. If a hold left the work unmerged, leave the issue open and say what
+  would make it closable; closing it would tell the team a fix shipped that nobody can use. Also:
+  split filed carries by triage destination rather than by count, so a design-level defect is not
+  triaged as tidy-up alongside a doc nit.
+
+## 2.5.0 — 2026-08-11
+
+- **Loop: a brief must name the OBSERVABLE OUTCOME, and the planner must verify the path to it
+  against the code graph before writing the brief** (`auto-loop`, brief clause 3). A brief that
+  specifies a mechanism is satisfied by fixing that mechanism, which is not the same as fixing the
+  symptom. Adds three sharpenings: **a data path is not automatically a render path**; **enumerate
+  the full lifecycle of any state the task introduces** (for a cache that is write / read / **clear**
+  — a brief naming two of three ships the third as a defect); and **grep the done-criteria for the
+  field the task is about before funding a fix wave**. Evidence, one run: four briefs named a
+  function feeding a sort key, a dead fallback branch, or a write half while the visible value came
+  from elsewhere — each passed review on the thing the brief named and left the symptom intact,
+  costing ~6 review rounds at reviewer rates. Twice the missing seam was the *clear*, i.e. state
+  written and read correctly that then shadows the server for the whole session while the pending
+  indicator makes it look more correct. The decisive fact ending the run's worst task — that the
+  field appeared in no done-criterion — was one grep, run only after the second CHANGES REQUIRED.
+- **Loop: a mutation-testing reviewer is NOT read-only; verify the tree after every review**
+  (`auto-loop`, safety rules). It edits source and restores as the *last* step of an interruptible
+  sequence, so a killed reviewer leaves the mutation applied and never reaches the "tree is clean"
+  line its own report would have carried. Treat a missing completion record as *assume a mutation is
+  applied*. Evidence: a reviewer stopped by a machine shutdown left a reconcile call silently
+  disabled in the working tree; the next executor would have started from it, in a file outside its
+  own scope. Every prior one-writer rule points at executors, which is why the gap survived. Requires
+  reviewers to apply/run/restore each mutation **within a single tool call** with a restore proof, so
+  the window closes structurally rather than by discipline.
+
+## 2.4.7 — 2026-08-09
+
+- **Loop: a mutation that stays green is a claim about the mutation first** (`auto-loop`).
+  Before reading a mutation's verdict, prove the break took effect — that the edited file is
+  the one the gate loads, that the anchor existed, that the injected code runs in the scope
+  the gate inspects. A broken mutation and a blind gate produce identical output, and the
+  broken mutation is the likelier of the two. Evidence: three of a planner's own mutations
+  were invalid in one run (wrong artifact, absent anchor, wrong scope); all printed
+  "0 FAILs" and two were a sentence away from being reported as "the gate is blind".
+- **Routing: the in-session unwind test is a BLOCKING WAIT, not a "watcher" role**
+  (`auto-routing`). The prior wording scoped the rule to long-lived watcher roles, so it did
+  not obviously bind an ordinary worker whose step happens to contain a long command.
+  Observed on a `sonnet` worker told to apply, clear cache and read back a deployment: it
+  armed a Monitor, said "still running — I'll report back", and stopped. "I'll report back"
+  in a subagent's final message is a return.
+
+Both sharpen the existing rule in its owning spoke rather than appending a scenario. No
+safety rule was relaxed, no cap raised, no reviewer downgraded, no blast radius widened.
+Also corrects a pre-existing drift: `plugin.json` read 2.4.5 while the CHANGELOG's top
+heading read 2.4.6.
+
+## 2.4.6 — 2026-08-09
+
+- **Routing: breadth-fit is the wrong axis when the deliverable is EVIDENCE**
+  (`auto-routing`). Before routing on task shape, ask what the task produces. Tests,
+  gates, verifiers and migrations are judged by whether they can FAIL correctly, and a
+  brand that writes plausible code writes equally plausible tests — which are worthless
+  in a way working code is not. "Frontend" and "mechanical" no longer override this.
+  Evidence: an agy lane produced working blocks plus 79 harness checks that passed
+  against deliberately broken code; the bad evidence cost two review rounds, and the fix
+  lane sent to repair it introduced two page-blanking blockers.
+- **Planning: a named hazard your gates cannot detect is a TASK, not a caveat**
+  (`auto-planning`). A plan that writes down its worst failure mode and mitigates nothing
+  reads as diligence and functions as none — every executor after that point works blind
+  in the exact place the plan flagged as most dangerous. Evidence: a plan stated "nothing
+  in this repo executes Lava or SQL", shipped no gate for it, and the fix loop then rewrote
+  T-SQL with zero runtime feedback for four rounds.
+
+Both are rule sharpenings in the owning spoke, not appended scenarios. No safety rule was
+relaxed, no cap raised, no reviewer downgraded, no vendored core file touched.
+
 ## 2.4.5 — 2026-08-08
 
 - **Core `1.3.0`: the compaction recommendation is now a shared rule.** `evidence-and-handoff.md`

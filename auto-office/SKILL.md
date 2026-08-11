@@ -21,7 +21,7 @@ Planner ──▶ Plan-reviewer ──▶ retires │ Planner ──▶ PM ─�
 | **PM** | CLI subagent, executor tier, ≥2 executors only | Hand out the briefs the plan wrote; collect results | Hold a planner-held action or a gate; re-decide routing |
 | **Executor** | One per repo, brand per plan, **sonnet-tier high always** | Implement its slice; may fan out in-session | Approve its own work; exceed the ceiling |
 | **Worker** | Per task; brand **and tier** per plan | One task, never a second writer | Widen scope; be promoted mid-run |
-| **Reviewer (code)** | Fresh `opus` medium (`codex-sol` high when Codex *plans*) | Adversarial gate every round | Fix what it gates |
+| **Reviewer (code)** | Fresh `opus` high (`codex-sol` high when Codex *plans*) | Adversarial gate every round | Fix what it gates |
 
 **Core principle: no one gates their own work, and inline work is still reviewed.** The planner *may*
 implement, and still never approves the result.
@@ -62,10 +62,13 @@ are **user-invoked only**.
   inline write never overlaps a live executor in that tree.
 - **No self-approval, ever** — not the executor on its diff, not the planner on its inline fix.
 - Executor is **sonnet-tier high** always; a worker's tier is the plan's call, never raised mid-run.
+- A delegation buys tier, isolation, parallelism, **or price** — and **every inline row states in a
+  clause what a delegation would have bought and why the brief costs more than the edit.** File
+  count and task count are never the test.
 - Explicit plan approval before dispatch — silence is not approval.
 - Fresh Opus code reviewer, resumed across rounds; **`CHANGES REQUIRED`** re-enters the fix loop; no
   approval without pasted evidence; **5-round cap** per task.
-- `PLAN DEFECT` and `BRIEF DEFECT` exit the loop without consuming a round; at **2** consecutive
+- `PLAN DEFECT` and `BRIEF DEFECT` exit the loop without consuming a round; at **2** total (not merely consecutive)
   `CHANGES REQUIRED` on one task, presume `PLAN DEFECT` and re-plan it.
 - A successful exit is **not evidence** — the gate is the plan's validation commands with real output;
   live-system writes need a read-back.
@@ -88,6 +91,11 @@ write, an external send, or a genuinely user-owned decision (an `AskUserQuestion
 first). Everything else it decides.
 
 ## Routing table
+
+**On entering any phase, and after any compaction, re-read this hub and the phase's spoke before
+acting.** This binds whoever holds the phase — the same agent across a boundary as much as a fresh
+one. Protocol amnesia past Phase 2 is the observed failure; a re-read is the cheapest fix for it.
+
 
 | Phase / need | Load |
 |---|---|
@@ -121,6 +129,7 @@ Opus-planner-only.
 | Thought | Reality |
 |---|---|
 | "This is routable, I'll auto-invoke" | Only an explicit `/auto-office` invokes this. |
+| "It's only a few files, I'll do it" | You are the priciest writer in the office. Volume is a purchase. Justify the inline row in a clause, or delegate it. |
 | "Codex is at 14%, so it's out" | No threshold exists. Weigh it, state it, spend it if it's worth it. |
 | "Quota's thin, I'll skip saying so" | It goes in the kickoff line, or the user can't override. |
 | "This task is hard, I'll use Opus" | The executor is pinned; a bigger *worker* is legal only if the plan declared it. |
@@ -129,6 +138,7 @@ Opus-planner-only.
 | "The plan's done, I'll ask before executing" | You have approval. The run is end-to-end. |
 | "It's autonomous, so I'll deploy too" | Irreversible prod is `PLANNER-HELD`. The loop stops. |
 | "CLI was blocked last time" | A past denial is not evidence about now; the dispatch form is an assignment. Attempt it. |
+| "The PM says monitoring started" | That is a *return*, not an update — an in-session PM unwinds every time it stops. Spawn it as a `--bg` CLI agent, or monitor yourself. |
 | "Executor says done" | It cannot approve its own work. Review is not optional. |
 | "Agy wrote it, agy can review it" | The **code** gate is a fresh Opus reviewer. |
 | "Round 6 will converge" | Past the cap the failure is structural. Report the deadlock. |

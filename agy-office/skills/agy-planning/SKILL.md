@@ -74,7 +74,7 @@ correctly in its prompt — which is why the brief also demands a citation (see
 
    | Strategy | When | Model |
    |---|---|---|
-   | **INLINE** | Trivial, deterministic, 1–3 files | You edit it; no dispatch, no verification pass |
+   | **INLINE** | Trivial, deterministic; a brief would cost more thought than the edit | You edit it; no dispatch, no verification pass. The plan row must say what a delegation would have bought. |
    | **FLASH** | Codemods, renames, boilerplate, doc/config churn — formulaic and trivially checkable | `gemini-3.6-flash-high` |
    | **PRO** | Default — well-briefed features, mid-size changes with a detailed spec, test writing | `gemini-3.6-flash-high` |
    | **ELSEWHERE** | Hard debugging, architectural work, subtle correctness, security-sensitive surface | Recommend `claude-office` for that task — see [routing.md](../../references/routing.md) |

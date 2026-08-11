@@ -12,7 +12,7 @@ Same discipline as `claude-office`, with the `agy` CLI (Antigravity/Gemini) as E
 |---|---|---|---|
 | **Planner** | The current agent (you) | session's own | Plan → approval; **independently verify**; fix/close out |
 | **Executor** | `agy --print`, unsandboxed | `gemini-3.6-flash-high` | Implement ≤3 tasks; commit; write handoff |
-| **Reviewer** | One fresh Claude subagent | `opus`, medium | Adversarial review each round; holds the gate |
+| **Reviewer** | One fresh Claude subagent | `opus`, high | Adversarial review each round; holds the gate |
 
 **Core principle:** the planner never implements the plan; the executor never approves its own
 work. Each gate is held by whoever did not do the work.
@@ -80,6 +80,11 @@ does **not** — the planner never implements the plan here. Narrowing is legal,
 reader of both files need not guess which governs.
 
 ## Routing table
+
+**On entering any phase, and after any compaction, re-read this hub and the phase's spoke before
+acting.** This binds whoever holds the phase — the same agent across a boundary as much as a fresh
+one. Protocol amnesia past Phase 2 is the observed failure; a re-read is the cheapest fix for it.
+
 
 No role reads the whole corpus — each gets the Office Kernel plus the spokes below.
 

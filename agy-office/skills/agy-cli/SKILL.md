@@ -21,6 +21,12 @@ agy --dangerously-skip-permissions --print-timeout 45m \
   --print "$(cat <prompt file>)"
 ```
 
+**Name the session by role.** The first line of the brief is `[ROLE] <repo> — <task>` — `[PLANNER]`,
+`[PM]`, `[EXECUTOR]`, `[WORKER]`, `[REVIEW]`, `[PLAN-REVIEW]` — so a job list is readable at a glance.
+Pass the same string to any label flag the brand exposes. The prefix is a display convenience and
+**never an identifier**: match on session or worktree identity, never on a label.
+
+
 - `--dangerously-skip-permissions` — required for unattended work.
 - `--print-timeout 45m` — defaults to 5m; **always raise it** or the run dies mid-task.
 - `--model "<exact display name>"` — the literal string from `agy models` (see

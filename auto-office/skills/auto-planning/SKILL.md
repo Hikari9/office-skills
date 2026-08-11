@@ -10,6 +10,9 @@ shared floor every office's plan must clear, including its **Claims discipline**
 this file adds the router's specifics (brand per task, the GOAL block, the two plan-review passes)
 and never drops a core requirement.
 
+**Entering this phase, re-read the [auto-office hub](../../SKILL.md) and this spoke before acting** —
+including after any compaction.
+
 Phase 1 carries more weight here than in the sibling offices, because it is the **last** point at
 which the user is asked anything routine. One approval authorizes everything through closeout, so
 the plan and the done-criteria have to be good enough to be executed without you asking again.
@@ -23,7 +26,7 @@ auto-office · executors: <n> (<brand(s)>, <fit reason>) · PM: <yes at ≥2 | n
 headroom: codex <n>% weekly (resets <t>) · claude <n>%/5h + <n>%/7d (resets <t>/<t>)
           · agy <n>% (resets <t>)          [UNKNOWN where a probe failed]
 quota call: <why this brand is worth its headroom, or why we shifted> · fallback: <brand>
-plan-reviewer: <brand> <model> low · reviewer: opus medium · benchmarks: <captured date>
+plan-reviewer: <brand> <model> low · reviewer: opus high · benchmarks: <captured date>
 loop: on · overrides: <none|…>
 ```
 
@@ -143,6 +146,17 @@ caps:
   loop_iterations: <n>
 ```
 
+**A named hazard your gates cannot detect is a TASK, not a caveat.** If the plan writes down that
+its validation cannot see its worst failure mode — "nothing in this repo executes Lava", "the tests
+can't reach the deploy path", "only a human can check this" — then closing that gap is a numbered
+task with an owner, or the plan is defective. Stating a risk honestly and mitigating nothing reads
+as diligence and functions as none: every executor after that point works blind in exactly the
+place the plan already identified as most dangerous. Measured 2026-08-08: a plan named this hazard
+in its constraints, shipped no gate for it, and the fix loop then rewrote T-SQL with zero runtime
+feedback for four review rounds — producing an invalid-column defect that aborts the batch and
+blanks the page at HTTP 200. Ask of every such sentence: *is there a cheap check that would have
+caught this, and is it in the task list?*
+
 Rules for done-criteria:
 
 - **Verifiable by command or read-back, never by assertion.** "Build passes" needs the build
@@ -187,6 +201,11 @@ brand**, at that brand's plan-review row in [auto-routing](../auto-routing/SKILL
 It receives: the **plan file path**, the GOAL block, and the task assignment table. It returns
 **numbered findings**. **One pass, no rounds.** The planner applies the findings, records which it
 rejected and why, and moves on.
+
+Each finding carries `Fix:` (the plan change, 1–2 sentences), `Where:` (the plan line or task row),
+and `Rejected:` (the plausible-but-wrong change and why it fails) — free at `low` effort, and it is
+what stops the planner from guessing. A recommendation is not a rewrite: the plan-reviewer never
+edits the plan, and the planner may reject a `Fix:` on the record.
 
 - **Do not pre-judge it.** Per `office-core/protocol/review-states.md`, do **not** pass your own
   self-review findings into its brief. That anchors the gate and converts an independent pass into a

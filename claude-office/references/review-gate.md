@@ -14,6 +14,10 @@ Agent(
 )
 ```
 
+**The code-review floor is `opus` high.** In-session dispatch has no `effort` parameter, so the
+brief carries it as stated rigor: open the brief with *"Treat this as a high-effort review; do not
+stop at the first defect you find."* A CLI-launched reviewer passes `--effort high` explicitly.
+
 **Record the returned agent ID/name.** Every subsequent round goes back to that same agent via SendMessage so it keeps the full history of what it already flagged and accepted. A fresh reviewer per round re-litigates settled findings and cannot tell you whether round 2 regressed round 1.
 
 Build the prompt from **[reviewer-brief.md](reviewer-brief.md)**. Hand it: the plan file path, the Global Constraints block copied verbatim, the executor's handoff report path, a diff package file for `BASE..HEAD`, and the validation commands.
@@ -82,8 +86,8 @@ You apply the fixes. Triage each finding with this matrix before touching anythi
 
 | Finding shape | Mode | Why |
 |---|---|---|
-| 1–3 files, deterministic, zero ambiguity — typo, import, off-by-one, missing constant, copy fix | **INLINE** (you edit) | Writing a brief costs more than the edit |
-| >3 files, or a refactor, or a fix whose correct shape is not obvious from the finding text | **Delegate `sonnet`** | Multi-file work pollutes your coordination context |
+| Deterministic, zero ambiguity, and the finding text *is* the brief — typo, import, off-by-one, missing constant, copy fix | **INLINE** (you edit) | Brief + dispatch + handoff costs more than the edit |
+| Real volume, a refactor, or a fix whose correct shape is not obvious from the finding text | **Delegate `sonnet`** | Volume is a purchase: cheaper per output token, and it stays out of your coordination context |
 | Subtle correctness, concurrency, security, or cross-cutting design; or a `sonnet` fix attempt already drifted | **Delegate `opus`** | Needs the higher reasoning tier |
 | Bulk mechanical repetition across many files — renames, codemods | **Delegate `haiku`** | Cheapest tier handles deterministic edits |
 

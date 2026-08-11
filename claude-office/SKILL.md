@@ -11,7 +11,7 @@ Three roles, one session, for irreversible or production-facing work.
 |---|---|---|---|
 | **Planner** | The current agent (you) | session default | Interview → plan → approval; triage/apply review fixes; close out |
 | **Executor** | One dispatched subagent | `sonnet`, high | Implement the whole plan via subagents; self-check every task before handoff |
-| **Reviewer** | One fresh dispatched subagent | `opus`, medium | Adversarial final review + each fix round; holds the approval gate |
+| **Reviewer** | One fresh dispatched subagent | `opus`, high | Adversarial final review + each fix round; holds the approval gate |
 
 **Core principle:** the planner never implements; the executor never approves its own work. Each
 gate is held by someone who did not do the work being gated.
@@ -70,6 +70,11 @@ does **not** — the planner never implements the plan here. Narrowing is legal,
 reader of both files need not guess which governs.
 
 ## Routing table
+
+**On entering any phase, and after any compaction, re-read this hub and the phase's spoke before
+acting.** This binds whoever holds the phase — the same agent across a boundary as much as a fresh
+one. Protocol amnesia past Phase 2 is the observed failure; a re-read is the cheapest fix for it.
+
 
 Each role gets the Office Kernel plus its selected spokes only — never the whole corpus.
 

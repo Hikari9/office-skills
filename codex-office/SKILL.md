@@ -60,6 +60,11 @@ reader of both files need not guess which governs.
 
 ## Routing table
 
+**On entering any phase, and after any compaction, re-read this hub and the phase's spoke before
+acting.** This binds whoever holds the phase — the same agent across a boundary as much as a fresh
+one. Protocol amnesia past Phase 2 is the observed failure; a re-read is the cheapest fix for it.
+
+
 Never load the whole office corpus for any role — each role gets the Office Kernel plus the spokes
 below it selects, and nothing else.
 

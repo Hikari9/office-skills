@@ -19,6 +19,10 @@ Agent(
 )
 ```
 
+**The code-review floor is `opus` high.** In-session dispatch has no `effort` parameter, so the
+brief carries it as stated rigor: open the brief with *"Treat this as a high-effort review; do not
+stop at the first defect you find."* A CLI-launched reviewer passes `--effort high` explicitly.
+
 **The reviewer is always a Claude subagent here.** Unlike `codex-office`, there is no caller tweak that
 routes review through the executor CLI: an agy run reviewing an agy diff shares the blind spots that
 produced it, and this executor's characteristic failure — self-consistent wrong work that passes its own
@@ -112,9 +116,9 @@ Triage each finding with this matrix before touching anything:
 
 | Finding shape | Mode | Why |
 |---|---|---|
-| 1–3 files, deterministic, zero ambiguity — typo, import, off-by-one, missing constant, copy fix | **INLINE** (you edit) | Writing a brief plus verifying the result costs far more than the edit |
+| Deterministic, zero ambiguity, and the finding text *is* the brief — typo, import, off-by-one, missing constant, copy fix | **INLINE** (you edit) | Brief + dispatch + verification costs far more than the edit |
 | Bulk mechanical repetition across many files — renames, codemods | **agy, `Gemini 3.5 Flash (Medium/High)`** | Cheapest tier, and the diff is trivially checkable |
-| >3 files, or a refactor, or a fix whose correct shape is not obvious from the finding text | **agy, `Gemini 3.1 Pro (High)`** | Default tier; multi-file work doesn't belong in your context |
+| Real volume, a refactor, or a fix whose correct shape is not obvious from the finding text | **agy, `Gemini 3.1 Pro (High)`** | Default tier; volume is a purchase and doesn't belong in your context |
 | An invented signature, a test that wouldn't go red, or a defect the reviewer calls subtle/security-relevant | **Claude subagent (`opus`), or INLINE** | This is the failure class agy produced. Do not hand it back to the same tool that created it. |
 
 Announce the mode in one terse line per fix wave: `Mode: <INLINE|flash|pro|claude-opus> — Why: <≤8 words>`.

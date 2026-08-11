@@ -6,10 +6,10 @@ Use this to decide whether to execute a task **INLINE** in the primary session o
 
 | Execution mode | When to use | Why |
 |---|---|---|
-| **INLINE (current session)** | Quick edits (**1–3 files max**); minor bugfixes, typos, import adjustments, small component updates; clear deterministic changes with zero ambiguity; tasks blocking immediate conversation progress | Maximum token efficiency: reuses active context directly, avoids CLI process startup overhead, sub-agent system prompt loading, stdin prompt piping, and status polling |
-| **DELEGATED (`claude --bg`)** | Multi-file features or refactors (>3 files); long-horizon, multi-step work while you prep downstream tasks; pick `haiku`/`sonnet`/`opus` from the decision matrix below | Concurrency & isolation: keeps the primary turn free for high-level steering while isolating complex or multi-file background work |
+| **INLINE (current session)** | Minor bugfixes, typos, import adjustments, small component updates; clear deterministic changes with zero ambiguity; tasks blocking immediate conversation progress | Maximum token efficiency: reuses active context directly, avoids CLI process startup overhead, sub-agent system prompt loading, stdin prompt piping, and status polling |
+| **DELEGATED (`claude --bg`)** | Features, refactors, or any real implementation volume; long-horizon, multi-step work while you prep downstream tasks; pick `haiku`/`sonnet`/`opus` from the decision matrix below | Concurrency, isolation, **and price** — a sonnet executor is two to six times cheaper per output token than you are, so volume is itself a purchase |
 
-> **Rule of thumb:** if writing the delegated stdin prompt brief takes longer than making the edits directly, execute **INLINE**.
+> **Rule of thumb:** if writing the delegated stdin prompt brief takes more thought than making the edits directly, execute **INLINE**. Not when there is simply a lot to type — that is what the executor is for. File count is not the test in either direction.
 
 ## Golden rules
 
@@ -36,7 +36,7 @@ Claude Opus 5 is the flagship model for complex reasoning and agentic coding, wi
 |---|---|---|---|---|
 | **Default workhorse** — most delegated implementation: features, code implementations, standard debugging, UI acceptance testing, refactors with a clear spec, test writing, code review, docs | `sonnet` | `claude-sonnet-5` | `high` | Near-Opus quality on coding/agentic at $3/$15. The default first pick. |
 | **Higher-tier** — escalate here when tasks need higher reasoning tier (multi-file refactors, subtle concurrency/correctness bugs, long-horizon agentic work, cross-cutting design, volatile components) or when Sonnet stalls | `opus` | `claude-opus-5` | `medium` | `medium` effort provides frontier-level agentic intelligence with optimal latency and token efficiency ($5/$25). |
-| **Mechanical/bulk & exploration** — codemods, renames, boilerplate, multi-file deterministic edits, first-pass exploration/triage | `haiku` | `claude-haiku-4-5` | `low`/`medium` | Fastest/cheapest ($1/$5); 200K context, 64K output. `low` for pure mechanical edits, `medium` for fast exploration/triage. (Quick 1–3 file edits should be done INLINE.) |
+| **Mechanical/bulk & exploration** — codemods, renames, boilerplate, multi-file deterministic edits, first-pass exploration/triage | `haiku` | `claude-haiku-4-5` | `low`/`medium` | Fastest/cheapest ($1/$5); 200K context, 64K output. `low` for pure mechanical edits, `medium` for fast exploration/triage. (An edit whose brief costs more thought than the edit should be done INLINE.) |
 | **Frontier / maximum rigor** — hardest frontier problems, deep security-critical architecture, or when Opus medium falls short | `opus` | `claude-opus-5` | `high` | Maximum reasoning depth and rigor for top-tier architectural problems, security audits, complex cross-cutting overhauls. |
 
 Heuristics:
@@ -58,11 +58,17 @@ Note: Claude Code's own built-in default is `xhigh`, and the broader ecosystem r
 
 ```bash
 cat /path/to/prompt.md | \
-  SHELL=/bin/bash claude --bg --remote-control "Fix login redirect bug" \
+  SHELL=/bin/bash claude --bg --remote-control "[EXECUTOR] myrepo — fix login redirect" \
     --model sonnet --effort high \
     --add-dir /absolute/path/to/repo \
     --dangerously-skip-permissions
 ```
+
+**Name the session by role.** The first line of the brief is `[ROLE] <repo> — <task>` — `[PLANNER]`,
+`[PM]`, `[EXECUTOR]`, `[WORKER]`, `[REVIEW]`, `[PLAN-REVIEW]` — so a job list is readable at a glance.
+Pass the same string to any label flag the brand exposes. The prefix is a display convenience and
+**never an identifier**: match on session or worktree identity, never on a label.
+
 
 - `--model <alias|id>` — required (rule 2).
 - `--effort <level>` — required (rule 3).
@@ -124,7 +130,7 @@ WT=/path/to/repo-<taskslug>
 git -C /path/to/repo worktree add "$WT" -b feat/<taskslug> "$BASE"
 ln -s /path/to/repo/node_modules "$WT/node_modules"   # deps identical; skip reinstall
 # dispatch from the worktree so the agent's cwd is the worktree:
-( cd "$WT" && cat /path/to/brief.md | claude --bg --name "<taskslug>" \
+( cd "$WT" && cat /path/to/brief.md | claude --bg --name "[EXECUTOR] <repo> — <taskslug>" \
     --model sonnet --effort high --add-dir "$WT" --dangerously-skip-permissions )
 ```
 

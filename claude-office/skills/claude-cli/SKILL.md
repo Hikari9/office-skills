@@ -25,10 +25,16 @@ agent (see discernment.md's invocation section for the exact command, model/effo
 outright in this workspace. Verified working launch shape, 2026-08-04:
 
 ```bash
-echo "<brief>" | SHELL=/bin/bash claude --bg --remote-control "<label>" \
+echo "<brief>" | SHELL=/bin/bash claude --bg --remote-control "[ROLE] <repo> — <task>" \
   --model sonnet --add-dir "<pre-created worktree>" \
   --allowedTools "Read Write Edit Grep Glob Bash(git *) Bash(corepack pnpm *)"
 ```
+
+**Name the session by role.** The first line of the brief is `[ROLE] <repo> — <task>` — `[PLANNER]`,
+`[PM]`, `[EXECUTOR]`, `[WORKER]`, `[REVIEW]`, `[PLAN-REVIEW]` — so a job list is readable at a glance.
+Pass the same string to any label flag the brand exposes. The prefix is a display convenience and
+**never an identifier**: match on session or worktree identity, never on a label.
+
 
 **The prompt must be piped on stdin.** Passing it as a positional argument returns
 `idle — send a prompt to start`: the agent registers but never begins, and a planner that reports the

@@ -63,7 +63,9 @@ merged, and still runs nowhere.
 ## Presenting the plan
 
 State routing, worker/dispatch count, and waves in one line each, with a ≤8-word reason for any
-off-default tag and a one-clause reason per delegation naming what it buys. A delegation that
-cannot be justified in a clause is one to collapse.
+off-default tag and a one-clause reason per delegation naming what it buys.
+
+**An inline row carries the clause too**: what a delegation would have bought, and why the brief
+costs more than the edit. An inline row that cannot be justified in a clause is one to delegate.
 
 Then get **explicit approval**. Do not dispatch off an unapproved plan.

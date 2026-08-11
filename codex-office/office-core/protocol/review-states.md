@@ -79,8 +79,9 @@ The **planner** applies fixes; the reviewer does not fix what it gates.
   and re-run the suite.
 - **Escalate out of the tool, not up within it.** A failure class the worker just demonstrated —
   an invented interface, a test that will not go red — does not go back to that worker.
-- **At 2 consecutive `CHANGES REQUIRED` rounds on one task, the default presumption flips to
-  `PLAN DEFECT`.** Re-plan the task instead of funding a third fix wave. Two rounds of findings on
+- **At 2 `CHANGES REQUIRED` rounds on one task — consecutive or not — the default presumption flips
+  to `PLAN DEFECT`.** An `APPROVED`-then-rejected sequence does not reset the count; a task that
+  needed two rounds of findings is a task whose instruction was wrong, whatever landed between them. Re-plan the task instead of funding a third fix wave. Two rounds of findings on
   one task is evidence about the *instruction*, not about the worker's diligence, and "escalate out
   of the tool" has nowhere to go when the tool is already the best fit or already the top tier. The
   presumption is rebuttable — say why in one line if you rebut it — but it is the default.

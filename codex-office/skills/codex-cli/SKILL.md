@@ -52,6 +52,12 @@ codex exec --yolo -m <model> --cd "<abs repo path>" "$(cat <brief>)" < /dev/null
 # run_in_background: true, timeout: 600000 — then hand the user the returned .output path
 ```
 
+**Name the session by role.** The first line of the brief is `[ROLE] <repo> — <task>` — `[PLANNER]`,
+`[PM]`, `[EXECUTOR]`, `[WORKER]`, `[REVIEW]`, `[PLAN-REVIEW]` — so a job list is readable at a glance.
+Pass the same string to any label flag the brand exposes. The prefix is a display convenience and
+**never an identifier**: match on session or worktree identity, never on a label.
+
+
 - **Pass an explicit `timeout` on every dispatch, or the harness kills it mid-work.** Under Claude
   Code the Bash tool's `timeout` applies to backgrounded tasks too, and its **default is 120000 ms**.
   A dispatch launched without it dies around the 3-minute mark — long enough to look like real work,

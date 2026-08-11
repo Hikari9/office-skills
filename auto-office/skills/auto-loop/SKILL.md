@@ -26,7 +26,7 @@ for each task in plan order:
     fresh Opus review         (resumed reviewer, same session across rounds)
     while verdict == CHANGES REQUIRED and round <= 5:
         triage → fix → re-review
-        2 consecutive CHANGES REQUIRED on this task → presume PLAN DEFECT (below)
+        2 CHANGES REQUIRED on this task (total, not consecutive) → presume PLAN DEFECT (below)
     verdict == PLAN DEFECT    → exits the loop for this task, does not consume a round
     verdict == APPROVED       → next task
 re-read GOAL:
@@ -73,11 +73,38 @@ Beyond the plan path, GOAL block, blast-radius ceiling, and file scope:
      report what it tried.
    - **A guard needs a two-sided assertion:** a guard that never fires and one that always fires must
      *both* turn the test red, or a bailout that silently disables the feature satisfies it.
+   - **A mutation that stays green is a claim about the mutation before it is a claim about the gate.**
+     Prove the break actually took effect — that the edited file is the one the gate loads, that the
+     anchor existed, that the injected code runs in the scope the gate inspects — *then* read the
+     verdict. Measured 2026-08-09: three of a planner's own mutations were invalid (one edited the
+     generated artifact while the harness loads the authored source; one anchored on a string absent
+     from the file; one landed textually correct but inside a click handler, so its element was
+     created after the gate had counted elements). All three printed "0 FAILs", and two were within a
+     sentence of being reported as "the gate is blind". The asymmetry is the point: a broken mutation
+     and a blind gate produce identical output, and the broken mutation is the likelier of the two.
    - Evidence for it being a brief clause, not a review clause: across one nine-task run every
      `CHANGES REQUIRED` verdict was a test defect, never an implementation defect — including a test
      whose condition was a compile-time-constant `false`. Reviewers caught it all by mutation testing,
      at reviewer rates, doing work the brief should have demanded.
-3. **You may fan out in-session** using your own harness's built-in sub-agent mechanism, within your
+3. **Name the OBSERVABLE OUTCOME, and verify the path to it against the graph before writing the
+   brief.** A brief that specifies a mechanism is satisfied by fixing that mechanism — which is not
+   the same as fixing the symptom. Write the acceptance as what the user sees, then trace, in the
+   code, which call site actually produces it.
+   - **A data path is not automatically a render path.** Measured across one run: four briefs named a
+     function that fed a sort key, a dead fallback branch, or a write half, while the visible value
+     came from somewhere else entirely. Each passed review *on the thing the brief named* and left
+     the symptom intact. Cost: roughly six review rounds, all of them at reviewer rates.
+   - **Enumerate the full lifecycle of any state the task introduces**, not the half in front of you.
+     For a cache or overlay that is write / read / **clear**; for a resource it is acquire / use /
+     release. A brief naming two of three ships the third as a defect — twice in one run, the missing
+     seam was the *clear*, i.e. state that is written and read correctly and then shadows the server
+     forever.
+   - **Cheapest possible check, and it is a planner check, not an executor one:** grep the plan's
+     done-criteria for the field or behaviour the task is about. If no criterion names it, ask whether
+     the task should exist before funding a round of it. One run spent three review rounds on a field
+     that appeared in no done-criterion; the decisive grep took seconds and was run only after the
+     second `CHANGES REQUIRED`.
+4. **You may fan out in-session** using your own harness's built-in sub-agent mechanism, within your
    file scope and under one-writer-per-tree. The brief never prescribes *how* — that is your office's
    mechanism, not this one's.
 
@@ -127,7 +154,7 @@ A cap is a signal, not an obstacle. Do not raise a cap to make a run finish.
 
 ### The 2-round plan-defect presumption
 
-At two consecutive `CHANGES REQUIRED` rounds on one task, stop funding fix waves and re-plan the
+At two `CHANGES REQUIRED` rounds on one task — consecutive or not — stop funding fix waves and re-plan the
 task. Route per `office-core/protocol/review-states.md`:
 
 - **Technical gap** → the planner amends the plan and re-dispatches **only the affected tasks**.
@@ -181,6 +208,12 @@ Read it for when `yes` is warranted, what a `no` obliges, and why a live executo
 - **The field is the last one on the status line above**, so it rides a line the user is already
   reading and never becomes a message of its own.
 
+**A compaction is a protocol boundary, so reload across it.** The first act after any compaction —
+and on entering any phase — is to re-read the [auto-office hub](../../SKILL.md) and this phase's
+spoke before acting. Compaction at a task boundary is the main way a run loses the protocol while
+keeping the run state, and a survivor that remembers the GOAL but not the gates is the exact shape of
+the failure. Same agent or fresh agent makes no difference; whoever holds the phase re-reads.
+
 ### Brief sizing is the same problem, one level down
 
 Core states the principle; the evidence for it came from this office. A brief spanning ten call
@@ -201,6 +234,15 @@ surface, and split on surface boundaries, never on file count.
   executor.
 - The executor never approves its own work — not on the last task, not on a one-line fix, not
   because it is 3am and the reviewer costs money.
+- **A mutation-testing reviewer is NOT read-only. Verify the tree after every review, including an
+  approved one.** It edits source to prove a test reddens and restores as the *last* step of a
+  sequence that can be interrupted — so a killed reviewer leaves the mutation applied, and never
+  reaches the "tree is clean" line its own report would have carried. Treat a missing completion
+  record as *assume a mutation is applied*, not *assume nothing happened*; the next executor would
+  otherwise start from a silently altered file outside its own scope. Every one-writer rule in this
+  file points at executors, which is exactly why this gap survives. Require reviewers to apply, run
+  and restore each mutation **within a single tool call** with a restore proof, so the window closes
+  structurally rather than by discipline.
 - A successful exit is not evidence. The gate is the plan's validation commands with real pasted
   output. Live-system writes need a read-back.
 - If agy executed, the mandatory verification pass runs before review. It exits 0 having done

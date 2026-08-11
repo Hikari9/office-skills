@@ -58,7 +58,7 @@ one a helpful agent will "finish" for you. Back it with mechanism where you can 
 
 | Strategy | When | Effort |
 |---|---|---|
-| **INLINE** | Trivial, deterministic, 1–3 files | n/a |
+| **INLINE** | Trivial, deterministic; a brief would cost more thought than the edit — state what a delegation would have bought | n/a |
 | **HAIKU** | Plan text has the complete code, or a single-file mechanical edit/codemod | low |
 | **SONNET** | Default — features, standard debugging, clear-spec refactors, test writing | medium, high if multi-file/integration risk |
 | **OPUS** | Subtle correctness, concurrency, security-sensitive, cross-cutting, multi-file coordination | high, xhigh only for the hardest single task |
