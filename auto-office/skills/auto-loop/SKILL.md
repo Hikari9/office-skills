@@ -71,6 +71,12 @@ Beyond the plan path, GOAL block, blast-radius ceiling, and file scope:
      "fails" at `BASE` merely by importing a module that does not exist yet. Require the executor to
      break each mechanism its test claims to cover, confirm the test goes red for each, restore, and
      report what it tried.
+   - **Restore an uncommitted mutation by file copy, never `git checkout`.** When the change under
+     test is not yet committed, `git checkout -- <file>` restores the *committed* version and silently
+     wipes the uncommitted edits the mutation was probing — desyncing generated-from-authored artifacts
+     and forcing a full re-apply. Snapshot with `cp` before mutating, restore from the copy after; or
+     commit first, then `git checkout` is safe. Measured 2026-08-12: a `git checkout` restore reverted
+     an authored `.lava` while its generated twin kept the edits, costing a four-edit re-apply.
    - **A guard needs a two-sided assertion:** a guard that never fires and one that always fires must
      *both* turn the test red, or a bailout that silently disables the feature satisfies it.
    - **A mutation that stays green is a claim about the mutation before it is a claim about the gate.**
@@ -121,6 +127,27 @@ they are what keeps an autonomous run honest:
 5. **Agy consecutive-task count** — at 3, re-brief with full context restated or re-route.
 6. **`git rev-parse --abbrev-ref HEAD` before every commit and every push.** Read it; do not assume
    the branch you created is still checked out.
+
+## A deploy's targets come from the diff, not from the file you edited
+
+When a task ships a change to a live system, enumerate what must be re-applied from the **diff**, not
+from "the script that owns the file I touched." One source file can be instantiated as several live
+objects, each provisioned by a *different* apply command — and re-applying only "its own" leaves the
+other consumers running an older copy of the same source, silently, with no error and every local
+gate green.
+
+- **Before deploying, grep for every consumer of the changed source** (`grep -rn <basename>` across
+  the apply scripts) and run all of them. Verifying "the page renders" is not enough — verify every
+  host is running the **same build**, by matching a string unique to the new code in the live output.
+- **Removing a shared action or field is ordered: sync every consumer first, remove second.**
+  Reversing that order breaks whichever consumer is still stale — a live regression the deploying
+  agent introduces, not one it inherits.
+
+Evidence (2026-08-12): a `.lava` block shipped as two Rock Block rows via two apply scripts; the loop
+re-applied only one after each review round, so the second host silently ran stale code, and then a
+commit removed a bridge action the stale host still called — breaking it outright. A full extra
+dispatch, a restore, and a re-review to relearn a lesson the target repo's own memory already carried.
+The cheap check — "what else consumes this file?" — was one grep.
 
 ## The branch you are on is not a fact you may assume
 

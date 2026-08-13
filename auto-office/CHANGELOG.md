@@ -1,5 +1,47 @@
 # Changelog — auto-office
 
+## 2.10.0 — 2026-08-13
+
+Core `1.5.0`. Adds the **fit test**: before an invoked office interviews, plans, or dispatches, it
+prices the whole run and says out loud whether the office is worth paying for.
+
+- **The office now discerns whether to be an office.** `roles-and-authority.md` gains *Fit test —
+  before the office runs at all*, above the per-task delegation test. Four questions — risk, size and
+  shape, ambiguity, and whether a fresh adversarial reader would catch something. Any yes on risk, or
+  two or more yeses across the rest, and the office runs as specified; none, and the run is overhead,
+  so the work is done directly under the same safety rules.
+- **It explains, it does not ask.** The verdict is stated in two or three sentences — the call, the
+  reason, what the alternative would have cost — then the run proceeds. A user who typed the office's
+  name gets an explanation of a downgrade, never a request for permission to think.
+- **Bounded so it cannot become a bypass.** It chooses only between the full office and direct work;
+  no partial office. It may never downgrade an irreversible, production-facing, or externally visible
+  run, and never downgrade because quota is short or an executor brand is unavailable — those are
+  routing problems, answered by the routing table rather than by less review. A caller override
+  outranks it in both directions.
+- **Restated in `auto-planning`**, which self-runs the test if the spoke is entered directly or
+  after a compaction that ate the hub's pass — a run that fails it gets done, not planned.
+- **Wired into the hub** so it is read before anything else, restating the rule at the entry point.
+
+## 2.9.2 — 2026-08-12
+
+Self-heal from a live run (#118, rock-pages unified-chrome UI fixes + PROD deploy). One change to
+`auto-loop`'s mutation clause: **restore an uncommitted mutation by file copy, never `git checkout`** —
+`git checkout -- <file>` reverts to the committed version and silently wipes the uncommitted edits the
+mutation was probing, desyncing generated-from-authored artifacts. Snapshot with `cp` before mutating
+(or commit first). Measured cost: a four-edit re-apply after a `git checkout` wiped an authored `.lava`
+while its generated twin kept the edits.
+
+## 2.9.1 — 2026-08-12
+
+Self-heal from a live run (#92, rock-pages Merge Person). One change to `auto-loop`: the goal loop's
+drift check now carries a **deploy-completeness** rule — a change to a shared source file must
+enumerate its live consumers from the diff (grep every apply command that reads it), re-apply all of
+them, and verify every host runs the *same build*; removing a shared action is ordered sync-first,
+remove-second. A `.lava` block that ships as two Rock Block rows via two apply scripts was re-applied
+on only one host per round, silently ran stale code on the other, and then a removal broke it — a full
+extra dispatch to relearn a lesson the target repo's memory already held. No safety rule relaxed, no
+cap raised, no blast radius widened.
+
 ## 2.9.0 — 2026-08-11
 
 Core `1.4.0`. Five changes from live-run failures: planners holding work inline that the executor
