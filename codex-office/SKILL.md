@@ -29,6 +29,15 @@ role, skip a phase with an approved plan path, extra reviewer rubric items, skip
 caller override may: skip an independent review, reuse the executor as its own reviewer, downgrade
 the reviewer below its stated floor, or widen the blast-radius ceiling implicitly.
 
+## Fit test — first, before anything
+
+Before scoping or planning, price the run: does this office buy anything here? Any irreversibility
+/ production exposure / external visibility, or two or more of {real volume or parallel breadth,
+needs an interview, would benefit from an adversarial reader} → run all four phases. None of it →
+**say so in two or three sentences and do the work directly**, under the same safety rules, then
+stop. Never downgrade a one-way-door run; never invent a half-office. A caller override decides it
+either way. Full rule: `office-core/protocol/roles-and-authority.md` → *Fit test*.
+
 ## Non-bypassable safety rules
 
 - Explicit invocation only; never self-triggered.
@@ -50,11 +59,11 @@ the reviewer below its stated floor, or widen the blast-radius ceiling implicitl
 
 ## Protocol version
 
-This plugin implements office-core protocol `1.3.0`, vendored at `office-core/` in this plugin.
+This plugin implements office-core protocol `1.5.0`, vendored at `office-core/` in this plugin.
 The vendored copy is authoritative for an installed plugin; the repo-root `office-core/` is the
 development source. Mandatory read: `office-core/protocol/roles-and-authority.md`.
 
-**Declared narrowing of core.** Core `1.3.0` lets the planner implement inline; this office
+**Declared narrowing of core.** Core `1.5.0` lets the planner implement inline; this office
 does **not** — the planner never implements the plan here. Narrowing is legal, and it is stated so a
 reader of both files need not guess which governs.
 

@@ -52,6 +52,17 @@ Anything after `/agy-office` overrides one default; honor it, echo it, keep the 
 skip it, downgrade/bypass the reviewer, route review through `agy`, remove a phase, or widen the
 blast-radius ceiling implicitly.
 
+## Fit test — first, before anything
+
+Before interviewing, planning, or checking quota, price the run: does this office buy anything
+here? Any irreversibility / production exposure / external visibility, or two or more of {real
+volume or parallel breadth, needs an interview, would benefit from an adversarial reader} → run all
+five phases. None of it → **say so in two or three sentences and do the work directly**, under the
+same safety rules, then stop. Never downgrade a one-way-door run, and never downgrade because agy
+quota is short — that is a routing problem, and the answer is a fallback executor, not less review.
+Phase 2b is structural: a run that proceeds under this office keeps it. A caller override decides
+it either way. Full rule: `office-core/protocol/roles-and-authority.md` → *Fit test*.
+
 ## Non-bypassable safety rules
 
 - Explicit `/agy-office` only, never self-triggered; load the `agy` skill first.
@@ -70,12 +81,12 @@ blast-radius ceiling implicitly.
 
 ## Protocol version
 
-Implements office-core **`1.3.0`**, vendored at `office-core/` here. Mandatory read:
+Implements office-core **`1.5.0`**, vendored at `office-core/` here. Mandatory read:
 [`roles-and-authority.md`](office-core/protocol/roles-and-authority.md) — vendored copy
 authoritative once installed; repo-root `office-core/` is the dev source. Exception:
 `agy-phase-2b` (`COMPATIBILITY.md`).
 
-**Declared narrowing of core.** Core `1.3.0` lets the planner implement inline; this office
+**Declared narrowing of core.** Core `1.5.0` lets the planner implement inline; this office
 does **not** — the planner never implements the plan here. Narrowing is legal, and it is stated so a
 reader of both files need not guess which governs.
 

@@ -2,9 +2,9 @@
 
 | Line | Value |
 |---|---|
-| Plugin version | `2.0.0` (see `.claude-plugin/plugin.json`) |
+| Plugin version | `2.10.0` (see `.claude-plugin/plugin.json`) |
 | Core protocol supported | `>=1.2.0 <2.0.0` |
-| Core protocol vendored | `1.3.0` (see `office-core/SNAPSHOT.json`) |
+| Core protocol vendored | `1.5.0` (see `office-core/SNAPSHOT.json`) |
 | Vendored snapshot | `office-core/SNAPSHOT.json`, written by `scripts/vendor-core.sh` |
 | Sibling plugins required | `codex-office`, `claude-office`, `agy-office` — for the CLI, executor, reviewer, and closeout mechanics of whichever brand is routed to |
 

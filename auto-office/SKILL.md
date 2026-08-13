@@ -39,6 +39,16 @@ override is the **only** thing that may change a default, executor tier included
 independent review, let an executor review itself, drop a reviewer floor, remove a phase, or widen the
 blast radius implicitly.
 
+## Fit test — first, before anything
+
+Before interviewing, planning, or probing quota, price the run: does this office buy anything here?
+Any irreversibility / production exposure / external visibility, or two or more of {real volume or
+parallel breadth, needs an interview, would benefit from an adversarial reader} → run the office as
+specified. None of it → **say so in two or three sentences and do the work directly**, under the
+same safety rules, then stop. Never downgrade a one-way-door run, and never downgrade because quota
+is short — that is a routing problem. A caller override decides it either way. Full rule:
+`office-core/protocol/roles-and-authority.md` → *Fit test*.
+
 ## Routing, in one screen
 
 Brand by fit — **codex** backend/data/infra/long-horizon (preferred default), **agy** frontend,
@@ -75,7 +85,7 @@ are **user-invoked only**.
 - Irreversible production work is `PLANNER-HELD`, excluded from every brief. The loop never widens
   blast radius or adds a repo/environment; user-owned decisions get a recommendation, never inference.
 
-Implements office-core `1.3.0`, vendored at `office-core/`. Mandatory read:
+Implements office-core `1.5.0`, vendored at `office-core/`. Mandatory read:
 `office-core/protocol/roles-and-authority.md`.
 
 ## The autonomous run

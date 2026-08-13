@@ -1,5 +1,25 @@
 # Changelog — claude-office
 
+## 1.5.0 — 2026-08-13
+
+Core `1.5.0`. Adds the **fit test**: before an invoked office interviews, plans, or dispatches, it
+prices the whole run and says out loud whether the office is worth paying for.
+
+- **The office now discerns whether to be an office.** `roles-and-authority.md` gains *Fit test —
+  before the office runs at all*, above the per-task delegation test. Four questions — risk, size and
+  shape, ambiguity, and whether a fresh adversarial reader would catch something. Any yes on risk, or
+  two or more yeses across the rest, and the office runs as specified; none, and the run is overhead,
+  so the work is done directly under the same safety rules.
+- **It explains, it does not ask.** The verdict is stated in two or three sentences — the call, the
+  reason, what the alternative would have cost — then the run proceeds. A user who typed the office's
+  name gets an explanation of a downgrade, never a request for permission to think.
+- **Bounded so it cannot become a bypass.** It chooses only between the full office and direct work;
+  no partial office. It may never downgrade an irreversible, production-facing, or externally visible
+  run, and never downgrade because quota is short or an executor brand is unavailable — those are
+  routing problems, answered by the routing table rather than by less review. A caller override
+  outranks it in both directions.
+- **Wired into the hub** so it is read before anything else, restating the rule at the entry point.
+
 ## 1.4.0 — 2026-08-11
 
 Core `1.4.0`. Five changes from live-run failures: planners holding work inline that the executor

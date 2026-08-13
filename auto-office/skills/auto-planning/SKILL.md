@@ -17,6 +17,10 @@ Phase 1 carries more weight here than in the sibling offices, because it is the 
 which the user is asked anything routine. One approval authorizes everything through closeout, so
 the plan and the done-criteria have to be good enough to be executed without you asking again.
 
+**The hub's fit test is already settled by the time you are here.** If it has not been run — you
+entered this spoke directly, or after a compaction that ate it — run it now, before the interview,
+and state the verdict. A run that fails the fit test does not get a plan; it gets done directly.
+
 ## Kickoff line
 
 Announce before doing anything else:

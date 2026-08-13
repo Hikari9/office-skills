@@ -107,6 +107,51 @@ tree; a newer overlapping writer is stopped before it can edit.
 
 Pre-existing dirty changes are preserved and named as **protected paths** in the plan.
 
+## Fit test — before the office runs at all
+
+The delegation test below prices one task. The **fit test** prices the whole run, and it comes
+first: **the very first thing an invoked office does, before interviewing, before planning, before
+any dispatch.** An office is machinery — interview, plan, plan-review, brief, dispatch, verify,
+review, closeout — and that machinery has a price in tokens, wall-clock, and the user's attention.
+It is worth paying when it buys something, and it is pure overhead when it does not.
+
+Ask, in one pass over the request as stated:
+
+1. **Risk.** Is anything here irreversible, production-facing, or externally visible? Would a wrong
+   result be expensive or hard to notice?
+2. **Size and shape.** Is there real implementation volume, or parallelizable breadth, or a
+   genuinely uncertain design — versus a known, bounded edit?
+3. **Ambiguity.** Does the request need an interview to reach 95% clarity, or is the target already
+   unambiguous?
+4. **Independent review.** Would a fresh adversarial reader plausibly catch something the doer
+   would not?
+
+**Any "yes" to (1), or two or more yeses across (2)–(4), and the office runs as specified.** No
+yeses, and the office is overhead: say so and do the work directly under the normal working rules.
+
+**State the verdict out loud before proceeding**, in two or three sentences at most: the call, the
+one or two reasons behind it, and what the alternative would have cost. Then proceed without
+asking again — the fit test is a discernment step, not a new approval gate. A user who typed the
+office's name gets an explanation of a downgrade, never a request for permission to think.
+
+### What the fit test may and may not do
+
+It may only choose **between the full office and doing the work directly.** It may not invent a
+partial office: a run that proceeds under the office does every phase that office declares.
+
+It may **never** downgrade a run that is irreversible, production-facing, or externally visible —
+question (1) is a one-way door. Nor may it downgrade because quota is short, an executor brand is
+unavailable, or the office feels slow; those are routing and scheduling problems, and the answer to
+them is the routing table, not less review.
+
+An explicit caller override outranks the fit test in both directions: `plan approved: <path>` or a
+named executor means the user has already decided the office runs, and `just do it directly` means
+they have already decided it does not.
+
+Direct work is not unreviewed work. It follows the same non-bypassable rules — no unverified
+external mutation, read-backs over exit codes, planner-held actions still planner-held — it simply
+does not pay for phases nothing in the request justifies.
+
 ## Delegation test
 
 A delegation must buy **tier, isolation, parallelism, or price**. If it buys none of the four, do
