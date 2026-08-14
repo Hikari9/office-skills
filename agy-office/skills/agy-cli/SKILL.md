@@ -43,6 +43,22 @@ Pass the same string to any label flag the brand exposes. The prefix is a displa
 **Stdin piping does not work.** Use the positional argument (`--print "$(cat <file>)"`), never a
 pipe into `agy`'s stdin.
 
+## Live-system access is agy's own, not the planner's
+
+`--dangerously-skip-permissions` removes every approval stop locally, but an `agy` process reaches
+the **MCP servers configured for agy** — not the connectors the planner's harness holds. A task
+needing Rock, Basecamp, or Sheets is not reachable just because permissions are skipped.
+
+- **Check before routing.** If the server is not configured for this CLI, route that task to a brand
+  whose launch can carry the tools (`claude-office/skills/claude-cli` → the allowlist section)
+  rather than concluding delegates cannot do MCP work at all.
+- **Prefer plain HTTP where the API allows it** — an MCP server lacking a tool is not the underlying
+  system refusing the call.
+- **Reads, production included, are ordinary delegated work.** Pin the entity, fields, ID provenance
+  and expected envelope in the brief, and require one real record pasted back. With agy this matters
+  more than elsewhere: it invents plausible shapes confidently, and a pinned shape is the only thing
+  a fabrication can collide with.
+
 ## Launching and watching it
 
 **Launch as a background task with no pipes on stdout**, then give the user the `.output` path so

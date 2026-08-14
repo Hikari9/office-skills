@@ -1,6 +1,6 @@
 ---
 name: auto-loop
-description: Phase 2–3 — the goal-locked autonomous loop that runs dispatch → liveness → verify → review → fix per task until every done-criterion is green, with hard caps, the 2-round plan-defect presumption, four stop conditions, and the per-task compaction recommendation. Loaded by the auto-office hub; not invoked directly.
+description: Phase 2–3 — the goal-locked autonomous loop that runs dispatch → liveness → verify → review → fix per task, lands each milestone as its criteria go green, and stops for only two things. Hard caps, the 2-round plan-defect presumption, named-action preconditions, and the compaction recommendation. Loaded by the auto-office hub; not invoked directly.
 ---
 
 # Auto Loop
@@ -12,10 +12,9 @@ waiting. Report progress and keep moving until closeout or a stop condition.
 
 ```
 before the loop:
-    planner self-review of the plan          (auto-planning 7.4)
-    one adversarial plan-review, then it retires   (auto-planning 7.5)
-    ≥2 executors?  → spawn a PM by CLI to distribute briefs and collect results
-    1 executor?    → no PM at all
+    planner self-review of the plan               (auto-planning 7.4)
+    full gear only: one adversarial plan-review, then it retires   (auto-planning 7.5)
+    ≥2 executors?  → the planner distributes and monitors. There is no PM.
 load GOAL block
 for each task in plan order:
     dispatch                  (form derived; sibling office spoke per delegation-map)
@@ -24,16 +23,25 @@ for each task in plan order:
     executor returns BRIEF DEFECT → stop this task, do not implement, do not consume a round
                                     → planner (technical) or user (scope)
     fresh Opus review         (resumed reviewer, same session across rounds)
-    while verdict == CHANGES REQUIRED and round <= 5:
+    while verdict == CHANGES REQUIRED and round <= cap:
         triage → fix → re-review
         2 CHANGES REQUIRED on this task (total, not consecutive) → presume PLAN DEFECT (below)
     verdict == PLAN DEFECT    → exits the loop for this task, does not consume a round
-    verdict == APPROVED       → next task
+    verdict == APPROVED       → milestone check, then next task
+
+    milestone check: every done-criterion in this task's milestone green?
+        → LAND IT (auto-closeout, milestone pass): gate → commit → PR → merge the chain
+        → then continue the loop. Do not batch milestones.
 re-read GOAL:
-    all done_criteria green?  → closeout
+    all done_criteria green?  → final closeout
     a criterion still red?    → new task, back into the loop (counts an iteration)
     caps exhausted?           → stop and report the deadlock
 ```
+
+**Landing a milestone is part of the loop, not a phase after it.** The loop that reaches the end
+with nothing merged has produced one large unreviewable PR and no re-entry point — which is the
+failure this shape exists to prevent. If the milestone's gate is red, that milestone does not land
+and the loop does not walk past it into the next one.
 
 ## Liveness check after every CLI dispatch
 
@@ -65,52 +73,46 @@ Beyond the plan path, GOAL block, blast-radius ceiling, and file scope:
 
 1. **Verify the stated cause reproduces at `BASE` before implementing.** If it does not, return
    `BRIEF DEFECT` with the evidence — do not implement anyway.
-2. **Any task shipping a test must paste that test failing at `BASE`** (or against the reverted fix).
-   A green useless test is invisible to review.
-   - **Failing at `BASE` is necessary, not sufficient — demand mutation testing too.** A new test file
-     "fails" at `BASE` merely by importing a module that does not exist yet. Require the executor to
-     break each mechanism its test claims to cover, confirm the test goes red for each, restore, and
-     report what it tried.
-   - **Restore an uncommitted mutation by file copy, never `git checkout`.** When the change under
-     test is not yet committed, `git checkout -- <file>` restores the *committed* version and silently
-     wipes the uncommitted edits the mutation was probing — desyncing generated-from-authored artifacts
-     and forcing a full re-apply. Snapshot with `cp` before mutating, restore from the copy after; or
-     commit first, then `git checkout` is safe. Measured 2026-08-12: a `git checkout` restore reverted
-     an authored `.lava` while its generated twin kept the edits, costing a four-edit re-apply.
-   - **A guard needs a two-sided assertion:** a guard that never fires and one that always fires must
+2. **Any task shipping a test pastes that test failing at `BASE`, and mutation-tests it.** Failing at
+   `BASE` is necessary and not sufficient — a new test file "fails" merely by importing a module that
+   does not exist yet. Break each mechanism the test claims to cover, confirm red for each, restore,
+   report what was tried. Four rules that make the mutation real:
+   - **Restore by file copy (`cp`), never `git checkout`**, when the change under test is uncommitted:
+     `git checkout -- <file>` restores the *committed* version and silently wipes the edits being
+     probed. Commit first, or snapshot and restore from the copy.
+   - **A guard needs a two-sided assertion.** A guard that never fires and one that always fires must
      *both* turn the test red, or a bailout that silently disables the feature satisfies it.
-   - **A mutation that stays green is a claim about the mutation before it is a claim about the gate.**
-     Prove the break actually took effect — that the edited file is the one the gate loads, that the
-     anchor existed, that the injected code runs in the scope the gate inspects — *then* read the
-     verdict. Measured 2026-08-09: three of a planner's own mutations were invalid (one edited the
-     generated artifact while the harness loads the authored source; one anchored on a string absent
-     from the file; one landed textually correct but inside a click handler, so its element was
-     created after the gate had counted elements). All three printed "0 FAILs", and two were within a
-     sentence of being reported as "the gate is blind". The asymmetry is the point: a broken mutation
-     and a blind gate produce identical output, and the broken mutation is the likelier of the two.
-   - Evidence for it being a brief clause, not a review clause: across one nine-task run every
-     `CHANGES REQUIRED` verdict was a test defect, never an implementation defect — including a test
-     whose condition was a compile-time-constant `false`. Reviewers caught it all by mutation testing,
-     at reviewer rates, doing work the brief should have demanded.
-3. **Name the OBSERVABLE OUTCOME, and verify the path to it against the graph before writing the
-   brief.** A brief that specifies a mechanism is satisfied by fixing that mechanism — which is not
-   the same as fixing the symptom. Write the acceptance as what the user sees, then trace, in the
-   code, which call site actually produces it.
-   - **A data path is not automatically a render path.** Measured across one run: four briefs named a
-     function that fed a sort key, a dead fallback branch, or a write half, while the visible value
-     came from somewhere else entirely. Each passed review *on the thing the brief named* and left
-     the symptom intact. Cost: roughly six review rounds, all of them at reviewer rates.
-   - **Enumerate the full lifecycle of any state the task introduces**, not the half in front of you.
-     For a cache or overlay that is write / read / **clear**; for a resource it is acquire / use /
-     release. A brief naming two of three ships the third as a defect — twice in one run, the missing
-     seam was the *clear*, i.e. state that is written and read correctly and then shadows the server
-     forever.
-   - **Cheapest possible check, and it is a planner check, not an executor one:** grep the plan's
-     done-criteria for the field or behaviour the task is about. If no criterion names it, ask whether
-     the task should exist before funding a round of it. One run spent three review rounds on a field
-     that appeared in no done-criterion; the decisive grep took seconds and was run only after the
-     second `CHANGES REQUIRED`.
-4. **You may fan out in-session** using your own harness's built-in sub-agent mechanism, within your
+   - **A mutation that stays green is a claim about the mutation first.** Prove the break took effect
+     — right file (authored, not generated), anchor existed, injected code runs in the scope the gate
+     inspects — *then* read the verdict. A broken mutation and a blind gate produce identical output,
+     and the broken mutation is the likelier of the two.
+   - **State the wrong-but-passing implementation the test must exclude.** A test observing a
+     consequence reachable by more than one path certifies nothing; naming the failure mode in the
+     brief has repeatedly turned multi-round waves into single-round ones.
+
+   This is a *brief* clause, not a review clause, because across one nine-task run every
+   `CHANGES REQUIRED` was a test defect — caught by reviewers doing mutation testing at reviewer rates.
+3. **Name the OBSERVABLE OUTCOME, and trace the path to it in the code before writing the brief.** A
+   brief that specifies a mechanism is satisfied by fixing that mechanism, which is not the same as
+   fixing the symptom.
+   - **A data path is not automatically a render path.** One run's four briefs each named a function
+     feeding a sort key, a dead branch, or a write half while the visible value came from elsewhere;
+     each passed review on the thing it named and left the symptom intact. ~6 review rounds.
+   - **Enumerate the full lifecycle of state the task introduces** — for a cache that is write / read
+     / **clear**, for a resource acquire / use / release. Naming two of three ships the third as a
+     defect; twice the missing seam was the *clear*, shadowing the server for a whole session.
+   - **Grep the done-criteria for the field the task is about.** If no criterion names it, ask whether
+     the task should exist before funding a round of it. Seconds to run; one run reached the second
+     `CHANGES REQUIRED` before anyone did.
+4. **If the task touches a live system, grant the access and pin the shape.** Enumerate the MCP/API
+   tools in the dispatch — **production reads included**, since the true shape often exists nowhere
+   else — and state the entity, operation, field names, ID provenance, and expected response envelope.
+   The executor pastes back one real record it received. A pinned shape contradicted by reality is a
+   `BRIEF DEFECT` and that is the cheap outcome; an unpinned brief has nothing for reality to
+   contradict, which converts an early failure into a late one. Core:
+   [`evidence-and-handoff.md`](../../office-core/protocol/evidence-and-handoff.md) → *Briefs that
+   touch a live system*.
+5. **You may fan out in-session** using your own harness's built-in sub-agent mechanism, within your
    file scope and under one-writer-per-tree. The brief never prescribes *how* — that is your office's
    mechanism, not this one's.
 
@@ -123,9 +125,13 @@ they are what keeps an autonomous run honest:
 2. **Is this inside `blast_radius`?** A new repo, a new environment, or a new live system is a
    blast-radius widening. Not the loop's call. Stop.
 3. **Is this a `non_goal`?** Then it is not happening, however tempting.
-4. **Is this `planner_held`?** Stop for the user.
-5. **Agy consecutive-task count** — at 3, re-brief with full context restated or re-route.
-6. **`git rev-parse --abbrev-ref HEAD` before every commit and every push.** Read it; do not assume
+4. **Is this `planner_held`?** Then *you* perform it, never a delegate — and check `named_actions`:
+   named with its preconditions met, you execute it and keep going; not named, or a precondition
+   failed, you stop for the user.
+5. **Which milestone does this task belong to, and did the previous one land?** An unlanded milestone
+   behind you is a lost re-entry point.
+6. **Agy consecutive-task count** — at 3, re-brief with full context restated or re-route.
+7. **`git rev-parse --abbrev-ref HEAD` before every commit and every push.** Read it; do not assume
    the branch you created is still checked out.
 
 ## A deploy's targets come from the diff, not from the file you edited
@@ -156,9 +162,11 @@ The cheap check — "what else consumes this file?" — was one grep.
   concurrent *edits*, not an agent running `git checkout` en route to its own worktree. A brief saying
   "make your own branch" is a request, not a control.
 - **Re-read the branch after any dispatch returns**, not only before committing.
-- **A push is `planner_held` whenever the target branch deploys.** Name the branch:
+- **A push is `planner_held` always — the planner performs it, never a delegate.** It does not pause
+  the run when the plan named the branch and chain. **Name the branch:**
   `git push <remote> <branch-name>`, **never** `HEAD` — `HEAD` inherits whatever you are on, so "I
-  only push feature branches" is not true by construction.
+  only push feature branches" is not true by construction, and this is exactly how a deploy has
+  already happened by accident once.
 
 Evidence (2026-08-02, reached production): a dispatched agent left the shared checkout on `main`; two
 planner commits and a `git push … HEAD` landed there and deployed in 59 seconds.
@@ -167,10 +175,10 @@ planner commits and a `git push … HEAD` landed there and deployed in 59 second
 
 | Cap | Value | On exhaustion |
 |---|---|---|
-| Review rounds per task | 5 | Stop. Past the cap the failure is structural, not another round's work. Report the deadlock with the last verdict. |
+| Review rounds per task | **5 full / 2 express** | Full: stop, the failure is structural — report the deadlock with the last verdict. Express: **promote the run to full** and re-plan the task with a plan-review pass. |
 | Agy consecutive tasks | 3 | Re-brief from scratch, or re-route the next task. |
 | Loop iterations | as set in GOAL | Stop and report which criteria are still red. |
-| **Consecutive `CHANGES REQUIRED` on one task** | **2** | **Declare `PLAN DEFECT`** and take core's existing route. See below. |
+| **`CHANGES REQUIRED` on one task** | **2** (total, not consecutive) | **Declare `PLAN DEFECT`** and take core's existing route. See below. |
 
 **Quota is not a cap.** If the tool the run depends on is draining, re-probe and re-decide the same
 way planning did — weigh what remains against what is left to do. Falling back to the named fallback
@@ -196,16 +204,13 @@ task. Route per `office-core/protocol/review-states.md`:
 Evidence: one task burned 829k tokens over three review rounds. The loop now stops funding at round 2
 instead of 5.
 
-## The four stop conditions
+## The two stop conditions
 
 The loop returns to the user for exactly these, and nothing else:
 
-1. **A `PLANNER-HELD` step** — deploys, migrations, irreversible writes. Authority never transfers
-   to an executor, and autonomy never converts an irreversible action into a routine one.
-2. **A destructive or production-facing write** not already approved as part of the GOAL.
-3. **An external send** — email, message, public post, bulk outreach. Surface audience and draft;
-   get approval in the current session.
-4. **A genuinely user-owned decision** — a fork the plan did not anticipate where different choices
+1. **An external send** — email, message, public post, bulk outreach. Surface audience and draft; get
+   approval in the current session. **A plan can never pre-authorize one of these.**
+2. **A genuinely user-owned decision** — a fork the plan did not anticipate where different choices
    produce materially different work. **Ask it as an `AskUserQuestion` with your recommendation as
    the first option, and wait for the answer.** That is the pause; the run resumes on the answer, not
    on your inference. Recommend, never infer.
@@ -216,12 +221,32 @@ re-route, how to sequence remaining tasks, when to fan out scouts.
 **Nothing else is a stop.** A failing test is not a stop, it is the next task. An unclear finding is
 not a stop, it is a verification. A slow tool is not a stop, it is a reroute.
 
+### Production work runs — under preconditions, not under a pause
+
+Deploys, migrations, prod applies, merges to a deploying branch, and production data writes are
+still **planner-held**: *you* perform them, never a delegate. They no longer stop the run, because
+the approved plan already named them. Before each one:
+
+1. **It is in `named_actions`, verbatim** — exact command, target environment, what it changes. A
+   plan saying "deploy when done" has named nothing; that is unauthorized and it *is* a stop.
+2. **The dry run ran and was read**, where the tool has one. `--dry-run` output showing unexpected
+   changes is a stop, and it is a stop because the precondition failed.
+3. **A backup or revert target exists and is named.**
+4. **A read-back after** proves what landed matches committed source — plus the observable behaviour
+   that motivated the change. An exit code is not a read-back.
+5. **Enumerate the targets from the diff, not from the file you edited** (see below). One source file
+   is frequently several live objects behind several apply commands.
+
+Any of 1–4 failing turns the action into a stop with a named reason. This is the gate moving earlier
+— spent at approval on a list the user read — not the gate disappearing.
+
 ## Progress reporting without blocking
 
-Post a one-line status per task completion — task, brand, dispatch form, review rounds, **wall
-clock**, verdict, criteria now green, **`compact:`**. It informs; it does not ask. Never end a status
-line with a question the run's continuation depends on. Wall clock goes on the line because it is the
-cost that is invisible in a token count and the one a silent dispatch spends.
+Post a one-line status per task completion — task, brand, review rounds, **wall clock**, verdict,
+criteria now green, milestone state (`landed → PR #n` or `n/m criteria`), **`compact:`**. It informs;
+it does not ask. Never end a status line with a question the run's continuation depends on. Wall
+clock goes on the line because it is the cost invisible in a token count and the one a silent
+dispatch spends.
 
 ## The compaction recommendation, every task boundary
 
@@ -231,7 +256,9 @@ Read it for when `yes` is warranted, what a `no` obliges, and why a live executo
 `yes`. This office narrows it in exactly two ways:
 
 - **The boundary is a task reaching `APPROVED`**, not merely a phase closing — this office runs a
-  loop, so it has more boundaries than a linear office and each one is a real offer.
+  loop, so it has more boundaries than a linear office and each one is a real offer. **A landed
+  milestone is the strongest boundary there is**: the state that must survive is a branch name and a
+  PR number, so recommend `yes` there almost always.
 - **The field is the last one on the status line above**, so it rides a line the user is already
   reading and never becomes a message of its own.
 
@@ -278,7 +305,10 @@ surface, and split on surface boundaries, never on file count.
 
 ## Resuming an interrupted run
 
-The GOAL block plus the plan's task states is the whole resume record. On resume: re-read the GOAL,
-re-probe all three tools' headroom (a long run may have crossed a window boundary), re-check which done-criteria are
-green **by running their verify commands** — not by trusting the prior session's notes — and
-re-enter the loop at the first red one.
+**The landed milestones are the resume record.** Read what is merged first — `gh pr list --state
+merged`, then the branch — because that is durable in a way a plan file's task notes are not. Then
+re-read the GOAL, re-check which done-criteria are green **by running their verify commands** rather
+than trusting the prior session's notes, and re-enter the loop at the first red one.
+
+Probe headroom on resume only if the run is long enough for it to matter. Do not re-derive state a
+merged PR already proves.

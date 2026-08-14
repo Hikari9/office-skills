@@ -12,9 +12,12 @@ is how they resolve once installed alongside this plugin.
 
 This office says **Executor** for core's `executor` role — same authority, same gates, same schema
 id. A **Worker** is this office's name for a per-task sub-delegate; core has no separate role for it,
-because it holds no authority of its own. **PM** and **Plan-reviewer** are added roles, legal under
-`office-core/protocol/roles-and-authority.md`: the plan-review gate *adds* a gate rather than
-absorbing one, and the PM is a coordinator holding no planner-held action and no gate.
+because it holds no authority of its own. **Plan-reviewer** is an added role, legal under
+`office-core/protocol/roles-and-authority.md` because it *adds* a gate rather than absorbing one; it
+runs in the **full** gear only.
+
+**There is no PM.** Core permits a coordinator; this office declines to use one. At ≥2 executors the
+planner distributes and monitors.
 
 Keep emitting `executor` as the role id in schema fields (`office-kernel`, `run-event`,
 `capability-manifest`), and keep the sibling spoke names (`codex-executor`, `claude-executor`,
@@ -29,7 +32,6 @@ Keep emitting `executor` as the role id in schema fields (`office-kernel`, `run-
 | Independent verification pass | — | — | `agy-office/skills/agy-verification` (**mandatory**) |
 | **Plan-review** gate | `codex-office/skills/codex-reviewer` at `codex-sol` **low** | `claude-office/skills/claude-reviewer` at `opus` **low** | `agy-office/skills/agy-reviewer` at `agy` **high** |
 | **Code-review** gate | `codex-office/skills/codex-reviewer` | `claude-office/skills/claude-reviewer` | **never** — agy does not hold this gate |
-| **PM** (≥2 executors only) | the planner's brand at **executor tier**, dispatched by **CLI** per that office's `*-cli` spoke — for claude that is `claude --bg --remote-control`, **never** an in-session Agent (see auto-routing: an in-session PM returns instead of monitoring) | ← | ← |
 | Answering a blocked background agent | — | `claude-office/skills/claude-cli-send-message` | — |
 | Closeout mechanics | `codex-office/skills/codex-closeout` | `claude-office/skills/claude-closeout` | `agy-office/skills/agy-closeout` |
 
@@ -50,10 +52,14 @@ so it needs no diff package and no gate output — and it runs exactly once.
   **plan**-review floor is `opus` low. The "stricter rule wins" clause below is about conflicting
   rules for the *same* gate — it does not promote plan review to the code-review floor. Applying it
   that way doubles the cost of the cheap gate and strengthens nothing.
-- **Dispatch form follows brand match.** Planner → executor or PM is **CLI**. Executor → worker of
-  the **same** brand is **in-session**; a worker of a **different** brand is **CLI**, necessarily.
+- **Dispatch form follows brand match.** Planner → executor is **CLI**. Executor → worker of the
+  **same** brand is **in-session**; a worker of a **different** brand is **CLI**, necessarily.
   Work a delegation buys nothing for is **inline**. The brief says the executor *may* fan out; it
   never says how. Mechanism is the sibling office's, like every other mechanism.
+- **Enumerate the live-system tools in the launch.** A dispatch that needs Rock, Basecamp, Sheets, or
+  any MCP server names those tools in its permission form — the scoped allowlist carries none of them
+  by default. Mechanism per brand is the sibling `*-cli` spoke; the *obligation* is here, because a
+  task bounced back to the planner "for access" is this office's routing failure.
 - **Agy's Phase 2b is structural.** If agy executed a task, run
   `agy-office/skills/agy-verification` before review — no exceptions, no "the diff looks fine."
   That phase exists because agy can exit 0 having done nothing.

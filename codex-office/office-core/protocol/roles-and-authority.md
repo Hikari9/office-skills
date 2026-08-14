@@ -99,6 +99,36 @@ remote/DNS/config changes, credential access or creation, production data writes
 outbound message. An executor gains one of these only when the brief names that exact action;
 silence means not authorized.
 
+### Planner-held names the actor, not a pause
+
+Two different things wore one label and the conflation cost whole runs. **Planner-held** means
+*the planner performs this action, never a delegate.* It does **not**, on its own, mean the run
+stops and asks again — a plan the user approved is authority the run already holds.
+
+A planner-held action executes **without a new go-ahead** when both hold:
+
+1. **The approved plan names that exact action**, verbatim, in a `named_actions:` block — the
+   target environment, the command or write, and what it changes. A general permission ("deploy
+   when done") does not name an action; `apply_form_insights_pages.py --yes-prod` does.
+2. **Its preconditions are met and stated**: a dry run reviewed first where the tool offers one,
+   a named backup or revert target, and a **read-back after** proving what landed. An office may
+   add preconditions; none may drop one.
+
+Anything **not** named in the approved plan is unauthorized, and that is what the standing stop
+protects. So the gate moved earlier rather than disappearing: it is spent at approval, on a list
+the user read, instead of mid-run on a decision they have already made once.
+
+**Two things stop the run regardless of what the plan says:**
+
+- **Outbound messages** — email, chat, public post, bulk outreach. Audience and draft surfaced,
+  approval taken in the current session, every time. A plan cannot pre-authorize these.
+- **A genuinely user-owned decision** the plan did not anticipate — a fork where different
+  choices produce materially different work. Recommend first, then ask; never infer.
+
+**A named action whose preconditions fail is not a named action.** The dry run showing unexpected
+changes, a missing backup path, a read-back that does not match — each of those is a stop, and it
+is a stop *because the precondition failed*, not because the run lost its nerve.
+
 ## One writer per working tree
 
 One writing process per tree, always. Parallel work requires separate worktrees **and**
@@ -126,27 +156,60 @@ Ask, in one pass over the request as stated:
 4. **Independent review.** Would a fresh adversarial reader plausibly catch something the doer
    would not?
 
-**Any "yes" to (1), or two or more yeses across (2)–(4), and the office runs as specified.** No
-yeses, and the office is overhead: say so and do the work directly under the normal working rules.
+The answers select one of **three gears**:
 
-**State the verdict out loud before proceeding**, in two or three sentences at most: the call, the
-one or two reasons behind it, and what the alternative would have cost. Then proceed without
-asking again — the fit test is a discernment step, not a new approval gate. A user who typed the
-office's name gets an explanation of a downgrade, never a request for permission to think.
+| Answers | Gear | What runs |
+|---|---|---|
+| Any yes to **(1)** | **full** | Every phase the office declares. One-way door — never downgraded. |
+| No to (1), **two or more** yeses across (2)–(4) | **express** | The express phase set below |
+| No to (1), **one or none** | **direct** | No office. Do the work under normal working rules. |
+
+**Express promotes to full** — before dispatch, not mid-flight — if the run turns out to need more
+than one executor, more than one repo, or more than roughly three tasks. Size is what makes a
+single review round defensible; a run that outgrows the gear says so and changes gear.
+
+**State the gear out loud before proceeding**, in two or three sentences at most: the call, the one
+or two reasons behind it, and what the other gears would have cost. Then proceed without asking
+again — the fit test is a discernment step, not a new approval gate. A user who typed the office's
+name gets an explanation of the gear, never a request for permission to think.
+
+### The express phase set
+
+Express is a **declared** shape, not an improvised one. An office running express runs exactly
+these, in order, and may not thin them further:
+
+1. **A short plan, written to a file.** Outcome, done-criteria with real verify commands, the task
+   list, and the blast-radius ceiling. Approval still attaches to a path, not to a conversation.
+   Interview only to the point where a remaining unknown would change the implementation.
+   **No plan-review gate**, no coordinator, no quota probe, no benchmark read.
+2. **Implement** — delegated or inline per the delegation test.
+3. **One independent code review** by a fresh agent that did not do the work, on real evidence,
+   at the office's stated code-review floor. `CHANGES REQUIRED` re-enters the fix loop.
+4. **Commit, PR, and land it** per the office's closeout.
+
+**Cap: two review rounds.** A second `CHANGES REQUIRED` **promotes the run to full** — re-plan the
+task with the full office's plan-review gate — rather than funding a third round. Express degrades
+into full; it never deadlocks and it never lowers a bar to finish.
+
+Express drops **phases**, never **floors**. Everything in this file that is not a phase still
+binds: no self-approval, every gate held by someone who did not do the work, evidence over exit
+codes, read-backs for live-system writes, one writer per tree, the blast-radius ceiling, and the
+planner-held rules above.
 
 ### What the fit test may and may not do
 
-It may only choose **between the full office and doing the work directly.** It may not invent a
-partial office: a run that proceeds under the office does every phase that office declares.
+It chooses **only** among the three declared gears. It may not invent a fourth shape: a run that
+proceeds in a gear runs every phase that gear declares.
 
 It may **never** downgrade a run that is irreversible, production-facing, or externally visible —
-question (1) is a one-way door. Nor may it downgrade because quota is short, an executor brand is
-unavailable, or the office feels slow; those are routing and scheduling problems, and the answer to
-them is the routing table, not less review.
+question (1) is a one-way door, and it selects **full**, never express. Nor may it downgrade
+because quota is short, an executor brand is unavailable, or the office feels slow; those are
+routing and scheduling problems, and the answer to them is the routing table, not less review.
 
-An explicit caller override outranks the fit test in both directions: `plan approved: <path>` or a
-named executor means the user has already decided the office runs, and `just do it directly` means
-they have already decided it does not.
+An explicit caller override outranks the fit test in every direction: `plan approved: <path>` or a
+named executor means the user has already decided the office runs, `express` and `full` name a gear
+outright, and `just do it directly` means they have already decided against an office. A caller may
+name a gear; a caller may not name express for a run that answered yes to (1).
 
 Direct work is not unreviewed work. It follows the same non-bypassable rules — no unverified
 external mutation, read-backs over exit codes, planner-held actions still planner-held — it simply

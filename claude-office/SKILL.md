@@ -38,15 +38,26 @@ other default:
 executor as its own reviewer, downgrade the reviewer below this office's floor, remove a
 structural phase, or widen the blast-radius ceiling implicitly.
 
-## Fit test — first, before anything
+## Fit test — first, before anything, and it picks a gear
 
-Before interviewing or planning, price the run: does this office buy anything here? Any
-irreversibility / production exposure / external visibility, or two or more of {real volume or
-parallel breadth, needs an interview, would benefit from an adversarial reader} → run all four
-phases. None of it → **say so in two or three sentences and do the work directly**, under the same
-safety rules, then stop. Never downgrade a one-way-door run; never invent a half-office. A caller
-override decides it either way. Full rule: `office-core/protocol/roles-and-authority.md` → *Fit
-test*.
+Before interviewing or planning, price the run. Ask: (1) irreversible, production-facing, or
+externally visible? (2) real volume or parallel breadth? (3) needs an interview? (4) would an
+adversarial reader plausibly catch something?
+
+| Answers | Gear | What runs |
+|---|---|---|
+| Any yes to **(1)** | **full** | All four phases. One-way door — never downgraded. |
+| No to (1), **2+** yeses across (2)–(4) | **express** | Short plan → execute → **one** Opus review → land it. **Cap 2 review rounds**; a second `CHANGES REQUIRED` promotes the run to full. |
+| No to (1), **≤1** yes | **direct** | No office. Do the work under the normal safety rules, then stop. |
+
+Express promotes to full before dispatch if the run needs more than one executor, more than one
+repo, or more than roughly three tasks. It drops **phases, never floors**: no self-approval, the
+fresh Opus gate, evidence over exit codes, and read-backs all still bind.
+
+Given this office exists for irreversible and production-facing work, **most `/claude-office` runs
+answer yes to (1) and are therefore full.** Express is here so a bounded, reversible task invoked by
+name is not charged for four phases. State the gear in two or three sentences and proceed. Full rule:
+`office-core/protocol/roles-and-authority.md` → *Fit test*.
 
 ## Execution mode
 
@@ -67,15 +78,21 @@ fork-and-recover cycle. Mechanism: [claude-cli](skills/claude-cli/SKILL.md); ans
 - `PLAN DEFECT` exits the fix loop instead of consuming a round.
 - A successful exit is not evidence; the gate is the plan's validation commands with real output.
 - Live-system writes need a read-back, not an exit code.
-- Irreversible prod work is `PLANNER-HELD`, excluded in the brief.
+- Irreversible prod work is `PLANNER-HELD` — **the planner performs it, never the executor**. It runs
+  without a fresh go-ahead only when the plan's `named_actions:` names it verbatim with its dry run,
+  revert target, and read-back. Unnamed, or a precondition failed, and it stops.
+- **Land each milestone as its criteria go green** — commit, PR, merge the chain — rather than
+  batching everything into one closeout. The merged branch is the run's re-entry point.
+- **Delegated work is dispatched with the access it needs**, MCP tools enumerated in the launch,
+  production **reads** included; the brief pins the data shape and the executor reads it back.
 - User-owned decisions get a recommendation, never inference.
 
 ## Protocol version
 
-Implements office-core `1.5.0`, vendored at `office-core/` (authoritative once installed; the
+Implements office-core `2.0.0`, vendored at `office-core/` (authoritative once installed; the
 repo-root copy is the dev source). Mandatory read: `office-core/protocol/roles-and-authority.md`.
 
-**Declared narrowing of core.** Core `1.5.0` lets the planner implement inline; this office
+**Declared narrowing of core.** Core `2.0.0` lets the planner implement inline; this office
 does **not** — the planner never implements the plan here. Narrowing is legal, and it is stated so a
 reader of both files need not guess which governs.
 
@@ -118,6 +135,11 @@ plan, Global Constraints, handoff, and a diff-package file. Triage/fix `CHANGES 
 worktree, close every open Upline entry. Skipped only on `skip cleanup`. Load
 [claude-closeout](skills/claude-closeout/SKILL.md).
 
+**Phase 4 runs once per milestone, not once per run.** Every milestone whose done-criteria go green
+gets its own gate → commit → PR → merge, immediately, and then the run continues. Sync, worktree
+removal, and loop closure are terminal and run only after the last one — removing the worktree at
+milestone 1 of 3 destroys the run.
+
 **At the close of every phase**, end the status post with `compact: yes | no — <reason>` per
 [`evidence-and-handoff.md` § Run-state durability](office-core/protocol/evidence-and-handoff.md).
 It informs; it never asks, and it never blocks the phase transition. A `no` means run state lives
@@ -154,7 +176,11 @@ legitimate outcome.
 | "The executor's report says it's done" | It cannot approve its own work. Phase 3 is not optional. |
 | "I'll review it myself instead of spawning Opus" | Worst reviewer for code you've read all session. |
 | "Round 6 will converge" | Past the cap the failure is structural. Report the deadlock. |
-| "The executor can just do the deploy too" | Irreversible prod work is `PLANNER-HELD`, excluded in the brief. |
+| "The executor can just do the deploy too" | Irreversible prod work is `PLANNER-HELD` — you perform it, never the executor. |
+| "It's a prod apply, so I stop and ask" | Only if the plan didn't name it. A `named_actions:` entry with its preconditions met runs. |
+| "The plan says 'deploy when done'" | That names nothing. Exact command, target, dry run, revert, read-back — or it's a stop. |
+| "I'll PR everything at the end" | Land each milestone as it goes, or the run has no re-entry point. |
+| "The delegate can't reach Rock" | Not unless you named the MCP tools in its launch. That's a dispatch bug, not a capability limit. |
 | "The user probably wants X, I'll decide" | User-owned decisions get a recommendation, never inference. |
 | "Finding contradicts the plan, so it's wrong" | Plans are hypotheses. That's `PLAN DEFECT` or a user call. |
 | "The apply script exited 0, so it's deployed" | Live-system evidence is a read-back, not an exit code. |

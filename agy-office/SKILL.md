@@ -52,16 +52,23 @@ Anything after `/agy-office` overrides one default; honor it, echo it, keep the 
 skip it, downgrade/bypass the reviewer, route review through `agy`, remove a phase, or widen the
 blast-radius ceiling implicitly.
 
-## Fit test — first, before anything
+## Fit test — first, before anything, and it picks a gear
 
-Before interviewing, planning, or checking quota, price the run: does this office buy anything
-here? Any irreversibility / production exposure / external visibility, or two or more of {real
-volume or parallel breadth, needs an interview, would benefit from an adversarial reader} → run all
-five phases. None of it → **say so in two or three sentences and do the work directly**, under the
-same safety rules, then stop. Never downgrade a one-way-door run, and never downgrade because agy
-quota is short — that is a routing problem, and the answer is a fallback executor, not less review.
-Phase 2b is structural: a run that proceeds under this office keeps it. A caller override decides
-it either way. Full rule: `office-core/protocol/roles-and-authority.md` → *Fit test*.
+Before interviewing or planning, price the run. Ask: (1) irreversible, production-facing, or
+externally visible? (2) real volume or parallel breadth? (3) needs an interview? (4) would an
+adversarial reader plausibly catch something?
+
+| Answers | Gear | What runs |
+|---|---|---|
+| Any yes to **(1)** | **full** | All five phases. One-way door — never downgraded. |
+| No to (1), **2+** yeses across (2)–(4) | **express** | Short plan → execute → **Phase 2b** → **one** Claude review → land it. **Cap 2 review rounds**; a second `CHANGES REQUIRED` promotes the run to full. |
+| No to (1), **≤1** yes | **direct** | No office. Do the work under the normal safety rules, then stop. |
+
+**Phase 2b survives express.** It is not a review phase, it is the reason an agy executor's report is
+believable at all — exit 0 here means nothing. Express drops **phases, never floors**, and 2b is a
+floor. Never downgrade because agy quota is short either: that is a routing problem, and the answer
+is a fallback executor, not less review. Say the gear in two or three sentences and proceed. Full
+rule: `office-core/protocol/roles-and-authority.md` → *Fit test*.
 
 ## Non-bypassable safety rules
 
@@ -72,7 +79,12 @@ it either way. Full rule: `office-core/protocol/roles-and-authority.md` → *Fit
 - `--print` last or prompt is swallowed; always pass `--model`; raise `--print-timeout`.
 - Every touched interface pinned verbatim, `file:line`; executor cites real signatures.
 - One tree, one agy process; one executor per repo; parallel = separate worktrees only.
-- Commit boundary: no push/PR/deploy/remote-config/message/credentials unless authorized.
+- Commit boundary: no push/PR/deploy/remote-config/message/credentials unless authorized. Those are
+  the **planner's** to perform, and they run without a fresh go-ahead only when the plan's
+  `named_actions:` names them verbatim with a dry run, a revert target, and a read-back.
+- Land each milestone as its criteria go green — commit, PR, merge the chain — not one PR at the end.
+- Dispatch live-system work **with** its access: MCP/API tools named in the launch, production
+  **reads** included, data shape pinned in the brief, read-back required.
 - Reviewer always a Claude subagent, never `agy`; escalate out of the tool, not to it.
 - Irreversible work is `PLANNER-HELD`; explicit approval before dispatch, silence isn't approval.
 - Verdicts are `APPROVED`, `CHANGES REQUIRED`, `PLAN DEFECT`; 5-round cap; never self-approve.
@@ -81,12 +93,12 @@ it either way. Full rule: `office-core/protocol/roles-and-authority.md` → *Fit
 
 ## Protocol version
 
-Implements office-core **`1.5.0`**, vendored at `office-core/` here. Mandatory read:
+Implements office-core **`2.0.0`**, vendored at `office-core/` here. Mandatory read:
 [`roles-and-authority.md`](office-core/protocol/roles-and-authority.md) — vendored copy
 authoritative once installed; repo-root `office-core/` is the dev source. Exception:
 `agy-phase-2b` (`COMPATIBILITY.md`).
 
-**Declared narrowing of core.** Core `1.5.0` lets the planner implement inline; this office
+**Declared narrowing of core.** Core `2.0.0` lets the planner implement inline; this office
 does **not** — the planner never implements the plan here. Narrowing is legal, and it is stated so a
 reader of both files need not guess which governs.
 

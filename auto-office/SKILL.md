@@ -1,30 +1,30 @@
 ---
 name: auto-office
-description: Use ONLY when explicitly invoked via /auto-office. Router office — the current agent plans and interviews to 95% clarity, routes each task to a codex / agy / claude executor by capability and live quota, and runs goal-locked to closeout with no further go-aheads. Opus gates the plan and the code. Never self-triggered.
+description: Use ONLY when explicitly invoked via /auto-office. Router office — a fit test picks the gear (direct / express / full), the current agent plans and interviews to clarity, routes each task to a codex / agy / claude executor by capability, and runs goal-locked with no further go-aheads, landing a PR at every milestone. Opus gates the code. Never self-triggered.
 ---
 
 # Auto Office
 
 The office that chooses the office. The executor's **brand** is selected; its **tier is fixed**. One
-plan approval, then the run continues to closeout without asking again.
+plan approval, then the run goes to the end — landing each milestone as it goes — without asking again.
 
 ```
-Planner ──▶ Plan-reviewer ──▶ retires │ Planner ──▶ PM ──▶ Executor(s) ──▶ Worker | inline
-(self-reviews,  (Opus-tier, planner's │  (only when >1 executor;    (brand+tier per plan)
- plans, fixes)   brand, low effort)   │   a separate CLI agent)
+Planner ─▶ Plan-reviewer ─▶ retires │ Planner ─▶ Executor(s) ─▶ Worker | inline
+(plans, self-reviews,  full gear only│ (one per repo)   (brand+tier per plan)
+ fixes, lands)                       │
 ```
 
 | Role | Who | Job | Never does |
 |---|---|---|---|
-| **Planner** | The current agent (you) | Interview → brand per task → **self-review** → plan + GOAL → approval; drive the loop; fix inline; close out | Take a task away from review; approve work, its own included |
-| **Plan-reviewer** | Fresh, planner's brand, Opus-tier **low** | One adversarial pass over the plan, before user approval, then **retires** | Distribute work; return; hold a later gate |
-| **PM** | CLI subagent, executor tier, ≥2 executors only | Hand out the briefs the plan wrote; collect results | Hold a planner-held action or a gate; re-decide routing |
+| **Planner** | The current agent (you) | Interview → route → self-review → plan + GOAL → approval; drive the loop; fix inline; land each milestone | Take a task from review; approve work, its own included |
+| **Plan-reviewer** | Fresh, planner's brand, Opus **low**. **Full gear only** | One adversarial pass over the plan before approval, then **retires** | Distribute work; return; hold a later gate |
 | **Executor** | One per repo, brand per plan, **sonnet-tier high always** | Implement its slice; may fan out in-session | Approve its own work; exceed the ceiling |
 | **Worker** | Per task; brand **and tier** per plan | One task, never a second writer | Widen scope; be promoted mid-run |
 | **Reviewer (code)** | Fresh `opus` high (`codex-sol` high when Codex *plans*) | Adversarial gate every round | Fix what it gates |
 
 **Core principle: no one gates their own work, and inline work is still reviewed.** The planner *may*
-implement, and still never approves the result.
+implement, and still never approves the result. **There is no PM** — removed in 3.0.0; at ≥2
+executors the planner distributes and monitors.
 
 ## Invocation gate and caller overrides
 
@@ -34,19 +34,29 @@ planner is invoked with `/auto-office` **plus this plugin directory's absolute p
 ([delegation-map.md](references/delegation-map.md)).
 
 Anything after `/auto-office` overrides discernment and is echoed in the kickoff line: `use codex`,
-`executor: agy`, `reviewer: codex`, `no loop`, `skip cleanup`, `plan approved: <path>`. A caller
-override is the **only** thing that may change a default, executor tier included — and none may skip
-independent review, let an executor review itself, drop a reviewer floor, remove a phase, or widen the
-blast radius implicitly.
+`express`, `full`, `no loop`, `skip cleanup`, `plan approved: <path>`. A caller override is the
+**only** thing that may change a default, executor tier included — and none may skip independent
+review, let an executor review itself, drop a floor, remove a phase, or widen blast radius.
 
-## Fit test — first, before anything
+## Fit test — first, and it picks a gear
 
-Before interviewing, planning, or probing quota, price the run: does this office buy anything here?
-Any irreversibility / production exposure / external visibility, or two or more of {real volume or
-parallel breadth, needs an interview, would benefit from an adversarial reader} → run the office as
-specified. None of it → **say so in two or three sentences and do the work directly**, under the
-same safety rules, then stop. Never downgrade a one-way-door run, and never downgrade because quota
-is short — that is a routing problem. A caller override decides it either way. Full rule:
+Before interviewing or planning, price the run. Ask: (1) irreversible, production-facing, or
+externally visible? (2) real volume or parallel breadth? (3) needs an interview? (4) would an
+adversarial reader plausibly catch something?
+
+| Answers | Gear | What runs |
+|---|---|---|
+| Any yes to **(1)** | **full** | Everything below. One-way door — never downgraded. |
+| No to (1), **2+** across (2)–(4) | **express** | Short plan → implement → **one** Opus review → land it. No plan-review, quota probe, benchmark read, run report, or ledger row. **Cap 2 rounds**; a 2nd `CHANGES REQUIRED` **promotes to full**. |
+| No to (1), **≤1** yes | **direct** | No office. Work under the normal safety rules, then stop. |
+
+**Express promotes to full before dispatch** if the run needs >1 executor, >1 repo, or more than ~3
+tasks — size is what makes one review round defensible. It drops **phases, never floors**: every rule
+under *Non-bypassable safety rules* below still binds.
+
+**State the gear and why in two or three sentences, then proceed** — a discernment step, not a new
+approval gate. Never downgrade for quota; that is a routing problem. A caller may name a gear, but
+none may name express for a run that answered yes to (1). Full rule:
 `office-core/protocol/roles-and-authority.md` → *Fit test*.
 
 ## Routing, in one screen
@@ -58,13 +68,14 @@ recon, bulk breadth, **claude** cross-cutting ambiguity. Rubric:
 **Dispatch form is derived, not priced** — planner fans out → CLI, executor fans out → in-session,
 inline when a brief takes more thought than the change. Near-ties: same tier, both fit, pick one.
 
-**Headroom is measured, then weighed — never a hardcoded gate.** Probe first; UNKNOWN means
-unavailable. State it **per window, with reset times**, in the kickoff line. The planner's question:
-is a low-threshold agent worth it if quality is massively lost otherwise? Agy: **3 consecutive
-tasks**, hard cap.
+**Headroom is probed on demand, not by ritual** — a long run, a thin brand, or the user asking. Then
+weigh it; never gate on a number. UNKNOWN means unavailable. Agy: **3 consecutive tasks**, hard cap.
 
-**Model and effort are fixed by role** (table above); `xhigh`/`ultra`/`max` and model substitutions
-are **user-invoked only**.
+**Live-system work is delegated WITH its access** — MCP/API tools enumerated in the launch,
+production reads included, shape pinned in the brief, read-back required.
+
+**Model and effort are fixed by role**; `xhigh`/`ultra`/`max` and model substitutions are
+**user-invoked only**.
 
 ## Non-bypassable safety rules
 
@@ -73,32 +84,40 @@ are **user-invoked only**.
 - **No self-approval, ever** — not the executor on its diff, not the planner on its inline fix.
 - Executor is **sonnet-tier high** always; a worker's tier is the plan's call, never raised mid-run.
 - A delegation buys tier, isolation, parallelism, **or price** — and **every inline row states in a
-  clause what a delegation would have bought and why the brief costs more than the edit.** File
-  count and task count are never the test.
+  clause what a delegation would have bought.** File and task count are never the test.
 - Explicit plan approval before dispatch — silence is not approval.
 - Fresh Opus code reviewer, resumed across rounds; **`CHANGES REQUIRED`** re-enters the fix loop; no
-  approval without pasted evidence; **5-round cap** per task.
-- `PLAN DEFECT` and `BRIEF DEFECT` exit the loop without consuming a round; at **2** total (not merely consecutive)
-  `CHANGES REQUIRED` on one task, presume `PLAN DEFECT` and re-plan it.
-- A successful exit is **not evidence** — the gate is the plan's validation commands with real output;
-  live-system writes need a read-back.
-- Irreversible production work is `PLANNER-HELD`, excluded from every brief. The loop never widens
-  blast radius or adds a repo/environment; user-owned decisions get a recommendation, never inference.
+  approval without pasted evidence; **5-round cap** (2 in express, then promote to full).
+- `PLAN DEFECT` and `BRIEF DEFECT` exit the loop without consuming a round; at **2** total (not merely
+  consecutive) `CHANGES REQUIRED` on one task, presume `PLAN DEFECT` and re-plan it.
+- A successful exit is **not evidence** — the gate is the plan's validation commands with real
+  output; live-system writes need a read-back.
+- Planner-held actions are **the planner's to perform**, never delegated. They stop the run only when
+  the plan did not **name them verbatim** with preconditions (dry run, revert target, read-back). The
+  loop never widens blast radius or adds a repo/environment.
 
-Implements office-core `1.5.0`, vendored at `office-core/`. Mandatory read:
+Implements office-core `2.0.0`, vendored at `office-core/`. Mandatory read:
 `office-core/protocol/roles-and-authority.md`.
 
 ## The autonomous run
 
-After plan approval this is **end-to-end**. No go-aheads between phases; report progress and keep
-moving. Caps, stops: [auto-loop](skills/auto-loop/SKILL.md).
+After plan approval this is **end-to-end**. No go-aheads; report progress and keep moving. Caps and
+stops: [auto-loop](skills/auto-loop/SKILL.md).
 
-`self-review → plan-review → approve → GOAL locked → per task: dispatch → verify → Opus review → fix
-→ every done-criterion green → closeout → run report with the cost retrospective`
+```
+self-review → plan-review (full) → approve → GOAL locked
+  per task:      dispatch → verify → Opus review → fix → APPROVED
+  per milestone: gate → commit → PR → land it → keep going
+  at the end:    sync, close loops, short run report
+```
 
-It stops early for exactly four things: a `PLANNER-HELD` step, a destructive or production-facing
-write, an external send, or a genuinely user-owned decision (an `AskUserQuestion`, recommendation
-first). Everything else it decides.
+**The run lands work as it goes.** A milestone is a group of done-criteria declared at approval; when
+they go green the loop commits, PRs, and merges the chain, then continues. **The merged branch is the
+resume record** — an interruption costs one milestone, not the run.
+
+It stops for two things: an **external send**, and a **user-owned decision the plan did not
+anticipate** (`AskUserQuestion`, recommendation first). Everything else — production applies and
+merges the plan named included — it executes.
 
 ## Routing table
 
@@ -109,30 +128,28 @@ one. Protocol amnesia past Phase 2 is the observed failure; a re-read is the che
 
 | Phase / need | Load |
 |---|---|
-| Phase 1 — interview, plan + GOAL, **self-review, the one plan-review pass**, approval | [auto-planning](skills/auto-planning/SKILL.md) |
-| Phase 1 — brand per unit of work, dispatch form, model+effort; headroom, both windows | [auto-routing](skills/auto-routing/SKILL.md) · [quota-probe.md](references/quota-probe.md) |
-| Routing — this workspace's ledger, read **before** the benchmarks | [routing-outcomes.md](references/routing-outcomes.md) · [model-benchmarks.md](references/model-benchmarks.md) |
-| Phase 2+ — goal loop, caps, stop conditions, drift checks | [auto-loop](skills/auto-loop/SKILL.md) |
+| Phase 1 — interview, plan + GOAL + milestones + named actions, self-review, approval (**full** adds plan-review) | [auto-planning](skills/auto-planning/SKILL.md) |
+| Phase 1 — brand per unit of work, dispatch form, model+effort | [auto-routing](skills/auto-routing/SKILL.md) |
+| Routing — the local ledger, read **before** the benchmarks | [routing-outcomes.md](references/routing-outcomes.md) · [model-benchmarks.md](references/model-benchmarks.md) |
+| Phase 2+ — goal loop, milestone landing, caps, stops, drift checks | [auto-loop](skills/auto-loop/SKILL.md) |
 | Every dispatch — sibling spoke to load, forced-invocation path | [delegation-map.md](references/delegation-map.md) |
-| Phase 4 (unless `skip cleanup`) — commit, PR, cost retrospective, self-heal | [auto-closeout](skills/auto-closeout/SKILL.md) |
+| Milestone landing and final closeout (unless `skip cleanup`) | [auto-closeout](skills/auto-closeout/SKILL.md) |
+| Headroom, **only when you have a reason to probe** | [quota-probe.md](references/quota-probe.md) |
 | Doubt about core — the plan/evidence/verdict floor | `office-core/protocol/*` |
 
 auto-office owns **routing and the loop**, never CLI or sub-agent mechanics — every phase loads the
 sibling spoke for the chosen brand. Where two rules bind the **same** gate the stricter wins; a
 sibling's *role* narrowing is never imported ([delegation-map.md](references/delegation-map.md)).
 
-## Run telemetry
+## Telemetry and maintenance
 
-One event per `office-core/schemas/run-event.schema.json` per explicit dispatch, plus
-`routing_reason`, `headroom_percent` per tool **per window**, `benchmark_snapshot_date`,
-`loop_iteration`, `reroute_from`. Match on session/worktree identity, never a display label.
-
-## Maintenance
+One event per `office-core/schemas/run-event.schema.json` per explicit dispatch, plus `gear`,
+`routing_reason`, `loop_iteration`, `milestone`, `reroute_from` — and `headroom_percent` per window
+only when a probe ran. Match on session/worktree identity, never a display label.
 
 Bump `plugin.json` `version` to match the new `CHANGELOG.md` heading, re-vendor core if changed, run
-`check-plugins.sh` from the **office-skills root** (this plugin's `scripts/` holds only quota probes).
-A shared invariant is a core change proposal, never a local edit; editing these skills is
-Opus-planner-only.
+`check-plugins.sh` from the **office-skills root**. A shared invariant is a core change proposal,
+never a local edit; editing these skills is Opus-planner-only.
 
 ## Red Flags — stop and correct
 
@@ -140,17 +157,18 @@ Opus-planner-only.
 |---|---|
 | "This is routable, I'll auto-invoke" | Only an explicit `/auto-office` invokes this. |
 | "It's only a few files, I'll do it" | You are the priciest writer in the office. Volume is a purchase. Justify the inline row in a clause, or delegate it. |
-| "Codex is at 14%, so it's out" | No threshold exists. Weigh it, state it, spend it if it's worth it. |
-| "Quota's thin, I'll skip saying so" | It goes in the kickoff line, or the user can't override. |
+| "Codex is at 14%, so it's out" / "better probe quota first" | No threshold exists — weigh it and spend it if it's worth it. And probe only with a reason; the ritual probe is gone. |
 | "This task is hard, I'll use Opus" | The executor is pinned; a bigger *worker* is legal only if the plan declared it. |
-| "I fixed it inline, so it's mine to approve" | Lifting planner-implements did not lift planner-never-approves. Fresh reviewer, every time. |
+| "I fixed it inline, so it's mine to approve" | Planner-implements did not lift planner-never-approves. Fresh reviewer, every time. |
 | "Agy is on task 5 and doing fine" | It forgets past 3. Re-brief or re-route. |
 | "The plan's done, I'll ask before executing" | You have approval. The run is end-to-end. |
-| "It's autonomous, so I'll deploy too" | Irreversible prod is `PLANNER-HELD`. The loop stops. |
+| "It's a prod apply, so the loop stops" | Only if the plan didn't name it. A named action with preconditions met runs — and *you* perform it. |
+| "'Deploy when done' — that's named" | It names nothing. Exact command, target, dry run, revert, read-back. Vague = unauthorized = stop. |
+| "I'll PR everything at the end" | Land each milestone. A run with no landed checkpoint has no re-entry point. |
+| "This needs MCP, so I'll keep it" | Delegate it *with* the tools enumerated, production reads included. Withholding access is a dispatch bug. |
 | "CLI was blocked last time" | A past denial is not evidence about now; the dispatch form is an assignment. Attempt it. |
-| "The PM says monitoring started" | That is a *return*, not an update — an in-session PM unwinds every time it stops. Spawn it as a `--bg` CLI agent, or monitor yourself. |
-| "Executor says done" | It cannot approve its own work. Review is not optional. |
-| "Agy wrote it, agy can review it" | The **code** gate is a fresh Opus reviewer. |
+| "My worker said it'll report back" | That is a *return*. An in-session subagent unwinds once it has no live children. Blocking waits go `--bg`, or you hold them. |
+| "Executor says done" / "agy can review agy" | Nobody gates their own work; the **code** gate is a fresh Opus reviewer. |
 | "Round 6 will converge" | Past the cap the failure is structural. Report the deadlock. |
-| "Benchmarks in my head are current" | Read the snapshot; refresh it if stale. |
+| "Express needs a third round" | Two is the cap. A 2nd `CHANGES REQUIRED` promotes to full; it buys no extra round. |
 | "The loop can add one more repo" | That widens the blast radius. Not the loop's call. |

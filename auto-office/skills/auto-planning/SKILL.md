@@ -26,32 +26,31 @@ and state the verdict. A run that fails the fit test does not get a plan; it get
 Announce before doing anything else:
 
 ```
-auto-office · executors: <n> (<brand(s)>, <fit reason>) · PM: <yes at ≥2 | none>
-headroom: codex <n>% weekly (resets <t>) · claude <n>%/5h + <n>%/7d (resets <t>/<t>)
-          · agy <n>% (resets <t>)          [UNKNOWN where a probe failed]
-quota call: <why this brand is worth its headroom, or why we shifted> · fallback: <brand>
-plan-reviewer: <brand> <model> low · reviewer: opus high · benchmarks: <captured date>
+auto-office · gear: <express|full> (<the fit-test reason, one clause>)
+executors: <n> (<brand(s)>, <fit reason>) · milestones: <n>
+reviewer: opus high · plan-reviewer: <brand> <model> low   [full only]
+headroom: <only if probed — per window, with reset times, UNKNOWN where a probe failed>
 loop: on · overrides: <none|…>
 ```
 
-The quota line is not decoration. A stated number and a stated reason are what let the user
-override a spend decision before it costs anything. **Report every window with its reset time** —
-one probe number is a routing convenience, not a measurement, and a single-number delta across a
-window boundary is meaningless (last run read `82% → 52% → 85%` and none of it meant anything).
-
-If the benchmark snapshot was refreshed, or a capability role changed hands, add that line too.
+**The gear line is the important one.** It tells the user what they are about to pay for and is the
+cheapest place to overrule it. The headroom line appears only when a probe actually ran; when it
+does, report **every window with its reset time** — a single-number delta across a window boundary
+is meaningless (one run read `82% → 52% → 85%` and none of it described anything).
 
 ## Order of operations
 
-1. **Probe headroom for all three tools** ([quota-probe.md](../../references/quota-probe.md)) —
-   before routing. You need the numbers to reason about the spend, not to apply a threshold.
+1. **Run the fit test and state the gear** (hub). Express skips steps 2, 6-review, and most of what
+   follows; the checklist below is the **full** gear unless a step says otherwise.
 2. **File the tracking issue** by default, before exploring.
-3. **Interview to 95% clarity.** Ask in batches, not one at a time. The floor below is not optional.
+3. **Interview to clarity.** Ask in batches, not one at a time. The floor below is not optional in
+   full; in express, interview only until a remaining unknown would not change the implementation.
 4. **Recon with agy scouts, in parallel** — read-only, each returning file paths and line numbers.
    Verify their claims cheaply before building on them. A scout claim you cannot verify is dropped.
 5. **Route, fully** ([auto-routing](../auto-routing/SKILL.md)) — **every task's brand**, and how many
    executors the run needs. Model and effort are fixed by role, so they are filled in, not decided.
    Do not leave routing "to be decided during execution"; an unassigned task is an unreviewable cost.
+   Probe headroom **only if you have a reason to**; it is no longer a mandatory step.
 6. **Write the plan** to `docs/plans/<slug>.md` **in the target repo** — see *Where a run's files
    live* below. The five required sections are core's
    ([`plan-contract.md`](../../office-core/protocol/plan-contract.md)) and none may be dropped:
@@ -64,11 +63,13 @@ If the benchmark snapshot was refreshed, or a capability role changed hands, add
 
    The GOAL block and the task assignment table below are additions to those sections, never
    substitutes for them.
-7. **Write the GOAL block** into the plan (below). This is what the loop is measured against.
-7.4 **Self-review the plan** (below). Mandatory, before any hand-off.
-7.5 **One adversarial plan-review** (below). Mandatory, before user approval.
+7. **Write the GOAL block** into the plan (below), including its `milestones:` and `named_actions:`.
+   This is what the loop is measured against and what authorizes its landings.
+7.4 **Self-review the plan** (below). Mandatory in **both** gears, before any hand-off.
+7.5 **One adversarial plan-review** (below). Mandatory in **full**; **not run in express**.
 8. **Get explicit approval.** Silence is not approval. Say plainly that approval starts an
-   end-to-end run that will not stop for further go-aheads except at the four stop conditions.
+   end-to-end run which lands each milestone as it goes, executes the `named_actions:` list without
+   asking again, and stops only for an external send or a decision the plan did not anticipate.
 
 ## Interview floor — 95% clear
 
@@ -82,16 +83,20 @@ do not write a plan until every item is answered or explicitly deferred by the u
   a verification for a requirement, the requirement is not yet specified.
 - **Blast radius** — which repos, environments, and live systems. Production named explicitly or
   excluded explicitly. Never inferred.
-- **Irreversible steps** — deploys, migrations, external sends, deletions. Each one becomes
-  `PLANNER-HELD`.
+- **Irreversible steps** — deploys, migrations, prod applies, deletions. Each one becomes
+  `PLANNER-HELD` **and gets a `named_actions:` entry**, because that entry is what lets the run
+  perform it without stopping. An irreversible step you cannot yet write out exactly is one the
+  interview is not finished on. External sends are the exception: they never go in the list.
+- **Milestones** — which done-criteria group into a shippable landing, and in what order. Ask the
+  user if the natural grouping is not obvious; this is what they will see arrive as PRs.
 - **Interfaces** — the signatures, schemas, routes, or file boundaries that tasks must agree on.
   Pin these now; a routed executor cannot invent them consistently.
 - **Constraints** — stack, conventions, domain skills that must load, things not to touch.
 - **Speed vs correctness** — which one the user is buying here. This directly moves the route.
 - **Other work queued** — only if a probe came back thin and this run might drain a window the user
   needs later. Otherwise do not ask; weigh it yourself and state the call.
-- **How many executors this run needs** — one repo or several, one slice or several. This decides
-  whether a **PM** is spawned at all: no PM below two executors.
+- **How many executors this run needs** — one repo or several, one slice or several. More than one
+  also promotes an express run to full.
 - **User-owned decisions** — anything you would otherwise guess. Recommend, never infer.
 
 ## The task assignment table
@@ -137,18 +142,40 @@ done_criteria:            # each independently verifiable, each with a real comm
     verify: <exact command or read-back>
   - id: dc2
     ...
+milestones:               # each a shippable landing; every dc belongs to exactly one
+  - id: m1
+    criteria: [dc1, dc2]
+    lands_on: <branch>    # first hop of the repo's real promotion chain, read from the repo
+  - id: m2
+    criteria: [dc3]
+    lands_on: <branch>
+named_actions:            # planner-held steps the run may perform WITHOUT stopping
+  - action: <the exact command or write, verbatim>
+    target: <environment / host / record>
+    changes: <what it changes>
+    dry_run: <the command that previews it, or "none available">
+    revert: <backup path, prior version, or revert command>
+    read_back: <the command or read proving what landed>
 non_goals:                # what the loop may NOT expand into
   - ...
 blast_radius:
   repos: [...]
   environments: [...]     # name production or say "none"
-planner_held:             # loop stops here, every time
-  - <irreversible step>
 caps:
-  review_rounds_per_task: 5
+  review_rounds_per_task: 5   # 2 in express, and a 2nd CHANGES REQUIRED promotes to full
   agy_consecutive_tasks: 3
   loop_iterations: <n>
 ```
+
+**`named_actions:` replaces the old `planner_held:` list, and the replacement is not cosmetic.** The
+old list said *stop here*; this one says *you may do this, here is how you prove it went right*.
+Every entry still names a planner-held action — the planner performs it, never a delegate — and an
+action absent from this list is unauthorized, which is the stop. A vague entry (`deploy to prod`)
+authorizes nothing and will stop the run; write the command.
+
+**Milestone rules:** every done-criterion belongs to exactly one milestone; a milestone that leaves
+the tree broken without the next one is not a milestone, it is half of one; and `lands_on` comes from
+reading the repo's merged PRs, never from its default branch. One milestone is a legitimate plan.
 
 **A named hazard your gates cannot detect is a TASK, not a caveat.** If the plan writes down that
 its validation cannot see its worst failure mode — "nothing in this repo executes Lava", "the tests
@@ -196,11 +223,19 @@ and may not be used to skip it.** Measured: self-review found 10 findings, the f
 overlapping on only 4. Self-review finds what the author knows it hand-waved; the fresh gate finds what
 the author could not see.
 
-## Step 7.5 — one adversarial plan-review (mandatory)
+## Step 7.5 — one adversarial plan-review (full gear only)
+
+**Express does not run this gate**, which is most of what makes express cheap. Everything below is
+the full gear.
 
 Between self-review and user approval. The plan-reviewer is a **fresh agent of the planner's own
 brand**, at that brand's plan-review row in [auto-routing](../auto-routing/SKILL.md) — Opus-tier,
 **low** effort. Spoke paths: [delegation-map.md](../../references/delegation-map.md).
+
+**This gate stays because it is the best-value item in every run that has recorded one** — 14 vs 4,
+22 vs 8, 24 vs 6 findings against self-review, overlap near zero each time, blockers that were real.
+When the fit test picks express it is betting the run is small enough not to need it; a second
+`CHANGES REQUIRED` is that bet losing, and the run promotes to full and runs this pass.
 
 It receives: the **plan file path**, the GOAL block, and the task assignment table. It returns
 **numbered findings**. **One pass, no rounds.** The planner applies the findings, records which it
@@ -215,8 +250,7 @@ edits the plan, and the planner may reject a `Fix:` on the record.
   self-review findings into its brief. That anchors the gate and converts an independent pass into a
   confirming one. Merge the two lists *after* the verdict returns.
 - **It retires permanently** after that single pass. It is never recalled, never distributes work,
-  and holds no later gate. Distribution is the **PM**'s job, and the PM is a different agent spawned
-  only at ≥2 executors.
+  and holds no later gate. Distribution is the planner's.
 - Why one pass and not a loop: user approval is the scarcest thing in the run and must not be spent
   on an unreviewed plan — but a plan-review *loop* is itself the kind of cost the plan-review exists
   to prevent.
@@ -238,9 +272,11 @@ run report into the target repo.
 
 ## Approval
 
-Present: the route and why, the plan, the GOAL block, the stop conditions, the plan-review findings
-and what you did with each, and the rough cost shape. Then take an explicit yes. After that, run —
-see [auto-loop](../auto-loop/SKILL.md).
+Present: the gear and why, the route, the plan, the GOAL block, **the milestones as the PRs they will
+become**, **the `named_actions:` list read out plainly** — this is the moment the user authorizes
+every production step the run will take, so it is the one list they must actually read — the two stop
+conditions, and (full only) the plan-review findings and what you did with each. Then take an
+explicit yes. After that, run — see [auto-loop](../auto-loop/SKILL.md).
 
 If the user's approval carries a change ("yes but use claude"), treat it as a caller override:
 re-route, echo the new kickoff line, and proceed without a second approval round.

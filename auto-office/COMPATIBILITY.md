@@ -3,8 +3,8 @@
 | Line | Value |
 |---|---|
 | Plugin version | `2.10.0` (see `.claude-plugin/plugin.json`) |
-| Core protocol supported | `>=1.2.0 <2.0.0` |
-| Core protocol vendored | `1.5.0` (see `office-core/SNAPSHOT.json`) |
+| Core protocol supported | `>=2.0.0 <3.0.0` |
+| Core protocol vendored | `2.0.0` (see `office-core/SNAPSHOT.json`) |
 | Vendored snapshot | `office-core/SNAPSHOT.json`, written by `scripts/vendor-core.sh` |
 | Sibling plugins required | `codex-office`, `claude-office`, `agy-office` — for the CLI, executor, reviewer, and closeout mechanics of whichever brand is routed to |
 
@@ -64,16 +64,15 @@ exceptions:
       are untouched. Its floor is declared separately (opus low) and binds only itself. It runs
       exactly once and is never recalled, so it can never gate work it previously approved.
     widens_core_authority: false
-  - id: auto-pm-fanout
+  - id: auto-no-coordinator
     owner: auto-office
     reason: >
-      When a run needs two or more executors, the planner spawns a PM by CLI to distribute the
-      briefs the plan already wrote and collect the results. The PM is core's permitted coordinator
-      role: it holds no planner-held action and no gate of any kind — commit, PR, merge, deploy,
-      escalation, and closeout stay with the planner — and it never re-decides routing, because a
-      PM facing a routing decision means the plan was incomplete, which is a PLAN DEFECT. It is a
-      separate role from the plan-reviewer, which has already retired, so no agent both distributes
-      work and gates it. A single-executor run has no PM at all.
+      Core permits a coordinator role; this office declines to use one. At two or more executors the
+      planner distributes the briefs the plan already wrote and monitors the lanes itself. This
+      replaces the withdrawn auto-pm-fanout exception, which was removed in plugin 3.0.0 after the
+      only run that spawned a PM recorded it dispatching three lanes for roughly an hour and then
+      being driven directly by the planner regardless. Declining a permitted role removes an actor
+      and adds no authority anywhere.
     widens_core_authority: false
   - id: auto-mandated-executor-tier
     owner: auto-office
@@ -99,9 +98,19 @@ exceptions:
     widens_core_authority: false
 ```
 
-## Re-audit against core 1.2.0
+## Re-audit against core 2.0.0
 
-All four original exceptions were re-checked against core `1.2.0` and all four remain
+Core `2.0.0` absorbed three things this office would otherwise have had to declare, so they are
+**not** exceptions here:
+
+- **The express gear** is a core-declared phase set, chosen by core's own fit test. This office
+  selects among core's gears; it does not invent a shape.
+- **Milestone landing** is core's repeatable closeout plus the plan contract's `milestones:` block.
+- **Named actions** are core's — a planner-held action stays the planner's to perform, and the plan
+  naming it verbatim with preconditions is what removes the *pause*, not the *actor*. This office
+  narrows nothing here and widens nothing; it inherits the rule intact.
+
+The remaining exceptions were re-checked against core `2.0.0` and all remain
 `widens_core_authority: false`:
 
 - `auto-orchestrator-selection` — still a runtime-mechanics choice about which brand fills the

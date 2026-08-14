@@ -1,5 +1,91 @@
 # Changelog — auto-office
 
+## 3.0.0 — 2026-08-14
+
+Core `2.0.0`. **The efficiency release.** The office was paying full price on every run and the
+user's own ledger said so — one row records closeout at ~8× implementation. Four changes, three of
+them deletions.
+
+### The fit test now picks a gear, not a yes/no
+
+`direct` / `express` / `full`. Express is a **core-declared** phase set: short plan → implement →
+**one** Opus code review → land it. No plan-review, no quota probe, no benchmark read, no run
+report, no ledger row. Cap **2** review rounds; a second `CHANGES REQUIRED` **promotes the run to
+full** rather than funding a third. Express also promotes before dispatch if the run needs >1
+executor, >1 repo, or more than ~3 tasks.
+
+Any yes to the irreversible/production/externally-visible question still forces **full**, and no
+caller override may name express for such a run. Express drops **phases, never floors**.
+
+Why: the office was all-or-nothing by construction (core forbade a partial office outright), so a
+medium-sized run either paid for the whole machine or got nothing. In practice it got nothing — the
+user ran vanilla Opus instead and got the same result. Express is the missing middle gear.
+
+### The run lands each milestone instead of one PR at the end
+
+The plan declares `milestones:` — groups of done-criteria that are shippable on their own — at Phase
+1, reviewed at approval. When a milestone's criteria go green the loop gates, commits, opens the PR,
+and merges the promotion chain, **then continues**. `auto-closeout` now runs once per milestone;
+sync, worktree removal and loop closure stay terminal.
+
+**The merged branch is the resume record.** Resume reads what is merged, not a plan file's task
+notes. An interruption costs one milestone rather than the run — which is the actual problem this
+solves: work that lands only at the end gets abandoned when the session's context is lost.
+
+### Stop conditions: four → two, and production work runs
+
+`named_actions:` replaces `planner_held:` in the GOAL block. Planner-held now names the **actor**
+(the planner performs it, never a delegate) and no longer implies a **pause**. An action the approved
+plan names verbatim — exact command, target, what it changes, dry run, revert target, read-back —
+executes without a fresh go-ahead. Deploys, prod applies, migrations, merges to deploying branches.
+
+The two remaining stops: an **external send** (never pre-authorizable), and a **user-owned decision
+the plan did not anticipate**. A vague entry (`deploy when done`) names nothing, is unauthorized, and
+stops the run; a failed precondition is likewise a stop, and it stops *because the precondition
+failed*.
+
+The gate did not disappear — it moved to approval, onto a list the user reads once, instead of
+firing mid-run on a decision they already made.
+
+### Live-system work is delegated with its access
+
+New brief clause 4, and a matching rule in `auto-routing` and `delegation-map`: a task touching
+Rock/Basecamp/Sheets/any MCP server is dispatched with **those tools enumerated in the launch**,
+**production reads included**, and its **data shape pinned** — entity, operation, field names, ID
+provenance, expected envelope — with the executor pasting back one real record.
+
+Root cause of the old behaviour, now fixed in `claude-office/skills/claude-cli`: the default scoped
+`--allowedTools` allowlist carries **no MCP tools at all** unless named. Agents reported they could
+not reach the system, work bounced back to the planner, and the episode read as a capability limit.
+It was a dispatch bug. A pinned shape contradicted by reality is now a `BRIEF DEFECT` — one read
+instead of a wrong implementation plus the rounds that find it.
+
+### Removed
+
+- **The PM role, entirely.** The one run that spawned one recorded it dispatching three lanes for
+  ~1h and then being driven directly by the planner anyway. At ≥2 executors the planner distributes
+  and monitors. `auto-pm-fanout` is withdrawn; `auto-no-coordinator` replaces it. The underlying
+  lesson — anything containing a blocking wait must be a background process, since an in-session
+  subagent unwinds the moment it has no live children — is kept, reframed on **workers**, which is
+  where it was also observed.
+- **The mandatory quota probe.** Demoted to on-demand. Three consecutive runs logged "headroom never
+  probed" as a defect, filed an issue about it each time, and lost nothing — the definition of a step
+  that was never load-bearing. Probe when the run is long, a brand looks thin, or the user asks.
+- **The cost retrospective**, and 7 of the run report's 14 fields. What survives: goal, landed,
+  route, task ledger, stops, **not verified**, still open. Express emits no report; the PR bodies are
+  the record.
+
+### Tightened
+
+- **Ledger rows are capped at two lines.** Historical rows are kept as history, explicitly *not* as a
+  template — they reached several thousand words each and stopped being a routing input. A lesson
+  needing more than a sentence is a rule change: make the change in the file that owns the rule and
+  let the row cite it.
+- **Self-heal bar raised: write a rule or write nothing.** Nothing durable to add is now stated as
+  the *expected* outcome. This mechanism is why the plugin reached 9.5k lines.
+- `auto-loop` brief clauses 2 and 3 compressed — every rule kept, the narrative evidence around them
+  cut to citations.
+
 ## 2.10.0 — 2026-08-13
 
 Core `1.5.0`. Adds the **fit test**: before an invoked office interviews, plans, or dispatches, it

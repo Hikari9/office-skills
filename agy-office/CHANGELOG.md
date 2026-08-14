@@ -1,5 +1,51 @@
 # Changelog — agy-office
 
+## 2.0.0 — 2026-08-14
+
+Core `2.0.0`. Adopts the release's three protocol changes and fixes the delegation bug behind
+"delegates can't reach MCP".
+
+### The fit test picks a gear
+
+`direct` / `express` / `full`. Express is core's declared phase set — short plan → execute → **Phase 2b** →
+**one** adversarial review → land it — with **no plan-review pass** and a **2-round cap**; a second
+`CHANGES REQUIRED` promotes the run to full rather than funding a third round. Any yes to the
+irreversible/production/externally-visible question still forces **full**, and express drops
+**phases, never floors**.
+
+**Phase 2b survives express.** It is not a review phase — it is the reason an agy executor's report
+is believable at all, since agy exits 0 having done nothing. It is a floor, not a phase.
+
+### Closeout runs per milestone
+
+The plan declares `milestones:`; each group of done-criteria that goes green is gated, committed,
+PR'd and merged along the promotion chain **during** the run. Sync, worktree removal and Upline
+closure stay terminal. The merged branch is the run's re-entry point, so an interruption costs one
+milestone instead of the whole run.
+
+### Planner-held names the actor, not a pause
+
+An irreversible action stays the planner's to perform and never transfers to an executor. It runs
+**without a fresh go-ahead** when the plan's `named_actions:` names it verbatim with its dry run,
+revert target and read-back. A vague entry authorizes nothing and stops the run; so does a failed
+precondition. The only unconditional stops left are an external send and a user-owned decision the
+plan did not anticipate.
+
+### Live-system work is delegated with its access
+
+`agy-cli` gains the same boundary rule: `--dangerously-skip-permissions` removes local approval
+stops but an agy process reaches only the MCP servers configured for agy. Route elsewhere when the
+server is absent rather than concluding delegates cannot do MCP work. Production **reads** are
+ordinary delegated work — and pinning the shape matters more here than anywhere, because agy invents
+plausible shapes confidently and a pinned shape is the only thing a fabrication can collide with.
+
+### Trimmed
+
+Run report shortened and given a mandatory **not verified** row; the **cost retrospective is
+removed** (core `2.0.0` no longer requires it — it produced paragraphs nobody acted on). Self-heal
+bar raised to *write a rule or write nothing*, with "nothing durable to add" stated as the expected
+outcome.
+
 ## 1.4.0 — 2026-08-13
 
 Core `1.5.0`. Adds the **fit test**: before an invoked office interviews, plans, or dispatches, it

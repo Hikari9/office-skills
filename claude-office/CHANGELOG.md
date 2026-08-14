@@ -1,5 +1,58 @@
 # Changelog — claude-office
 
+## 2.0.0 — 2026-08-14
+
+Core `2.0.0`. Adopts the release's three protocol changes and fixes the delegation bug behind
+"delegates can't reach MCP".
+
+### The fit test picks a gear
+
+`direct` / `express` / `full`. Express is core's declared phase set — short plan → execute →
+**one** adversarial review → land it — with **no plan-review pass** and a **2-round cap**; a second
+`CHANGES REQUIRED` promotes the run to full rather than funding a third round. Any yes to the
+irreversible/production/externally-visible question still forces **full**, and express drops
+**phases, never floors**.
+
+Most `/claude-office` runs answer yes to (1) and are therefore full; express exists so a bounded,
+reversible task invoked by name is not charged for four phases.
+
+### Closeout runs per milestone
+
+The plan declares `milestones:`; each group of done-criteria that goes green is gated, committed,
+PR'd and merged along the promotion chain **during** the run. Sync, worktree removal and Upline
+closure stay terminal. The merged branch is the run's re-entry point, so an interruption costs one
+milestone instead of the whole run.
+
+### Planner-held names the actor, not a pause
+
+An irreversible action stays the planner's to perform and never transfers to an executor. It runs
+**without a fresh go-ahead** when the plan's `named_actions:` names it verbatim with its dry run,
+revert target and read-back. A vague entry authorizes nothing and stops the run; so does a failed
+precondition. The only unconditional stops left are an external send and a user-owned decision the
+plan did not anticipate.
+
+### Live-system work is delegated with its access
+
+**The root cause, fixed here.** `claude-cli`'s default scoped `--allowedTools` allowlist carries
+**no MCP tools whatsoever** unless they are named. A delegated agent therefore could not reach Rock,
+Basecamp, Sheets or any connector, reported as much, and the work bounced back to the planner —
+which read as "delegates can't do MCP work" when the dispatch had simply never granted it. The spoke
+now requires enumerating `mcp__<server>__<tool>` names in the launch, grants **production reads**
+generously (the true shape of a record often exists nowhere else), keeps production *writes* with
+the planner, and separates the three gates that can refuse a call: the allowlist, the classifier, and
+the MCP server's own permissions. An MCP write refusal is not evidence the underlying API refuses it.
+
+Paired with the brief's **shape pin** — entity, operation, field names, ID provenance, expected
+envelope, and one real record read back. Access is the half that looks like the problem; shape is
+the half that actually goes wrong.
+
+### Trimmed
+
+Run report shortened and given a mandatory **not verified** row; the **cost retrospective is
+removed** (core `2.0.0` no longer requires it — it produced paragraphs nobody acted on). Self-heal
+bar raised to *write a rule or write nothing*, with "nothing durable to add" stated as the expected
+outcome.
+
 ## 1.5.0 — 2026-08-13
 
 Core `1.5.0`. Adds the **fit test**: before an invoked office interviews, plans, or dispatches, it

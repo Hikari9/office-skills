@@ -15,14 +15,33 @@ The step-by-step procedure is core: `office-core/protocol/closeout.md`. This off
 [`../../references/escalation.md`](../../references/escalation.md). This spoke states what must
 happen regardless of wording.
 
+## Runs once per milestone
+
+A plan declares milestones (`office-core/protocol/plan-contract.md`). **Every milestone whose
+done-criteria go green runs this file** — and then the run continues into the next one. Sync,
+worktree removal, and Upline closure are terminal: they run after the **last** milestone only.
+Removing a worktree at milestone 1 of 3 destroys the run.
+
+Never batch milestones. An unlanded green milestone is a re-entry point thrown away.
+
 ## Sequence
 
 Commit anything outstanding (why-focused message) → verify the project's real gate (not an
 invented one; don't skip one the project defines — for Next.js work that means a real build, not
-just lint) → if red, stop, commit and document only, no PR → `gh pr list --head <branch>` before
-creating one, then `gh pr create` + `gh pr merge --auto` with `Closes #N` in the body → document
-only what the repo already maintains (no invented doc files) → sync local main and verify
-`main`==`origin/main` before removing a worktree your tooling created → close every open loop.
+just lint) → if red, stop, commit and document only, no PR, and do not walk into the next milestone
+→ `gh pr list --head <branch>` before creating one, then `gh pr create` + `gh pr merge --auto` with
+`Closes #N` in the body → document only what the repo already maintains (no invented doc files) →
+**at the last milestone only:** sync local main, verify `main`==`origin/main` before removing a
+worktree your tooling created, close every open loop.
+
+**Read the promotion chain from the repo once** (`gh pr list --state merged --json
+number,headRefName,baseRefName`) and reuse it across milestones. A base picked from the default
+branch is a guess, and correcting it later means merging the target back in — which invalidates the
+gate output the milestone just produced.
+
+**Merging a branch that deploys does not stop the run** when the plan's `named_actions:` names that
+merge, with its dry run, revert target, and read-back. What the plan did not name is unauthorized,
+and that is the stop.
 
 ## Skipped only on `skip cleanup`
 
@@ -38,30 +57,25 @@ merely *defensible* rather than *correct* are exactly the ones worth filing. Del
 workspace (ledger, briefs, reports, diff packages — git history is the record) only after this
 step, since deleting it is what makes an unresolved item irreversible.
 
-## The ≤6-line run report
+## The ≤8-line run report
 
-Report the run in ≤6 lines: plan file, executor commits range, review rounds used, gate command +
-result, what closeout did, anything left open.
+At the **final** milestone only. Plan file, what landed (per milestone: PR, base, commit range),
+review rounds used, gate command + result, **what was not verified**, anything left open. Express
+runs emit no report — the PR bodies are the record.
 
-## Then the cost retrospective (core 1.2.0)
+**No cost retrospective.** It was removed in core `2.0.0`: it produced paragraphs nobody acted on,
+and over-provisioning is visible in the rounds-and-wall-clock line without a prose essay around it.
+Where a token count is unavailable, say so rather than printing `0`. If a headroom figure is
+reported at all, give the window and its reset time — never a single-number delta, since a
+`--percent`-style reading returns the tightest of the 5-hour and 7-day windows and a run crossing a
+reset appears to gain headroom it never had.
 
-The ≤6-line report says what happened; this says what it cost. Per
-`office-core/protocol/closeout.md`, one line **per task** — brand, model, effort, dispatch form
-(`cli` / `in-session` / `inline`), review rounds, tokens where the harness reports them, **wall
-clock** — followed by one honest paragraph on what was over- or under-provisioned.
+## Then make the skill better than you found it — or don't
 
-The paragraph is the point. "Sonnet at high did this in one round" and "Opus wrote a test that could
-not fail" are both findings that change the next run's plan. Where a token count is unavailable, say
-so rather than printing `0`.
-
-**Headroom goes in per window, with reset times, at start and at end** — never a single-number delta.
-`--percent`-style readings return the tightest of the 5-hour and 7-day windows, so a run that crosses
-a window reset appears to gain headroom it never had.
-
-## Then make the skill better than you found it
-
-Every run produces evidence no file could have anticipated, and the routing call is where the
-planner is most often wrong. Spend one pass, routing each lesson to the spoke that owns it:
+One pass, and the bar is high: **write a rule or write nothing.** A lesson that cannot be stated as a
+rule changing what a future run *does* is not a lesson, and **nothing durable to add is the expected
+outcome**, not a failure. Prefer sharpening an existing sentence to appending a new one. Route each
+lesson to the spoke that owns it:
 
 - **Routing feedback** — an escalated tier, a serialized wave, a `NEEDS_CONTEXT` return, or a
   collapsed task that drew a reviewer finding → [`../../references/routing.md`](../../references/routing.md).
