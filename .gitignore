@@ -7,3 +7,5 @@ auto-office/references/routing-outcomes.local.md
 .env*.local
 .env.production
 .env.development
+
+.DS_Store
