@@ -1,5 +1,122 @@
 # Changelog — auto-office
 
+## 3.1.0 — 2026-08-14
+
+Core `2.0.0`, unchanged. **The executor executes the plan.** Triggered by an observed run in which
+the planner dispatched a per-task worker for task 1 of a 7-task plan and had queued itself to
+dispatch the rest — turning an opus planner into a scheduler for a plan it had already written and
+had adversarially reviewed.
+
+### The defect
+
+`office-core/roles-and-authority.md:11` already defines the executor as *"implementing the approved
+plan"* — the plan, not a task — and `auto-routing`'s dispatch-form table never had a row for
+planner → per-task worker. So the behaviour was never authorised. What **enabled** it was shape:
+the planning spoke's assignment table carried a per-task `Brand` and `Dispatch` column and never said
+who launches, so a planner filling it in reads it as a list of processes to start.
+
+The same run also made the preview apply planner-held, contradicting the user's own standing rule
+that preview/staging writes are delegated.
+
+### Changes
+
+- **Hub role table**: the executor executes the **whole plan end to end**, fans out its own workers,
+  commits, pushes, and opens the PR. The planner's job now names dispatching **one executor per
+  repo** and explicitly forbids dispatching a per-task worker.
+- **New hub section — "Who owns what, once the plan is approved"**: a two-column split. Planner keeps
+  only what the **user** must see, the **anti-self-gating** gate, and **irreversible outward**
+  actions. Preview/staging writes, commits, pushes, PR-opening, non-deploying merges, fix
+  implementation, and run-report drafting all move to the executor.
+- **Five protected plan fields**: the executor may amend the *how* — committing the amendment and
+  reporting its **hash plus rationale** — but never `goal`, `done_criteria`, `blast_radius`,
+  `named_actions`, or `non_goals`. A code reviewer reads a clean diff against an amended contract and
+  cannot see that the contract moved; scope is the one thing no downstream gate catches.
+- **Assignment table reframed, not removed**: it stays per-task for cost visibility at approval, but
+  is stated as *the planner's dispatch design handed to the executor*. Adds a **row 0** naming the
+  executor and its whole-plan scope, renames the reason column to `Why this dispatch form`, and
+  requires a justification per row — parallelism, a different brand, isolation, an event loop, or
+  (for `inline`) that the brief would exceed the edit.
+- **A fan-out tree is now required in the plan** — an ASCII diagram showing what runs in parallel and
+  where the barriers are, so the run's width is legible at approval rather than inferred from a table.
+- **Launch-count self-check** before approving your own table: more than (one executor per repo) +
+  (one reviewer per task) + (Phase 1 scouts) means you wrote a scheduler.
+- **`EXECUTOR-STATE.md` is mandatory**, rewritten after every task. The consecutive-task memory cap is
+  now managed by the executor **re-briefing itself** from that file; the planner never reclaims tasks
+  to fit a cap. A missing state file is a stop.
+- **Consultation is brand-dependent and the docs now say so**: `claude` executors have a live inbound
+  channel; **`agy` has none** for a running `--print` process, so an agy consult costs an exit and a
+  `--continue`. This is why the state file is mandatory rather than encouraged.
+- **Fix loop**: every fix returns to the executor, one-liners included. The planner triages and
+  contests findings; it implements only when the executor has already retired and the brief would
+  exceed the edit.
+- **Git authority**: executor commits, pushes its own branch (named, never `HEAD`), opens the PR, and
+  may merge a **non-deploying** branch. Merges into a deploying branch stay planner-held.
+- **Routing table**: adds explicit planner→reviewer and planner→scout rows, and carries a struck-out
+  `planner → worker for a numbered task` row labelled *does not exist*, so the absence is visible
+  rather than merely unstated.
+- **Six new red flags**, each the verbatim rationalisation from the observed run — including "task 1
+  is recon so I'll dispatch it myself", "the executor's brief isn't writable until task 1 answers X",
+  and "the memory cap means I have to split the tasks up myself".
+
+### Routing and model catalog
+
+- **`EXECUTOR-STATE.md` is never committed.** Worktree root, `.git/info/exclude` (never the repo's
+  `.gitignore` — that is itself a committed file), dies with the worktree. The brief must forbid
+  `git add -A` / `git commit -a`, since the executor now authors its own commits and a blanket add is
+  exactly how a scratch file reaches a PR. The durable record stays the merged branch plus amendment
+  commits.
+- **Codex executor default is now `gpt-5.6-luna` `xhigh`** (standing user default, 2026-08-14) — a
+  caller override made durable, which is the only legitimate route to an `xhigh` default. Documented
+  honestly as a **cost trade, not an upgrade**: Luna xhigh scores **50** vs Terra max **55**, at
+  **$0.17/M vs $0.73/M**.
+- **Agy executor default is now `gemini-3.7-flash-high`** (was 3.6). Updated in `auto-routing`,
+  `agy-office`, `agy-office/agy-planning`, and the `agy` skill's catalog — the last re-read live from
+  `agy models` rather than edited from memory.
+- **Workers may be ANY mix.** The routing spoke now states explicitly that a worker's brand, model,
+  and effort are independently assignable — above the executor tier, below it (`haiku` for mechanical
+  sweeps), or cross-brand. Adds a kind-of-question → model table keyed to AA Intelligence Index
+  scores.
+- **Effort is a scored axis, not a synonym for "try harder."** Both spokes now carry the two
+  counter-intuitive orderings: **Luna max (52) outscores Luna xhigh (50)** — effort labels do not rank
+  monotonically — and **Gemini 3.7 Flash high (56) outscores Terra max (55)**, so "flash is fast but
+  not smart" is retired.
+- **`model-benchmarks.md` refreshed** to `captured: 2026-08-14`, Intelligence Index **v4.1.1** (its 9
+  evaluations named, with a rule to quote the index version alongside any score since v4.x is not
+  comparable to earlier captures). Adds an *Office role* column so the table shows who occupies each
+  slot, and Luna's ~50s time-to-first-token — irrelevant to a long executor run, wrong for a short
+  interactive one.
+
+- **Scout fallback**: `agy` is the default Phase 1 scout brand; when unavailable, fall back to the
+  planner's own brand at its **lower** tier (`haiku` in-session for claude, `gpt-5.6-luna` for codex),
+  never planner tier — scouting is breadth-first reading, and planner tier spends Decider rates on
+  locating files. Echo the substitution in the kickoff line.
+
+### Docs self-heal — the ledger is now compiled, not appended
+
+- **`routing-outcomes.md` compacted 7,802 → ~2,900 words**, its first consolidation. 30 verbose rows
+  became **40 numbered standing lessons**, each one line and each **citing the file that enforces
+  it** — because the file's own rule already said prose here binds nothing. Rows keep the routing
+  data (date, slug, brand, model, rounds, tokens, wall, verdict) plus a clause and a `§n` cite.
+- **The file was violating its own two rules.** Its "two lines per row, hard cap" is dated
+  2026-08-12 and the rows *on that date* run 1,500+ words; and its opaque-slug rule was broken by
+  rows naming real hosts. Both fixed: rows re-slugged (`repo-c/e/f/g` added to the gitignored map),
+  verbose originals archived to `routing-outcomes-archive.local.md`. **Git history still carries the
+  real names** — not fixable from the plugin, and stated in the compaction log rather than left
+  implicit.
+- **New self-healing clause, binding every long-lived `.md`**: compile weekly or past ~150 lines /
+  3,000 words; archive raw as `*.local.md`; promote recurrences to numbered rules with owners; merge
+  duplicates by mechanism; **keep every number — a compaction that loses one failed**; an unfixed
+  recurrence gets *louder*, not shorter. Test: *would the next reader act on this, and find it in ten
+  seconds?* **An essay that adds tokens without changing a decision is a defect in the document.**
+- `.gitignore` widened from one filename to `references/*.local.md`.
+
+### Not changed
+
+Core is untouched. `roles-and-authority.md` §35 (*the planner may implement inline*) stands; this
+release narrows its **live range** in commentary — a fix whose brief would exceed the edit — rather
+than removing the permission, since the office may bind itself more strictly than core but may not
+rewrite a shared invariant locally.
+
 ## 3.0.0 — 2026-08-14
 
 Core `2.0.0`. **The efficiency release.** The office was paying full price on every run and the

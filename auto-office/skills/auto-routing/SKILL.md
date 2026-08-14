@@ -81,24 +81,60 @@ Not derived from the benchmark table, and a leaderboard movement does not change
 |---|---|---|---|---|
 | Planner | `opus` (the session) | `codex-sol` | `agy` | fixed |
 | **Plan-reviewer** (full gear only) | `opus` **low** | `codex-sol` **low** | `agy` **high** | fixed |
-| Executor | `sonnet` **high** | `codex-terra` **high** | `agy` **high** | **fixed** |
-| Worker | `sonnet` high *default* | `codex-terra` high *default* | `agy` **high** | **planner-assigned** |
+| Executor | `sonnet` **high** | **`gpt-5.6-luna` `xhigh`** | **`gemini-3.7-flash-high`** | **fixed** |
+| Worker | `sonnet` high *default* | `gpt-5.6-luna` xhigh *default* | `gemini-3.7-flash-high` *default* | **ANY brand/model/effort the planner declares** |
 | Reviewer (code) | `opus` **high** | `codex-sol` high *(only when codex is planner)* | never reviews | fixed |
 
 **The plan-reviewer's brand is always the planner's brand** — it is not routed by fit. It reads one
 document the planner just wrote; same-brand is an advantage there, not the conflict of interest it
 would be on a diff. Executor and worker brand *is* routed by fit.
 
-**The executor is sonnet-tier, high effort. Full stop.** No self-escalation, no exception without a
-caller override. Evidence: on the run that produced this rule both green-but-useless tests the
+**The executor is sonnet-tier, high effort — with one standing per-brand default set by the user.**
+
+| Executor brand | Model + effort | Status |
+|---|---|---|
+| claude | `sonnet` high | office default |
+| agy | `gemini-3.7-flash-high` | office default (see note) |
+| **codex** | **`gpt-5.6-luna` `xhigh`** | **standing user default, set 2026-08-14** |
+
+The codex row is a **caller override made durable**, not a self-escalation — it is the one legitimate
+way `xhigh` becomes a default, since the ceiling rule below binds the *office*, never the user. Read
+the numbers before assuming it is an upgrade: Luna xhigh scores **50** on the AA Intelligence Index
+against Terra max's **55**, at **$0.17/M vs $0.73/M**. It is a deliberate cost-and-speed trade the
+user owns; do not "correct" it upward mid-run, and do not cite it as licence to raise anything else.
+
+No self-escalation beyond these, no exception without a caller override. Evidence: on the run that produced this rule both green-but-useless tests the
 reviewer caught were written by the *bigger* model, and the largest line item was three rounds fixing
 a task whose brief was wrong. A bigger executor does not fix a wrong brief; it implements it more
 convincingly.
 
-**Workers are routed, not pinned, at plan time.** The default is the executor's tier — most sub-tasks
-are recon, lookups, or mechanical edits a bigger model finishes no better. The planner may assign a
-higher tier or different brand when the sub-task is a *different kind* of question: a Decider-grade
-judgement, an ambiguity needing arbitration, an unconfirmed diagnosis. Three conditions, all binding:
+**Workers are routed, not pinned, and the planner may assign ANY mix — brand, model, and effort,
+independently, per task.** This is the one place in the office where the full catalog is open. A
+worker may be *below* the executor's tier (`haiku` for a mechanical sweep), *above* it (`opus` for an
+arbitration), or a different brand entirely (`gpt-5.6-luna` xhigh for a long backend chain while a
+`sonnet` executor drives). A plan whose every worker is the executor's tier has usually not thought
+about it.
+
+**Match the model to the kind of question, using the AA Intelligence Index as the axis** — the live
+figures are in [model-benchmarks.md](../../references/model-benchmarks.md), and this is what the
+`Model+effort` cell is arguing about:
+
+| Kind of sub-task | Reach for | Because |
+|---|---|---|
+| Bulk mechanical edit, rename sweep, file-by-file application | `haiku`, `gemini-3.7-flash-low` (51) | Index barely moves the outcome; speed and price do |
+| Read-only recon, breadth-first search across many files | `gemini-3.7-flash-high` (56, ~340 tok/s) | Highest index available at flash speed — N in parallel beat one deep read |
+| Ordinary implementation inside a clear brief | executor's own tier | The default; a bigger model implements a wrong brief more convincingly |
+| Long backend/data chain, terminal-heavy | `gpt-5.6-luna` xhigh (50) or `gpt-5.6-terra` (55) | Agentic-coding strength and per-token price, not raw index |
+| Arbitration, conflicting invariants, unconfirmed diagnosis | `opus` high (59) | A different *kind* of question — the only case that reliably repays the tier |
+
+**Effort is a real axis, not a synonym for "try harder", and the index is where you read it.** Within
+one model the index moves with effort — Gemini 3.7 Flash is **56 / 53 / 51** across high / medium /
+low, Luna is **52 / 50 / 47** across max / xhigh / high. Two consequences the office keeps getting
+wrong: a cheaper model at high effort often outscores a pricier one at low, so brand-then-effort is
+the wrong order to decide in; and **effort does not always rise monotonically with the flag name** —
+Luna *max* (52) outscores Luna *xhigh* (50). Read the table; do not infer from the label.
+
+Three conditions on any worker that is not the executor's default, all binding:
 
 - **Declared in the plan's task table** (`Model+effort` cell) before approval. A declared Opus worker
   is fine; an undeclared one is not, whatever tier it is — the defect was invisibility, not size.
@@ -117,7 +153,10 @@ gate's floor is `opus` low. Both are stated here explicitly because
 promote plan review to high and quietly double its cost for no extra gate strength. A floor binds
 the gate it was declared for.
 
-**High is the ceiling. `xhigh`, `ultra`, and `max` are user-invoked only.** Never escalate an effort
+**High is the ceiling *for the office*. `xhigh`, `ultra`, and `max` are user-invoked only** — which
+is exactly what the codex executor's standing `xhigh` default is: user-invoked once, durably, and
+recorded in the table above with its date. A standing default set by the user is not a counter-example
+to this rule; a planner reaching for `xhigh` on its own initiative still is. Never escalate an effort
 tier or substitute a bigger model on your own initiative — not to be safe, not because a task looks
 hard, not because the benchmark table shows a higher-scoring variant. If a task genuinely seems to
 need more than the table gives it, that is a recommendation to surface, not a default to change.
@@ -129,10 +168,18 @@ No arithmetic. The form follows from who is dispatching whom:
 
 | Who dispatches whom | Form | What the delegation buys |
 |---|---|---|
-| Planner → executor | **CLI, own worktree** | Isolation and unattended running |
+| Planner → executor, **one per repo, whole plan** | **CLI, own worktree** | Isolation, unattended running, and a ~6× cheaper writer that already holds the reviewed plan |
+| Planner → code reviewer | **CLI / fresh agent** | Independence — the executor may never launch its own gate |
+| Planner → read-only scout, **Phase 1 only** | **CLI, `agy` by default**; if agy is unavailable, the planner's own brand at its **lower** tier (`haiku` in-session for claude, `gpt-5.6-luna` for codex) — **never planner tier** | Breadth before a plan or an executor exists |
 | Executor → worker | **in-session / inline** | Reuse of the executor's live context — the value being spent |
 | Executor → worker of a **different brand** | **CLI**, necessarily | The only exception in the table |
-| Planner → itself, for a review fix or a change a delegation buys nothing for | **inline** | Nothing — which is the point |
+| Planner → itself, for a review fix **whose brief would exceed the edit** | **inline** | Nothing — which is the point |
+| ~~Planner → worker for a numbered task~~ | **does not exist** | Nothing. This row is absent deliberately: it is the drift this table is written to prevent |
+
+**There is no row for the planner dispatching task-by-task, and there never was.** If you are about
+to launch a process for task *n* of an approved plan, you are executing the executor's job at opus
+rates. The planner *designs* every task's dispatch form in the assignment table, with a reason; the
+executor *performs* every one of them.
 
 **At ≥2 executors the planner distributes and monitors.** There is no coordinator role. The run that
 spawned one recorded it dispatching three lanes for about an hour, after which every lane was a
