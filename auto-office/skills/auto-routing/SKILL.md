@@ -170,7 +170,7 @@ No arithmetic. The form follows from who is dispatching whom:
 |---|---|---|
 | Planner → executor, **one per repo, whole plan** | **CLI, own worktree** | Isolation, unattended running, and a ~6× cheaper writer that already holds the reviewed plan |
 | Planner → code reviewer | **CLI / fresh agent** | Independence — the executor may never launch its own gate |
-| Planner → read-only scout, **Phase 1 only** | **CLI, `agy` by default** | Breadth before a plan or an executor exists |
+| Planner → read-only scout, **Phase 1 only** | **CLI, `agy` by default**; if agy is unavailable, the planner's own brand at its **lower** tier (`haiku` in-session for claude, `gpt-5.6-luna` for codex) — **never planner tier** | Breadth before a plan or an executor exists |
 | Executor → worker | **in-session / inline** | Reuse of the executor's live context — the value being spent |
 | Executor → worker of a **different brand** | **CLI**, necessarily | The only exception in the table |
 | Planner → itself, for a review fix **whose brief would exceed the edit** | **inline** | Nothing — which is the point |

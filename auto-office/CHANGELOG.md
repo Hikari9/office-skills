@@ -86,6 +86,11 @@ that preview/staging writes are delegated.
   slot, and Luna's ~50s time-to-first-token — irrelevant to a long executor run, wrong for a short
   interactive one.
 
+- **Scout fallback**: `agy` is the default Phase 1 scout brand; when unavailable, fall back to the
+  planner's own brand at its **lower** tier (`haiku` in-session for claude, `gpt-5.6-luna` for codex),
+  never planner tier — scouting is breadth-first reading, and planner tier spends Decider rates on
+  locating files. Echo the substitution in the kickoff line.
+
 ### Docs self-heal — the ledger is now compiled, not appended
 
 - **`routing-outcomes.md` compacted 7,802 → ~2,900 words**, its first consolidation. 30 verbose rows

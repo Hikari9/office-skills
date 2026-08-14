@@ -50,6 +50,12 @@ is meaningless (one run read `82% → 52% → 85%` and none of it described anyt
    agy is unambiguously right: breadth-first reading at ~340 tok/s, N in parallel finishing before a
    deeper single pass starts producing, and no evidence-authoring involved (§18 of the ledger — agy
    is wrong where the *deliverable* is evidence, and a scout's deliverable is locations).
+   **If agy is unavailable — quota, outage, not installed — fall back to the planner's own brand at
+   its LOWER tier**, never at planner tier: `haiku` in-session for a claude planner,
+   `gpt-5.6-luna` for a codex planner. Scouting is breadth-first reading, so the fallback preserves
+   the cheap-and-parallel property that made agy right; falling back to planner tier would spend
+   Decider rates on locating files. Say in the kickoff line that agy was unavailable and what
+   replaced it.
    Verify their claims cheaply before building on them. A scout claim you cannot verify is dropped.
 5. **Route, fully** ([auto-routing](../auto-routing/SKILL.md)) — **every task's brand**, and how many
    executors the run needs. Model and effort are fixed by role, so they are filled in, not decided.
