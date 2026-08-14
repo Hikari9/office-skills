@@ -6,6 +6,20 @@ other skill.
 Each office narrows this with an adapter file naming its own gate command, its report fields,
 and where it records durable lessons. An adapter may add a step; it may not drop one.
 
+## Closeout runs per milestone, not once per run
+
+A plan declares milestones ([`plan-contract.md`](plan-contract.md)). **Every milestone whose
+done-criteria are green runs this file** — commit, gate, PR, land — and then the run continues
+into the next one. The last milestone additionally runs steps 5 and 6.
+
+- **Steps 0–4 run at every milestone.** Commit, gate, PR, document.
+- **Steps 5 and 6 run once, at the end** — syncing main, removing the worktree, and closing loops
+  are terminal acts. Removing a worktree at milestone 1 of 3 destroys the run.
+- **A red gate stops that milestone, not silently the next one.** Commit and document, do not
+  open the PR, and report — the run does not walk past a red milestone into the following one.
+- **The landed milestone is the resume record.** A run interrupted after milestone 2 resumes by
+  reading what is merged, not by re-deriving state from a plan file's task notes.
+
 ## 0. Confirm target
 
 `git rev-parse --is-inside-work-tree`. If that fails, you were invoked from outside any repo (a
@@ -32,14 +46,20 @@ lost, but do not open or arm a PR on red. Report the failure and end the run.
 
 `gh pr list --head <branch>` first. Never open a duplicate.
 
-- **No PR:** confirm with the user that shipping is wanted (an explicit "ship it" earlier
-  counts), then `gh pr create` with a body that actually describes the change, followed by
+- **No PR:** `gh pr create` with a body that actually describes the change, followed by
   `gh pr merge --auto`.
 - **PR exists but not armed:** arm it now with `gh pr merge --auto`.
 
 Push, PR, and merge remain planner-held actions under
-[`roles-and-authority.md`](roles-and-authority.md). Never merge or deploy on authority this run
-was not given.
+[`roles-and-authority.md`](roles-and-authority.md) — the **planner** performs them, never a
+delegate. An approved plan carrying this milestone is the authority to land it, so landing does
+not stop for a fresh go-ahead; see *Planner-held names the actor, not a pause*. What is still
+forbidden is landing something the plan does not cover, or landing on red.
+
+**Read the promotion chain out of the repo, do not assume it.** `gh pr list --state merged --json
+number,headRefName,baseRefName` shows where feature branches actually land. A base picked from the
+repo's default branch is a guess, and correcting it after the fact means merging the target back
+in — which invalidates the gate output this milestone just produced.
 
 ## 4. Document
 
@@ -115,26 +135,25 @@ Check merge state once with `gh pr view <n> --json state,mergedAt`. Do not poll.
 
 ## Final report
 
-Close with the office's run report. Every office reports at minimum: the plan path, the executor
-commit range, review rounds used, the gate command and its result, what closeout did, and
-anything left open. An office may add fields; it may not drop one.
+Close with the office's run report, and keep it short enough to be read. Every office reports at
+minimum:
 
-### Cost retrospective (every office)
+| Field | Content |
+|---|---|
+| Goal | The outcome, and each done-criterion with its final verify output |
+| Landed | Per milestone: the PR, where it merged to, and the commit range |
+| Rounds | Review rounds used per task, and any cap approached |
+| Stops | Every stop the run hit, what was asked, what was answered |
+| Not verified | Every check that did not happen, named. **Never let an unrun check read as a passed one.** |
+| Still open | Deferred items and known gaps. If genuinely empty, say so rather than omitting the row. |
 
-A run nobody watched is a run nobody priced. Report, per task: **brand, model, effort, dispatch
-form, review rounds, tokens where the harness reports them, and wall clock.** Then one honest
-paragraph on what was **over- or under-provisioned** — the model that was bigger than the task
-needed, the brief that was too thin and bought three review rounds, the dispatch that bought
-isolation nobody used.
+An office may add fields; it may not drop one. **It may not turn the report into an essay** — a
+record nobody finishes reading is a record that does not exist, and the accumulated habit of
+writing the run's whole biography into a ledger is a cost the run pays and the next run does not
+recover. State a durable lesson as a rule change in the file that owns the rule, or not at all.
 
-Wall clock is a first-class cost, not a footnote: a dispatch that produced nothing for an hour
-cost the run an hour whether or not it burned a token. Where a harness reports no token counts,
-say so explicitly rather than reporting zero — an absent measurement and a measurement of zero
-are different facts.
-
-### Headroom is reported per window, with reset times
-
-Never as a single-number delta. A tool with a 5-hour and a 7-day window has two numbers, and a
-convenience probe that returns the tightest of them will appear to *gain* headroom when the short
-window resets mid-run. Report each window's value at start and at end, each with its reset time.
-A start-to-end subtraction across a window boundary is not a measurement of anything.
+Where a harness reports no token counts, say so explicitly rather than reporting zero — an absent
+measurement and a measurement of zero are different facts. The same holds for any headroom figure
+that does get reported: give the window and its reset time, never a single-number delta, because a
+probe returning the tightest of two windows appears to *gain* headroom when the short one resets
+mid-run.

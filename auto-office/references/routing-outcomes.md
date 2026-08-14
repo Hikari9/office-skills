@@ -33,6 +33,20 @@ and append with a slug from the start; a ledger scrubbed later has already leake
   lesson instead.
 - `lesson` — one line, and only if the row taught something. "As expected" is a legitimate lesson.
 
+## Two lines per row. Hard cap.
+
+**Rows below the 2026-08-12 mark predate this rule and are kept as history, not as a template.** They
+grew to several thousand words each, which is how this plugin reached 9.5k lines; the rows stopped
+being a routing input and became a diary that the next run pays to read and does not act on.
+
+- **Two lines maximum, and two is the ceiling, not the goal.** Most rows are one.
+- **A lesson that needs more than a sentence is a rule change.** Make the change in the file that
+  owns the rule — `auto-routing`, `auto-loop`, or a sibling office's CLI spoke — and let the row cite
+  it in a clause. That is the only form in which a lesson actually binds a future run; prose in this
+  file binds nothing.
+- **Express runs append no row at all.**
+- **Do not manufacture a lesson.** "As expected" is the most common correct value.
+
 ## Ledger
 
 | Date | Repo | Task | Brand | Model | Effort | Dispatch | Rounds | Tokens | Wall | Verdict | Lesson |

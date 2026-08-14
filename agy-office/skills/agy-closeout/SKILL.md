@@ -34,20 +34,21 @@ command + result · what closeout did · anything left open. The Phase 2b line i
 addition over the sibling offices' report shape — it is the evidence that independent verification
 did something, not just that it ran.
 
-## Cost retrospective (core 1.2.0)
+Add a mandatory **not verified** row: every check that did not happen, named. An unrun check must
+never read as a passed one.
 
-Per `office-core/protocol/closeout.md`, price the run after reporting it: **per task** — brand, model,
-effort, dispatch form (`cli` / `in-session` / `inline`), review rounds, tokens, **wall clock** — plus
-one honest paragraph on what was over- or under-provisioned.
+**No cost retrospective.** Core `2.0.0` dropped the requirement — it produced paragraphs nobody acted
+on. Keep the per-task line only (brand, review rounds, **wall clock**, verdict); over-provisioning is
+visible there without an essay around it.
 
 **agy reports no token counts.** Say that explicitly and write `n/a`; **never print `0`**, which reads
 as a measurement of zero rather than an absent measurement. For this office the cost signal is
-therefore **wall clock and review rounds**, plus what Phase 2b had to catch — an executor that exits 0
-having done nothing consumes wall clock and produces nothing to count.
+**wall clock and review rounds**, plus what Phase 2b had to catch — an executor that exits 0 having
+done nothing consumes wall clock and produces nothing to count.
 
-**Headroom is reported per window, with reset times, at start and at end** — never a single-number
-delta. A tightest-of-two-windows reading appears to *gain* headroom when the short window resets
-mid-run, so a start-to-end subtraction across a window boundary measures nothing.
+If a headroom figure is reported at all, give the window and its reset time — never a single-number
+delta, since a tightest-of-two-windows reading appears to *gain* headroom when the short window
+resets mid-run.
 
 ## Links
 

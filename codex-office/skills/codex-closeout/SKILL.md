@@ -28,17 +28,19 @@ behavior that motivated the change — per `office-core/protocol/evidence-and-ha
 List: the plan path, the executor's commit range, the number of review rounds and their verdicts,
 the full gate result with real output, PR URL if one was created, and anything left unresolved.
 
-## Cost retrospective (core 1.2.0)
+Add a mandatory **not verified** row: every check that did not happen, named. An unrun check must
+never read as a passed one.
 
-Then price the run, because a run nobody priced gets over-provisioned the same way next time. Per
-`office-core/protocol/closeout.md`, report **per task**: brand, model, effort, dispatch form, review
-rounds, tokens where the harness reports them, and **wall clock**. Then one honest paragraph on what
-was over- or under-provisioned — the model that outran the task, the brief that was too thin and
-bought a second review round, the `codex exec` dispatch that produced nothing for an hour.
+## Per-task cost line — no retrospective
 
-Wall clock is a line item, not a footnote: a silent dispatch costs the run its wall clock whether or
-not it burned a token. Where a count is unavailable, say so — never print `0`.
+**No cost retrospective.** Core `2.0.0` dropped the requirement; it produced paragraphs nobody acted
+on. Keep one line **per task** — brand, review rounds, **wall clock**, verdict. Over-provisioning is
+visible in those four columns without an essay around them.
 
-**Headroom is reported per window, with reset times, at start and at end.** Never as a
-single-number delta: the tightest-of-two-windows reading appears to *gain* headroom when the short
-window resets mid-run, so a start-to-end subtraction across a window boundary measures nothing.
+Wall clock stays on the line because it is the cost invisible in a token count: a silent `codex exec`
+dispatch costs the run its wall clock whether or not it burned a token, and this office has lost 43
+and 57 minutes that way. Where a count is unavailable, say so — never print `0`.
+
+If a headroom figure is reported at all, give the window and its reset time — never a single-number
+delta, since a tightest-of-two-windows reading appears to *gain* headroom when the short window
+resets mid-run.

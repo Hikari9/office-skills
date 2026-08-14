@@ -55,8 +55,9 @@ review rounds, and the fix lane sent to repair it introduced two page-blanking b
 
 ## Brand selection
 
-Probe all three tools' headroom first ([quota-probe.md](../../references/quota-probe.md)). Then
-pick on **fit**, and only afterwards weigh headroom as a cost:
+Pick on **fit** first. Probe headroom ([quota-probe.md](../../references/quota-probe.md)) only when
+you have a reason to — a long run, a brand you expect to be thin, a user who asked — and weigh it as
+a cost afterwards, never as a gate:
 
 ```
 caller named a brand?  → use it, echo the override, stop here
@@ -79,8 +80,7 @@ Not derived from the benchmark table, and a leaderboard movement does not change
 | Role | claude | codex | agy | Fixed? |
 |---|---|---|---|---|
 | Planner | `opus` (the session) | `codex-sol` | `agy` | fixed |
-| **Plan-reviewer** | `opus` **low** | `codex-sol` **low** | `agy` **high** | fixed |
-| **PM** (≥2 executors) | `sonnet` **high** | `codex-terra` **high** | `agy` **high** | fixed |
+| **Plan-reviewer** (full gear only) | `opus` **low** | `codex-sol` **low** | `agy` **high** | fixed |
 | Executor | `sonnet` **high** | `codex-terra` **high** | `agy` **high** | **fixed** |
 | Worker | `sonnet` high *default* | `codex-terra` high *default* | `agy` **high** | **planner-assigned** |
 | Reviewer (code) | `opus` **high** | `codex-sol` high *(only when codex is planner)* | never reviews | fixed |
@@ -111,10 +111,6 @@ judgement, an ambiguity needing arbitration, an unconfirmed diagnosis. Three con
 task is hard" produced the last run's silent over-provisioning. "This needs a judgement the executor's
 tier cannot make" is the real distinction, and the plan is where you argue it.
 
-**The PM sits at executor tier deliberately.** The plan already assigned brand and dispatch per task,
-so the PM distributes and collects; it does not judge. **A PM making routing decisions means the plan
-was incomplete — a `PLAN DEFECT`, not a reason to upgrade the PM.**
-
 **Two floors, not one.** `opus` high is the floor for the **code**-review gate. The **plan**-review
 gate's floor is `opus` low. Both are stated here explicitly because
 [delegation-map.md](../../references/delegation-map.md)'s "stricter rule wins" clause would otherwise
@@ -134,54 +130,41 @@ No arithmetic. The form follows from who is dispatching whom:
 | Who dispatches whom | Form | What the delegation buys |
 |---|---|---|
 | Planner → executor | **CLI, own worktree** | Isolation and unattended running |
-| Planner → PM (≥2 executors only) | **CLI — `claude --bg --remote-control`, never an in-session Agent** | The same, plus parallel distribution |
 | Executor → worker | **in-session / inline** | Reuse of the executor's live context — the value being spent |
 | Executor → worker of a **different brand** | **CLI**, necessarily | The only exception in the table |
 | Planner → itself, for a review fix or a change a delegation buys nothing for | **inline** | Nothing — which is the point |
 
-### The PM is always a background CLI agent. Never an in-session subagent
+**At ≥2 executors the planner distributes and monitors.** There is no coordinator role. The run that
+spawned one recorded it dispatching three lanes for about an hour, after which every lane was a
+single process the planner drove directly — so the role was deleted rather than repaired.
 
-**Spawn the PM with `claude --bg --remote-control`, prompt piped on stdin**, per
-`claude-office/skills/claude-cli`. This is not a preference — an in-session PM cannot do the job it
-exists for.
+### State the effort flag explicitly on every CLI launch
 
-**State the effort flag explicitly on every CLI launch. `--model` alone is not the assignment.**
-This table fixes *model and effort* per role; a launch that passes only `--model sonnet` silently
-runs at the CLI's default (medium), so the plan says high and the process runs medium, and nothing
-in the output says so. Observed 2026-08-08 on a PM launch; the user caught it, not the run.
+**`--model` alone is not the assignment.** This table fixes *model and effort* per role; a launch
+passing only `--model sonnet` silently runs at the CLI's default (medium), so the plan says high and
+the process runs medium, and nothing in the output says so.
 
 ```bash
---model sonnet --effort high      # PM and executor
+--model sonnet --effort high      # executor
 --model opus   --effort high      # code reviewer
 --model opus   --effort low       # plan reviewer
 ```
 
-Treat a missing `--effort` as a defect in the dispatch, not a detail — the whole point of pinning
-tiers in a table is defeated if the flag that carries them is optional in practice. Read the
-launched agent's actual model **and** effort back before reporting a dispatch, exactly as you would
-read back a live-system write.
+Treat a missing `--effort` as a defect in the dispatch, not a detail. Read the launched agent's
+actual model **and** effort back before reporting a dispatch, exactly as you would read back a
+live-system write.
 
-An in-session Agent-tool subagent **returns to its caller every time it stops having live children**,
-and a monitoring loop stops constantly by nature. Observed 2026-08-08: a sonnet PM launched all three
-executor lanes correctly, then returned `"Monitoring started"` and exited — three times in a row,
-each firing a task-notification that woke the planner, burned ~55k subagent tokens per wake, and
-monitored nothing. The planner ended up taking monitoring over directly and stopping the PM.
+### Anything with a blocking wait goes to a background process, or you keep it
 
-- **The symptom to recognise**: a PM that reports "monitoring started / continuing to monitor" as its
-  *final result*. That is not a progress update, it is a return. The PM is finished and nothing is
-  watching the lanes.
-- **Why the CLI form fixes it**: a `--bg` agent owns its own process and its own event loop, so a
-  poll-sleep loop keeps running instead of unwinding to a caller that has to be re-invoked.
-- **The test is whether the delegate's work CONTAINS A BLOCKING WAIT — not whether its role is
-  "watcher".** Any in-session subagent unwinds the moment it has no live children, so a delegate that
-  must sit through a long command returns mid-task with the work unfinished, exactly as a monitoring
-  PM does. Route such a step to a background process, or keep it. Observed 2026-08-09 on an ordinary
-  *worker*, not a PM: a `sonnet` subagent told to apply, clear cache and read back a deployment spent
-  63k tokens, armed a Monitor for the long verifier, reported "still running — I'll report back when
-  it lands", and stopped. Nothing was watching, and the planner re-ran every step itself. Read
-  "I'll report back" in a subagent's **final** message as the return it is.
-- If the CLI launch genuinely refuses in the current run, the fallback is **the planner monitors
-  directly** — not an in-session PM. A PM that cannot block buys nothing and costs a wake per poll.
+An in-session Agent-tool subagent **returns to its caller every time it stops having live children**.
+So a delegate that must sit through a long command — a deploy, a watch, a slow verifier — returns
+mid-task with the work unfinished, and its "I'll report back when it lands" is a *return*, not an
+update. Observed on an ordinary worker: a subagent told to apply, clear cache and read back a
+deployment spent 63k tokens, armed a monitor, said it would report back, and stopped. Nothing was
+watching; the planner re-ran every step itself.
+
+**The test is whether the work contains a blocking wait**, not whether the role sounds like a
+watcher. Route those to a `--bg` process that owns its own event loop, or hold them yourself.
 
 **Every brand has a built-in in-session sub-agent mechanism.** The brief *prompts* the executor that
 it may fan out; **it never prescribes how.** Sub-agent mechanics belong to the sibling office, exactly
@@ -217,10 +200,17 @@ planner tokens on **every** task, and the code reviewer is the safety net either
 3-consecutive-task cap is already spent, or if the task is a long chain. A tiebreak that ignores a
 cap is how a cap gets broken by accident.
 
-## Headroom is a cost, not a gate
+## Headroom is a cost, not a gate — and probing it is not a ritual
 
-**There is no hardcoded threshold, and there will not be one.** This is a case-by-case trade-off the
-planner discerns and states; it is not delegated to a number. The question to answer out loud:
+**Probe when you have a reason, not because the phase started.** Three consecutive runs logged
+"headroom never probed" as a defect and filed an issue about it, and in none of them did the missing
+probe cost anything — which is the definition of a step that was never load-bearing. Reasons that
+justify a probe: the run is long, a brand looks thin, a previous run drained a window, or the user
+asked. Otherwise route on fit and move.
+
+**There is no hardcoded threshold, and there will not be one.** When you *do* probe, this is a
+case-by-case trade-off the planner discerns and states; it is not delegated to a number. The
+question to answer out loud:
 
 > **Is it worth running this in a low-threshold agent if quality will be massively lost otherwise?**
 
@@ -270,6 +260,14 @@ Rules that make this safe:
 
 - **Read-only fan-out is the delegation worth making.** Recon, "where is X", "does this pattern exist
   elsewhere", doc lookups: agy, in parallel, every time. N scouts finish in one scout's wall-clock.
+- **Live-system work is delegated WITH its access, never kept because a delegate "can't reach it".**
+  Enumerate the MCP/API tools the task needs in the launch — the scoped allowlist form omits every
+  MCP tool unless you name it, which is a dispatch bug that has been misread as a capability limit.
+  **Production reads are included**: the true shape of a record frequently exists only in production,
+  and a delegate reasoning from a preview fixture that does not match it is the failure being fixed.
+  Then pin the shape in the brief and require a read-back — access is the cheap half, shape is the
+  half that actually goes wrong. Core:
+  [`evidence-and-handoff.md`](../../office-core/protocol/evidence-and-handoff.md).
 - **Conversely, do not dispatch what the holder can already see.** A one-line fix, a rename, a config
   edit, applying a review finding just read — inline. **Brief quality is the real cost of a
   dispatch**, not tokens: a dispatched agent knows only what you wrote down, and half of all dispatch
@@ -340,9 +338,11 @@ Record `routing_reason`, `brand`, `dispatch_form`, `headroom_percent` per window
 
 | Thought | Reality |
 |---|---|
-| "The plan looks fine, straight to the user" | Self-review, then the plan-reviewer. User approval is never spent on an unreviewed plan. |
-| "One executor, so I'll spawn a PM to coordinate" | No PM below two executors. A PM with one executor is pure overhead. |
+| "The plan looks fine, straight to the user" | Self-review always; in **full**, the plan-reviewer too. User approval is never spent on an unreviewed plan. |
+| "Three executors — I'll spawn something to coordinate" | There is no coordinator. You distribute and you monitor. |
 | "codex or claude, let me think it through" | Same tier, both fit: pick one and move. One line of reasoning, maximum. |
+| "This task calls Rock, so I'll keep it myself" | Delegate it with the Rock tools named in the launch. Withholding access is a dispatch bug. |
+| "Preview data is close enough for the shape" | It routinely is not. Read production, pin the shape, require the read-back. |
 
 ## Read the local ledger before the leaderboard
 

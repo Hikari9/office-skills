@@ -31,6 +31,38 @@ the user's turns. Never spend a top-tier model on retrieval.
    `Touches:` sets are disjoint.
 5. **Out of scope** — explicit.
 
+## Milestones — the run's landing points
+
+A plan declares **milestones**: named groups of done-criteria that, once green, put the tree in a
+shippable state. Each milestone is a commit, a PR, and a landing — during the run, not at the end
+of it.
+
+- **Declared at plan time, reviewed at approval.** The loop does not improvise a milestone
+  boundary mid-run; if the grouping is wrong, that is a plan amendment.
+- **A milestone is shippable on its own.** If landing group A without group B leaves the tree
+  broken, they are one milestone, not two.
+- **Every done-criterion belongs to exactly one milestone.** A criterion in none is a criterion
+  nothing will ever ship.
+- **One milestone is a legitimate plan.** Small runs are not required to invent checkpoints.
+
+Why this is a contract requirement and not a closeout detail: a run whose work lands only at the
+end has no re-entry point, so an interruption anywhere costs the whole run. Milestones make the
+merged branch the resume record, which is durable in a way a plan file's task states are not.
+
+## Named actions — pre-authorized planner-held steps
+
+A plan carries a `named_actions:` block listing every planner-held action the run will perform,
+verbatim, with its preconditions. See
+[`roles-and-authority.md`](roles-and-authority.md) → *Planner-held names the actor, not a pause*
+for what naming buys and what it does not.
+
+Each entry states: the exact command or write, the target environment, what it changes, the dry
+run that precedes it, the backup or revert target, and the read-back that proves it landed.
+**A vague entry is not an entry** — "deploy to prod" authorizes nothing, and the run will stop on
+it as unnamed.
+
+Outbound messages may never appear here. They are approved in session, at the time, always.
+
 ## Claims discipline
 
 **Every factual claim the plan makes about the codebase is a claim the planner must have

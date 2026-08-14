@@ -41,6 +41,42 @@ sources — verify stale → skip, fresh+good → pass, fresh+defective → fail
 hand that output over rather than paying twice — but read the hook first and confirm both that
 the output exists and that it ran against `HEAD`.
 
+## Briefs that touch a live system: grant the access, pin the shape
+
+Two separate failures wore one explanation. "The delegate could not reach the system" was usually
+true and almost never the actual defect; the defect was that nobody knew what the data looked
+like. Handle them separately.
+
+**Access is granted, not withheld.** A brief whose task needs a live system names the tools that
+reach it and the dispatch enumerates them, so the delegate can actually make the call. Routing a
+task to the planner *because a delegate would lack access* is backwards — it is a dispatch bug,
+and the fix is the dispatch. **Reads are the cheap half and they include production reads:** the
+true shape of a record frequently exists only in production, and a delegate reasoning from a
+preview fixture that does not match it is the failure this rule exists to stop.
+
+**Shape is pinned, then read back.** Every such brief states, before the work starts:
+
+| Pin | Why |
+|---|---|
+| The **entity** and the exact operation | "Update the person" and `PATCH /api/People/{id}` are not the same instruction |
+| The **fields** in play, by their real names | Field names are where invented interfaces enter |
+| **ID types and their provenance** — which id, from which source | Surrogate keys, alias ids, and per-instance enum ids are the recurring defect class |
+| The **expected response envelope** | So a wrong shape is detected at the call, not three steps later |
+
+Then the executor **pastes back the shape it actually received** — one real record, trimmed — into
+its handoff. That read-back is the evidence; the pin is the hypothesis.
+
+**A pinned shape that does not match reality is a `BRIEF DEFECT`, and that is the point.** The
+executor returns it instead of implementing around it, which costs one read instead of a whole
+implementation plus the review rounds that find it. A brief with no pin cannot produce that return
+— there is nothing for reality to contradict — so an unpinned live-system brief silently converts a
+cheap early failure into an expensive late one.
+
+**A tool refusing a write is not evidence the system refuses it.** An MCP allowlist, a scoped
+tool grant, and a permission classifier are all local gates; the API underneath may accept the
+call fine. Say which gate refused, and check the other paths before reporting the capability
+missing.
+
 ## Evidence reuse and freshness
 
 Evidence is valid for the commit range it was produced against. Every fix wave invalidates the

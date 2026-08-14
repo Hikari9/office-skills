@@ -26,9 +26,41 @@ outright in this workspace. Verified working launch shape, 2026-08-04:
 
 ```bash
 echo "<brief>" | SHELL=/bin/bash claude --bg --remote-control "[ROLE] <repo> — <task>" \
-  --model sonnet --add-dir "<pre-created worktree>" \
+  --model sonnet --effort high --add-dir "<pre-created worktree>" \
   --allowedTools "Read Write Edit Grep Glob Bash(git *) Bash(corepack pnpm *)"
 ```
+
+### The allowlist carries no MCP tools unless you name them
+
+**This is the single most misread behaviour of this launch form.** The allowlist above grants file
+and shell access and **nothing else** — every MCP server the planner can reach (Rock, Basecamp,
+Sheets, Vercel, any connector) is absent from the launched agent. The agent then reports it cannot
+reach the system, and the work bounces back to the planner, and the whole episode reads as *"delegates
+can't do MCP work"* when the truth is *"this dispatch never granted it."*
+
+**A brief whose task touches a live system enumerates that system's tools in the launch:**
+
+```bash
+  --allowedTools "Read Write Edit Grep Glob Bash(git *) \
+                  mcp__<server>__<tool> mcp__<server>__<other_tool>"
+```
+
+- **Read the real tool names before launching** — they are the `mcp__<server-id>__<tool>` strings
+  from the planner's own tool list, and a guessed name grants nothing and fails silently.
+- **Grant the reads generously, including production reads.** The true shape of a record frequently
+  exists only in production, and an agent reasoning from a preview fixture that does not match it is
+  the expensive failure. Reads are cheap and reversible.
+- **Writes follow the brief.** Preview and staging writes are ordinary delegated work. A production
+  write is planner-held — the planner performs it — so it is not in the delegate's allowlist at all.
+- **A tool refusing a call is not the system refusing it.** The allowlist, the classifier, and the
+  MCP server's own permissions are three separate gates. Say which one refused before reporting a
+  capability as missing; an MCP write refusal has already been mistaken once for "Rock cannot do
+  this," when plain REST did it fine.
+
+Pair the grant with the brief's **shape pin** — entity, operation, field names, ID provenance,
+expected envelope, and a read-back of one real record. Access is the half that looks like the
+problem; shape is the half that actually goes wrong. Core:
+[`../../office-core/protocol/evidence-and-handoff.md`](../../office-core/protocol/evidence-and-handoff.md).
 
 **Name the session by role.** The first line of the brief is `[ROLE] <repo> — <task>` — `[PLANNER]`,
 `[PM]`, `[EXECUTOR]`, `[WORKER]`, `[REVIEW]`, `[PLAN-REVIEW]` — so a job list is readable at a glance.

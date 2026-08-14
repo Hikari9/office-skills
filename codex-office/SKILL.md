@@ -29,14 +29,22 @@ role, skip a phase with an approved plan path, extra reviewer rubric items, skip
 caller override may: skip an independent review, reuse the executor as its own reviewer, downgrade
 the reviewer below its stated floor, or widen the blast-radius ceiling implicitly.
 
-## Fit test — first, before anything
+## Fit test — first, before anything, and it picks a gear
 
-Before scoping or planning, price the run: does this office buy anything here? Any irreversibility
-/ production exposure / external visibility, or two or more of {real volume or parallel breadth,
-needs an interview, would benefit from an adversarial reader} → run all four phases. None of it →
-**say so in two or three sentences and do the work directly**, under the same safety rules, then
-stop. Never downgrade a one-way-door run; never invent a half-office. A caller override decides it
-either way. Full rule: `office-core/protocol/roles-and-authority.md` → *Fit test*.
+Before scoping or planning, price the run. Ask: (1) irreversible, production-facing, or externally
+visible? (2) real volume or parallel breadth? (3) needs an interview? (4) would an adversarial reader
+plausibly catch something?
+
+| Answers | Gear | What runs |
+|---|---|---|
+| Any yes to **(1)** | **full** | All four phases. One-way door — never downgraded. |
+| No to (1), **2+** yeses across (2)–(4) | **express** | Short plan → execute → **one** adversarial review → land it. **Cap 2 review rounds**; a second `CHANGES REQUIRED` promotes the run to full. |
+| No to (1), **≤1** yes | **direct** | No office. Do the work under the normal safety rules, then stop. |
+
+Express promotes to full before dispatch if the run needs more than one executor, more than one
+repo, or more than roughly three tasks. It drops **phases, never floors** — no self-approval, the
+fresh adversarial gate, evidence over exit codes, and read-backs all still bind. Say the gear in two
+or three sentences and proceed. Full rule: `office-core/protocol/roles-and-authority.md` → *Fit test*.
 
 ## Non-bypassable safety rules
 
@@ -47,7 +55,13 @@ either way. Full rule: `office-core/protocol/roles-and-authority.md` → *Fit te
   ceiling are the entire safety boundary.
 - Pass `-m` explicitly to every `codex exec`.
 - Executor authority is local edits and commits only; pushes, PRs, deploys, remote config,
-  messages, and credentials are forbidden unless the prompt names that exact action.
+  messages, and credentials are forbidden unless the prompt names that exact action. Those stay the
+  **planner's** to perform — and the planner performs them without a fresh go-ahead only when the
+  plan's `named_actions:` names them verbatim with a dry run, a revert target, and a read-back.
+- **Land each milestone as its criteria go green** — commit, PR, merge the chain — rather than
+  batching the run into one closeout. The merged branch is the re-entry point.
+- **Dispatch live-system work with its access**: enumerate the MCP/API tools in the launch,
+  production **reads** included, and pin the data shape in the prompt with a read-back required.
 - A successful process exit is not evidence; the gate is the repository's full validation
   commands with real, pasted output.
 - A deployment or migration is planner-held unless explicitly authorized, and is verified by a
@@ -59,11 +73,11 @@ either way. Full rule: `office-core/protocol/roles-and-authority.md` → *Fit te
 
 ## Protocol version
 
-This plugin implements office-core protocol `1.5.0`, vendored at `office-core/` in this plugin.
+This plugin implements office-core protocol `2.0.0`, vendored at `office-core/` in this plugin.
 The vendored copy is authoritative for an installed plugin; the repo-root `office-core/` is the
 development source. Mandatory read: `office-core/protocol/roles-and-authority.md`.
 
-**Declared narrowing of core.** Core `1.5.0` lets the planner implement inline; this office
+**Declared narrowing of core.** Core `2.0.0` lets the planner implement inline; this office
 does **not** — the planner never implements the plan here. Narrowing is legal, and it is stated so a
 reader of both files need not guess which governs.
 

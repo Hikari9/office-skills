@@ -1,6 +1,6 @@
 ---
 name: auto-closeout
-description: Phase 4 — verify the GOAL is actually green, commit, PR, sync, close every open loop, and emit the run report with its cost retrospective, per-window headroom, and the Opus-only self-heal gate. Loaded by the auto-office hub; not invoked directly.
+description: Landing a milestone and closing the run — verify the criteria are green, commit, PR, merge the promotion chain, and at the end emit a short run report. Loaded by the auto-office hub; not invoked directly.
 ---
 
 # Auto Closeout
@@ -14,21 +14,34 @@ Mechanics come from the sibling office of the executor that did the work — see
 [delegation-map.md](../../references/delegation-map.md). This spoke adds only what is specific to a
 routed, autonomous run.
 
-## Gate before commit
+## This file runs twice over, and the two passes are different
 
-Closeout does not begin because the loop *thinks* it finished.
+| Pass | When | What runs |
+|---|---|---|
+| **Milestone landing** | every time a milestone's done-criteria go green, **inside the loop** | Gate → commit → PR → merge the chain. Then straight back into the loop. |
+| **Final closeout** | once, after the last milestone | The above for the last milestone, plus sync, worktree removal, loop closure, and the run report. |
 
-1. **Re-run every `verify` command in the GOAL block** and paste real output. Not the executor's
-   record of having run them. Not the reviewer's summary. The commands, now.
-2. **Any red criterion sends you back into the loop**, not forward into a commit.
+**Never batch milestones.** A milestone that goes green and does not land is a re-entry point the run
+threw away, and the whole reason this office lands work mid-run rather than at the end.
+
+## Gate before every landing
+
+A landing does not begin because the loop *thinks* the milestone finished.
+
+1. **Re-run the `verify` command of every criterion in this milestone** and paste real output. Not
+   the executor's record of having run them. Not the reviewer's summary. The commands, now.
+2. **Any red criterion sends you back into the loop**, not forward into a commit — and the loop does
+   not walk past a red milestone into the next one.
 3. **Confirm nothing outside `blast_radius` was touched** — `git status`, and a diff review against
    the declared repos and file scope.
-4. **Confirm every `planner_held` step is either done with explicit approval, or still open and
-   named as such.** A `PLANNER-HELD` step must never be quietly absorbed into "done."
+4. **Confirm every action you are about to take is in `named_actions:` with its preconditions met**
+   — dry run read, revert target present, read-back ready. An action not on that list is a stop, and
+   a `named_actions:` entry left undone must never be quietly absorbed into "done."
 5. **Read the promotion chain out of the repo before opening the PR**, not after. `gh pr list --state
    merged --json number,headRefName,baseRefName` shows where feature branches actually land; a base
    picked from the repo's *default* branch is a guess. Getting this wrong late means merging the
-   target back in, which invalidates the run's green gate (see below) and costs more than the lookup.
+   target back in, which invalidates the milestone's green gate (see below) and costs more than the
+   lookup. Read it once per run and reuse it across milestones.
 6. **If the run bumps a version, prove the value is unclaimed across EVERY ref** — by reading the
    file per-ref, **not** with the pickaxe:
 
@@ -58,13 +71,18 @@ Per the executor's office closeout spoke: commit with a real message, open the P
 CI/build gate, automerge if that is the repo's convention, sync main, remove the worktree, and close
 every open Upline / escalation entry.
 
-### Closeout lands the work; it does not park it
+### Landing means landing; an open PR is not a closed loop
 
-**Unique to auto-office** — the point of this office is autonomous shipping. An open PR is not a
-closed loop. **Merge to the target branch, and continue along the repo's promotion chain to its
-final branch, regardless of outcome**, unless the caller said otherwise (`no loop`,
-`skip cleanup`, "open a PR and stop", or an explicit hold). Leaving a green, mergeable PR sitting
-for the user to click is an **incomplete run**, not a courtesy.
+**Unique to auto-office** — the point of this office is autonomous shipping. **Merge to the target
+branch, and continue along the repo's promotion chain to its final branch, regardless of outcome**,
+unless the caller said otherwise (`no loop`, `skip cleanup`, "open a PR and stop", or an explicit
+hold). Leaving a green, mergeable PR sitting for the user to click is an **incomplete milestone**,
+not a courtesy.
+
+**A branch in the chain that deploys does not stop the run** when the plan's `named_actions:` named
+that merge. It still runs under the preconditions — gate green, revert target known, and a read-back
+of the deployed result, not just a green check. What the plan did not name is unauthorized, and that
+is the stop.
 
 - **Read the chain from the repo, do not assume one.** `git log` the candidate branches and look at
   how previous promotions actually landed — merge commit vs squash, and in what order. In
@@ -118,29 +136,32 @@ assumption is dead and the run's green gate describes a tree that no longer exis
   and broken on the platform. If a deploy check fails where every local gate passed, suspect a
   local-toolchain blind spot before suspecting the check.
 
-## Run report
+## Run report — short, or it is not read
 
-An autonomous run must be auditable after the fact, because nobody watched it happen. **The run
-report is written into the target repo**, not into this plugin — see the artifact-location rule in
-[auto-planning](../auto-planning/SKILL.md). Emit:
+An autonomous run must be auditable, because nobody watched it happen. It does **not** need its
+biography written. **The report is written into the target repo**, not into this plugin — see the
+artifact-location rule in [auto-planning](../auto-planning/SKILL.md). **Express runs emit no report
+at all**; the PR body is the record.
+
+Seven rows, and no more:
 
 | Field | Content |
 |---|---|
 | Goal | The GOAL sentence, and each done-criterion with its final verify output |
-| Executors | How many, which brands, the routing reason, and whether a PM was spawned |
-| Plan review | The plan-reviewer's brand/model, findings returned, which were applied, which rejected and why |
-| Invocation form | `/auto-office` alone, or `/auto-office` + plugin path (which harness planned) |
-| Headroom | **Every window, at start and at end, with reset times** — see below |
-| Benchmark snapshot | `captured` date used, and whether it was refreshed mid-run |
-| Task ledger | Per task: brand, model, effort, dispatch form, review rounds, tokens where reported, wall clock, verdict, `reroute_from`, `brief_defects` |
-| Agy exposure | Which tasks agy touched, and that the miss-list checks were run |
-| Stops | Every stop condition hit, what was asked, what was answered |
-| Caps | Any cap approached or exhausted — including the 2-round plan-defect presumption |
-| **Cost retrospective** | See below. One honest paragraph, not a table restated |
-| Still open | `PLANNER-HELD` steps not executed, deferred items, known gaps |
+| Landed | Per milestone: PR number, what it merged into, commit range |
+| Route | Executors: how many, which brands, one clause of reason. Gear, and any promotion to full |
+| Task ledger | Per task: brand, review rounds, wall clock, verdict, `reroute_from`, `brief_defects` |
+| Stops | Every stop hit, what was asked, what was answered |
+| **Not verified** | Every check that did not happen, named. An unrun check must never read as a passed one |
+| Still open | `named_actions:` not executed, deferred items, known gaps |
 
-**"Still open" is never empty by default.** If it genuinely is, say so explicitly rather than
-omitting the row.
+**"Still open" and "Not verified" are never empty by default.** If either genuinely is, say so
+explicitly rather than omitting the row.
+
+**Do not write a cost retrospective.** It was removed in 3.0.0. It produced paragraphs nobody acted
+on, and the one thing it was actually for — noticing over-provisioning — is better served by the
+task ledger's four columns. Where a harness reports no tokens (always, for agy), say so rather than
+printing `0`.
 
 ### Close the issue loop — file the carries, close what is actually done
 
@@ -175,61 +196,33 @@ ready, not when the reviewer approved, not when the run report says green.
   what would make it closable.
 - Close any *dependency* issues the run genuinely resolved, under the same merged-to-default test.
 
-### Cost retrospective
-
-Core 1.2.0 requires this of every office (`office-core/protocol/closeout.md`). Here it means: the
-task ledger above, plus **one honest paragraph** naming what was over- or under-provisioned — the
-brief that was too thin and bought three review rounds, the dispatch that bought isolation nobody
-used, the wall clock spent on a process nobody was watching.
-
-- **agy reports no token counts.** Say so explicitly. Do not print `0`, which reads as a
-  measurement; for agy, **wall clock and review rounds are the cost signal**.
-- **Wall clock is a line item, not a footnote.** A dispatch that produced nothing for an hour cost the
-  run an hour whether or not it burned a token.
-- Then append one row per task to
-  [routing-outcomes.md](../../references/routing-outcomes.md) — the workspace-local ledger the next
-  run's routing reads *before* the benchmark file.
-
-### Headroom
-
-Report **both windows at start and at end, each with its reset time**, for every brand probed.
-
-**Single-number deltas are banned.** `--percent` returns the tightest of two windows, so a run whose
-5-hour window resets mid-flight reads as *gaining* headroom: last run logged `82% → 52% → 85%`, which
-described nothing that happened. A start-to-end subtraction across a window boundary is not a
-measurement.
-
-## Self-heal gate — permitted only when the planner is claude/Opus
+## Feeding the next run — sparingly, and only a rule
 
 Closeout may sharpen these skills, under one condition: **the planner is claude at Opus tier.** A
-codex or agy planner writes a **proposal block** into the run report and stops — it does not edit.
+codex or agy planner writes a proposal into the run report and stops. Self-healing is authority to
+change the rules that gate future runs, which is why it is Opus-only.
 
-Self-healing is authority to change the rules that gate future runs. It is the one place in this
-office where reviewer-grade judgment is load-bearing, which is why it is Opus-only.
+**The bar is high, and it was raised in 3.0.0 for cause.** This mechanism is why the plugin
+accumulated 9.5k lines and ledger rows the length of essays. A run that appends prose is not
+learning, it is fossilising.
 
-Even then:
-
-- **Sharpen a rule; never append an anecdote.** A list of past situations does not generalize.
-- **Edit the owning file** per the maintenance matrix — routing lessons to `auto-routing`, loop
-  lessons to `auto-loop`, CLI lessons to the sibling office that owns that CLI.
+- **Write a rule, or write nothing.** If the lesson cannot be stated as a rule that changes what a
+  future run *does*, it is not a lesson. **Nothing durable to add is the expected outcome**, not a
+  failure — do not manufacture one.
+- **Sharpen an existing rule before adding a line.** Prefer replacing a sentence to appending one; a
+  net-zero diff that makes a rule sharper is the best possible result here.
+- **Edit the owning file** — routing lessons to `auto-routing`, loop lessons to `auto-loop`, CLI
+  lessons to the sibling office that owns that CLI. Never patch around a sibling's mechanism here.
 - **Never** relax a safety rule, raise a cap, widen a blast radius, or downgrade a reviewer.
 - **Never edit a vendored `office-core/` copy.** A shared invariant is a *proposed* core change.
 - **Show the diff in the run report** and bump the plugin `CHANGELOG`.
 
-## Feeding the next run
+### The ledger row
 
-Route each lesson to its owner, and prefer sharpening a rule over appending a scenario. All of this
-is subject to the self-heal gate above — an agy or codex planner *proposes* every item below.
+Append **one row, two lines maximum**, to
+[routing-outcomes.md](../../references/routing-outcomes.md) — the workspace-local ledger routing
+reads before the benchmark file. **Express runs append nothing.**
 
-- The per-task cost row → [routing-outcomes.md](../../references/routing-outcomes.md), always. This
-  one is a record, not a rule change, so it is appended at every closeout.
-- A route that was wrong in hindsight → [auto-routing](../auto-routing/SKILL.md), as a rubric
-  change, not an anecdote.
-- A tool behaving worse or better than its benchmark row → note it in
-  [model-benchmarks.md](../../references/model-benchmarks.md) as observed behavior; local
-  experience outranks the leaderboard.
-- A loop that drifted, stopped too often, or failed to stop → [auto-loop](../auto-loop/SKILL.md).
-- A CLI gotcha → the sibling office that owns that CLI, never patched around here.
-- A shared invariant → propose a core change; never edit a vendored copy.
-
-Nothing durable to add is a legitimate outcome. Do not manufacture a lesson.
+Two lines is a hard cap, not a target. The columns carry the numbers; the `lesson` cell carries one
+sentence or the words "as expected". A row that needs three paragraphs is describing a rule change —
+make the rule change instead, and let the row cite it.
