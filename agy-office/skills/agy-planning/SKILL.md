@@ -75,13 +75,15 @@ correctly in its prompt — which is why the brief also demands a citation (see
    | Strategy | When | Model |
    |---|---|---|
    | **INLINE** | Trivial, deterministic; a brief would cost more thought than the edit | You edit it; no dispatch, no verification pass. The plan row must say what a delegation would have bought. |
-   | **FLASH** | Codemods, renames, boilerplate, doc/config churn — formulaic and trivially checkable | `gemini-3.6-flash-high` |
-   | **PRO** | Default — well-briefed features, mid-size changes with a detailed spec, test writing | `gemini-3.6-flash-high` |
+   | **FLASH** | Codemods, renames, boilerplate, doc/config churn — formulaic and trivially checkable | `gemini-3.7-flash-high` |
+   | **PRO** | Default — well-briefed features, mid-size changes with a detailed spec, test writing | `gemini-3.7-flash-high` |
    | **ELSEWHERE** | Hard debugging, architectural work, subtle correctness, security-sensitive surface | Recommend `claude-office` for that task — see [routing.md](../../references/routing.md) |
    | **PLANNER-HELD** | Irreversible production writes, anything awaiting a human go-ahead, anything outside the ceiling | Never in an agy brief; named as excluded |
 
    Tag every task (`Strategy: PRO`), justify anything off-default in ≤8 words. **Both tiers resolve
-   to `gemini-3.6-flash-high` — the configured default for this office (operator default, 2026-08-01).** The tag
+   to `gemini-3.7-flash-high` — the configured default for this office (operator default, updated
+   2026-08-14 from 3.6; 3.7 Flash high scores **56** on AA Intelligence Index v4.1.1 vs 3.6's 50, at
+   ~340 tok/s).** The tag
    still matters: it records how much the task is trusted to be checkable, which drives how hard
    Phase 2b looks at it.
 

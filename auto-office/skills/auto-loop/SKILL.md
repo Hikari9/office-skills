@@ -16,8 +16,9 @@ before the loop:
     full gear only: one adversarial plan-review, then it retires   (auto-planning 7.5)
     ≥2 executors?  → the planner distributes and monitors. There is no PM.
 load GOAL block
-for each task in plan order:
-    dispatch                  (form derived; sibling office spoke per delegation-map)
+dispatch ONE EXECUTOR per repo, with the WHOLE plan   ← the only work launch the planner makes
+                          (CLI, own worktree; sibling office spoke per delegation-map)
+for each task the executor completes and hands back:
     liveness check            (see below — no output means confirm dead before re-dispatch)
     verify independently      (mandatory extra pass if agy executed)
     executor returns BRIEF DEFECT → stop this task, do not implement, do not consume a round
@@ -38,6 +39,17 @@ re-read GOAL:
     caps exhausted?           → stop and report the deadlock
 ```
 
+**The loop iterates over the executor's returns, not over your dispatches.** You launch the executor
+once per repo and then hold the gate — verify, review, triage, answer consults, perform the
+planner-held actions. If you find yourself launching a process for task *n*, stop: that is the
+executor's job and you have become a scheduler. The exceptions are the code reviewer (which the
+executor must never launch for itself) and, in Phase 1 only, read-only scouts.
+
+**The executor is expected to hand back per task, not per run.** Its brief requires it to stop at
+each task boundary, write `EXECUTOR-STATE.md`, and wait — so review happens per task, as it always
+has. What changed is who launches the next one: the executor resumes itself, or the planner resumes
+it with `--continue`. The planner never launches a *different* process for the next task.
+
 **Landing a milestone is part of the loop, not a phase after it.** The loop that reaches the end
 with nothing merged has produced one large unreviewable PR and no re-entry point — which is the
 failure this shape exists to prevent. If the milestone's gate is red, that milestone does not land
@@ -53,6 +65,30 @@ tokens to an unwatched dispatch; wall clock is a first-class cost.)
 **Silence does not authorize a re-dispatch. Confirm the process is dead first** — `pgrep`, handoff
 mtime, or stop it explicitly. A silent-but-live process plus a replacement is **two writers in one
 tree**. Kill or confirm exit, *then* re-dispatch.
+
+### `EXECUTOR-STATE.md` is mandatory, and the memory cap is the executor's to manage
+
+Every executor brief requires a resumable state file at the worktree root, rewritten **after every
+task**: tasks complete, evidence, open branch points, plan amendments with their commit hashes, and
+any question it needs the planner to answer. It is not a status report — it is the file the executor
+**re-briefs itself from**.
+
+- **At its brand's consecutive-task cap the executor relaunches itself from that file**, restating
+  full context. The planner does not take tasks back to fit a cap; that is the cap disciplining the
+  wrong role. (Agy: 3.)
+- **No state file is a stop.** A missing or stale `EXECUTOR-STATE.md` means the run has no re-entry
+  point, and that failure must be loud rather than discovered at the cap.
+- **It is NEVER committed.** It is a run artifact, not a deliverable: it lives at the worktree root,
+  is added to `.git/info/exclude` (never to the repo's `.gitignore` — that *is* a committed file),
+  and dies with the worktree. The brief must say so **and must forbid `git add -A` / `git commit -a`**,
+  because the executor commits its own work and a blanket add is exactly how a scratch file lands in
+  a PR. The durable record is the merged branch plus the amendment commits — not this file.
+- **Consultation is not free on every brand, so do not design around it.** A `claude` executor has a
+  send-message channel while it is live. **`agy` has no inbound channel to a running `--print`
+  process** — `--continue` / `--conversation` only resume it *after* it exits. So an agy consult is:
+  write the question into the state file, exit, planner answers, planner resumes with `--continue`.
+  That works and it is auditable; it also costs a process cycle, which is precisely why the state
+  file is mandatory rather than encouraged.
 
 **A CLI executor has no return channel unless the brief builds one.** A `--bg` agent's final message
 dies with the process and its log is raw TTY capture, not a transcript. Every CLI brief names a
@@ -162,11 +198,15 @@ The cheap check — "what else consumes this file?" — was one grep.
   concurrent *edits*, not an agent running `git checkout` en route to its own worktree. A brief saying
   "make your own branch" is a request, not a control.
 - **Re-read the branch after any dispatch returns**, not only before committing.
-- **A push is `planner_held` always — the planner performs it, never a delegate.** It does not pause
-  the run when the plan named the branch and chain. **Name the branch:**
-  `git push <remote> <branch-name>`, **never** `HEAD` — `HEAD` inherits whatever you are on, so "I
-  only push feature branches" is not true by construction, and this is exactly how a deploy has
-  already happened by accident once.
+- **The executor owns commits, pushes its own branch, and opens the PR.** The planner never authors a
+  commit for code it did not write. **Name the branch:** `git push <remote> <branch-name>`, **never**
+  `HEAD` — `HEAD` inherits whatever you are on, so "I only push feature branches" is not true by
+  construction, and this is exactly how a deploy has already happened by accident once. This rule
+  binds the executor now, so it goes in the brief **verbatim**, not as a paraphrase.
+- **Merging splits on whether the branch deploys.** The executor may merge a branch that does **not**
+  deploy. **A merge into a deploying branch is planner-held** — irreversible and outward-facing — and
+  the plan must state which branches deploy, or the executor must treat every branch as deploying and
+  hand the merge back.
 
 Evidence (2026-08-02, reached production): a dispatched agent left the shared checkout on `main`; two
 planner commits and a `git push … HEAD` landed there and deployed in 59 seconds.
@@ -186,6 +226,50 @@ tool is an in-loop decision, not a stop. Draining a window entirely, when the us
 would not, is worth one line of warning at the next status post; it is still not a stop.
 
 A cap is a signal, not an obstacle. Do not raise a cap to make a run finish.
+
+### Ownership
+
+The planner keeps only what is structurally not the executor's: things the **user** must see, the
+**anti-self-gating** gate, and **irreversible outward** actions.
+
+| Planner-held | Executor-owned |
+|---|---|
+| Interview, plan, GOAL, approval, all `AskUserQuestion` stops | Every numbered task, start to finish, in dependency order |
+| Read-only Phase 1 scouts (no plan and no executor exist yet) | Ordering within the graph; when and how to fan out workers |
+| **Dispatching the code reviewer**; triaging findings | Resolving branch points the plan already anticipated |
+| **Contesting** a review finding on the executor's behalf | **Implementing** every finding the reviewer raises |
+| **Production and irreversible applies**; deploys | **All preview/staging writes and all live reads** |
+| External sends — never delegable, ever | Commits, pushing its own branch, opening the PR |
+| **Merging into a branch that deploys** | Merging a branch that does **not** deploy |
+| Accepting or re-revising a plan amendment | Proposing a plan amendment, committed, with its hash |
+| Posting the run report | Drafting the run report from its own evidence |
+
+### Who performs a fix
+
+**Every fix goes back to the executor**, including a one-liner. The planner triages — decides what a
+finding means and whether to contest it — and the executor implements. Round-trip cost is the only
+pivot, and it bites in exactly one place: **the executor has already retired.** Then the planner
+discerns — apply it inline (core §35's live range: the brief would exceed the edit), or relaunch an
+executor if the fix set is large enough to be worth a process. Either way the fresh reviewer still
+gates it.
+
+Contesting a finding is the planner's, not the executor's: an executor arguing a finding down is
+arguing about its own work.
+
+### The executor may amend the plan — and must show its work
+
+A plan defect no longer has to bounce off the planner before anything moves. The executor may amend
+the **how** — tasks, sequencing, technical approach — **commit the amendment**, and report the
+**commit hash plus why** in `EXECUTOR-STATE.md`. The planner then accepts it or re-revises. The hash
+is the point: it makes an amendment auditable instead of a claim in prose.
+
+**Five fields it may never touch, because the user approved them and no downstream gate protects
+them:** `goal`, `done_criteria`, `blast_radius`, `named_actions`, `non_goals`. A code reviewer reads
+a clean diff against an amended contract and cannot tell the contract moved. Any change to those
+five **stops** and reaches the user through the planner.
+
+**A second amendment to the same task still stops the loop for the user** (below) — the executor
+amending repeatedly is the same self-gate as the planner doing it.
 
 ### The 2-round plan-defect presumption
 
@@ -222,6 +306,11 @@ re-route, how to sequence remaining tasks, when to fan out scouts.
 not a stop, it is a verification. A slow tool is not a stop, it is a reroute.
 
 ### Production work runs — under preconditions, not under a pause
+
+**Preview and staging writes are NOT in this category.** They are delegated, with the read-back —
+the executor applies, clears cache, re-runs to zero, and reports what it read back. Withholding them
+from the executor forces it to guess at ids and action strings, which other rules forbid. Only
+**production and irreversible** actions are planner-held.
 
 Deploys, migrations, prod applies, merges to a deploying branch, and production data writes are
 still **planner-held**: *you* perform them, never a delegate. They no longer stop the run, because

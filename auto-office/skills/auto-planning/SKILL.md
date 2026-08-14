@@ -45,7 +45,11 @@ is meaningless (one run read `82% → 52% → 85%` and none of it described anyt
 2. **File the tracking issue** by default, before exploring.
 3. **Interview to clarity.** Ask in batches, not one at a time. The floor below is not optional in
    full; in express, interview only until a remaining unknown would not change the implementation.
-4. **Recon with agy scouts, in parallel** — read-only, each returning file paths and line numbers.
+4. **Recon with agy scouts, in parallel — `agy` is the default scout brand and you need a reason to
+   pick another.** Read-only, each returning file paths and line numbers. It is the one role where
+   agy is unambiguously right: breadth-first reading at ~340 tok/s, N in parallel finishing before a
+   deeper single pass starts producing, and no evidence-authoring involved (§18 of the ledger — agy
+   is wrong where the *deliverable* is evidence, and a scout's deliverable is locations).
    Verify their claims cheaply before building on them. A scout claim you cannot verify is dropped.
 5. **Route, fully** ([auto-routing](../auto-routing/SKILL.md)) — **every task's brand**, and how many
    executors the run needs. Model and effort are fixed by role, so they are filled in, not decided.
@@ -101,15 +105,60 @@ do not write a plan until every item is answered or explicitly deferred by the u
 
 ## The task assignment table
 
-Goes in the plan, next to the tasks. The planner fills every cell before approval:
+Goes in the plan, next to the tasks. The planner fills every cell before approval.
 
-| # | Task | Brand | Model+effort | Dispatch | Diagnosis | Why |
+**Read this before you fill it in.** This table is the planner's **dispatch design, handed to the
+executor** — it is *not* a list of processes the planner will launch. In an approved run the planner
+launches exactly three kinds of process: **one executor per repo**, the code reviewer, and (Phase 1
+only) read-only scouts. Every row below tells the **executor** how to run that task. The table exists
+because the planner has read the whole codebase and the executor should not have to re-derive which
+task deserves a subagent — not because the planner is the one dispatching.
+
+A per-task row therefore obliges a **reason**: why *that* task should be inline, in-session, or a
+CLI worker. A `Dispatch` cell with no justification in `Why` is an unreviewable cost and the plan is
+not ready.
+
+**Row 0 is the executor, and it is the only process the planner launches for the work:**
+
+| Repo | Executor | Model+effort | Worktree | Scope |
+|---|---|---|---|---|
+| `acme-api` | codex | `gpt-5.6-luna` `xhigh` | `../wt-retry-queue` @ `BASE` | **Tasks 1–5, end to end** |
+
+Then the per-task rows — **instructions to that executor**, not launches:
+
+| # | Task | Worker brand | Model+effort | Dispatch | Diagnosis | Why this dispatch form |
 |---|---|---|---|---|---|---|
-| 1 | Locate every call site of `sendReceipt` | agy | `agy` high | in-session ×3 | settled | Read-only recon, breadth over depth |
-| 2 | Add the queue column + migration | codex | `codex-terra` high | cli | settled | Backend; own worktree |
-| 3 | Wire the retry flag through the config | codex | `codex-terra` high | in-session | settled | Executor has the file loaded already |
-| 4 | Reconcile the two conflicting invariants | claude | `opus` high — **worker upgrade** | cli | **unverified** | Arbitration, not implementation: a different *kind* of question. Declared here, recorded in telemetry |
-| 5 | Apply reviewer finding 2 (one-line guard) | — | planner inline | inline | settled | A dispatch buys nothing; still goes back to the reviewer |
+| 1 | Locate every call site of `sendReceipt` | agy | `agy` high | **cli ×3** (different brand) | settled | Read-only breadth; 3 parallel scouts beat one deep read, and a different brand needs its own process |
+| 2 | Add the queue column + migration | — | executor itself | **inline** | settled | The executor is the backend specialist here; a brief would restate the whole task |
+| 3 | Wire the retry flag through the config | — | executor itself | **inline** | settled | Two files the executor already has loaded — a brief costs more than the edit |
+| 4 | Reconcile the two conflicting invariants | claude | `opus` high — **worker upgrade** | **in-session** | **unverified** | Arbitration, not implementation: a different *kind* of question. Declared here, recorded in telemetry |
+| 5 | Backfill + verify against staging | — | executor itself | **in-session `--bg`** | settled | Contains a blocking wait; must own an event loop or it returns mid-task |
+
+Note what is **absent**: no row says "planner". Reviewer-finding fixes are not rows — they go back to
+the executor inside the fix loop. The planner appears in the plan only in `named_actions:`.
+
+### The fan-out tree
+
+Draw it. The table says *what* each task gets; the tree shows the **shape** — what actually runs in
+parallel, and where the barriers are. One glance should answer "how wide does this get, and when."
+
+```
+PLANNER (opus, this session)
+  │
+  ├─▶ EXECUTOR  gpt-5.6-luna xhigh  ·  wt-retry-queue  ·  tasks 1-5 end to end
+  │     │
+  │     ├─ T1 ──┬─▶ worker agy (cli)   scan handlers/     ┐
+  │     │       ├─▶ worker agy (cli)   scan jobs/         ├ parallel, barrier before T2
+  │     │       └─▶ worker agy (cli)   scan legacy/       ┘
+  │     │
+  │     ├─ T2 ─── inline  (migration)          ─┐
+  │     ├─ T3 ─── inline  (config wiring)       ├ serial: T3 needs T2's column
+  │     ├─ T4 ─── worker claude opus (in-sess) ─┘  arbitration, runs alongside T3
+  │     └─ T5 ─── in-session --bg (blocking wait)
+  │
+  ├─▶ CODE REVIEWER  opus high  (fresh, resumed across rounds)   ← planner-dispatched, per task
+  └─▶ [Phase 1 only] read-only scouts
+```
 
 - **`Model+effort` is pre-filled** from [auto-routing](../auto-routing/SKILL.md)'s table. The
   **executor's** cell is fixed at sonnet-tier high; a non-default value there is a **caller override**
@@ -121,13 +170,21 @@ Goes in the plan, next to the tasks. The planner fills every cell before approva
   declared here is the defect this office was revised to fix; note that the defect was the
   *invisibility*, not the bigger model. Declared is fine, undeclared is not.
 - **`Dispatch` is derived, not chosen** — `cli` / `in-session` / `inline`, per the dispatch-form table.
-  There is no tax to compute and no tier to pick.
+  There is no tax to compute and no tier to pick. **But the reason is not derived**: `Why this
+  dispatch form` must say what the form buys — parallelism, a different brand, isolation, an event
+  loop for a blocking wait, or (for `inline`) that the brief would exceed the edit. "Executor has it
+  loaded" is a reason; a blank cell is not.
+- **`inline` means the executor does it itself, not the planner.** In an approved run there is no
+  such thing as a planner row in this table.
 - **`Diagnosis` is `settled` or `unverified`.** `unverified` **no longer buys a bigger executor.** It
   obliges the brief to carry the reproduce-at-`BASE` clause and makes the task a first-class
   `BRIEF DEFECT` candidate — the executor is expected to come back and say the cause is wrong, and
   that return costs one read instead of a whole implementation.
-- **An inline row is a real row.** The planner may hold it, and it is still reviewed like every other
-  row. What the planner may never do is take a row out of review.
+- **An inline row is a real row** and is reviewed like every other row. What nobody may do is take a
+  row out of review.
+- **Before you approve your own table, count the launches.** If the number of processes *you* would
+  start is greater than (one executor per repo) + (one reviewer per task) + (Phase 1 scouts), you
+  have written a scheduler, not a plan. Go back and give the whole thing to the executor.
 
 ## The GOAL block
 

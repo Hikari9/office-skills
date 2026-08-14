@@ -11,7 +11,7 @@ Same discipline as `claude-office`, with the `agy` CLI (Antigravity/Gemini) as E
 | Role | Who | Model | Job |
 |---|---|---|---|
 | **Planner** | The current agent (you) | session's own | Plan → approval; **independently verify**; fix/close out |
-| **Executor** | `agy --print`, unsandboxed | `gemini-3.6-flash-high` | Implement ≤3 tasks; commit; write handoff |
+| **Executor** | `agy --print`, unsandboxed | `gemini-3.7-flash-high` | Implement ≤3 tasks; commit; write handoff |
 | **Reviewer** | One fresh Claude subagent | `opus`, high | Adversarial review each round; holds the gate |
 
 **Core principle:** the planner never implements the plan; the executor never approves its own

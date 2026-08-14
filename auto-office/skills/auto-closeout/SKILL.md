@@ -19,6 +19,11 @@ routed, autonomous run.
 | Pass | When | What runs |
 |---|---|---|
 | **Milestone landing** | every time a milestone's done-criteria go green, **inside the loop** | Gate → commit → PR → merge the chain. Then straight back into the loop. |
+
+**Who performs each step:** the **executor** commits, pushes its branch (named, never `HEAD`), and
+opens the PR — it wrote the code and holds the evidence for a real description. The **planner** holds
+the gate and performs any merge into a **deploying** branch; the executor may merge a branch that
+does not deploy. The planner never authors a commit for code it did not write.
 | **Final closeout** | once, after the last milestone | The above for the last milestone, plus sync, worktree removal, loop closure, and the run report. |
 
 **Never batch milestones.** A milestone that goes green and does not land is a re-entry point the run
