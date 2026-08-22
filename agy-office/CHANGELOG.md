@@ -1,5 +1,10 @@
 # Changelog — agy-office
 
+## 2.1.0 — 2026-08-22
+
+- **Worktree execution & PR workflow:** agy-office now strictly pre-creates and operates inside an isolated git worktree (`.worktrees/<slug>`), opens a PR referencing the tracking issue, and merges to main before cleaning up the worktree.
+- **Core 2.0.0 re-vendored:** planner scratch and the planner's own working tree are pinned to the run's worktree, never the target repo's primary checkout.
+
 ## 2.0.0 — 2026-08-14
 
 Core `2.0.0`. Adopts the release's three protocol changes and fixes the delegation bug behind

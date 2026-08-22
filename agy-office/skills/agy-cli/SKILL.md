@@ -29,9 +29,10 @@ Pass the same string to any label flag the brand exposes. The prefix is a displa
 
 - `--dangerously-skip-permissions` — required for unattended work.
 - `--print-timeout 45m` — defaults to 5m; **always raise it** or the run dies mid-task.
-- `--model "<exact display name>"` — the literal string from `agy models` (see
-  [routing.md](../../references/routing.md) for the current catalog). Never omit this: agy's own
-  default is Flash, where the invented-signature failures were observed.
+- `--model "<exact display name>"` — the literal model slug (default: `gemini-3.7-flash-high`, see
+  the `agy` skill for verified slugs). Pass it directly; do not block on `agy models` dynamically
+  as `agy models` has been observed lagging/hanging. Never omit `--model`: agy's own default is Flash,
+  where the invented-signature failures were observed.
 - `--add-dir "<abs path>"` — **does not reliably set the workspace.** The prompt text itself must
   state the absolute workspace root and forbid the scratch dir; the flag alone has produced "no
   active workspace selected."

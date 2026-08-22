@@ -23,6 +23,16 @@ with the plan summary (or a link to the plan file). At closeout, reference it wi
 the PR body so it closes automatically on merge; if the gate stays red or the run stops short,
 leave the issue open as the record of what's unresolved.
 
+## Worktree creation (default, automatic)
+
+Pre-create the isolated git worktree for the run before dispatching Phase 2:
+```bash
+git -C <repo> worktree add .worktrees/<slug> -b feat/<slug> <BASE>
+```
+All plan artifacts, briefs, executor workspace `--add-dir`, Phase 2b verification, and Phase 3
+reviews must point to and operate inside this isolated worktree path, never in the target repo's
+primary checkout. Working in the primary checkout is forbidden unless the user explicitly requested it.
+
 ## Interview until 95% clear
 
 Clear enough that a stranger with no access to this conversation could build the right thing from
