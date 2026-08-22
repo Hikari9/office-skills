@@ -78,11 +78,11 @@ rule: `office-core/protocol/roles-and-authority.md` → *Fit test*.
 - Exit 0 means nothing; green tests only prove tests agree with the implementation.
 - `--print` last or prompt is swallowed; always pass `--model`; raise `--print-timeout`.
 - Every touched interface pinned verbatim, `file:line`; executor cites real signatures.
-- One tree, one agy process; one executor per repo; parallel = separate worktrees only.
+- One tree, one agy process; run in an isolated git worktree (`.worktrees/<branch>` or `worktrees/<branch>`), never directly in the primary repo checkout.
 - Commit boundary: no push/PR/deploy/remote-config/message/credentials unless authorized. Those are
   the **planner's** to perform, and they run without a fresh go-ahead only when the plan's
   `named_actions:` names them verbatim with a dry run, a revert target, and a read-back.
-- Land each milestone as its criteria go green — commit, PR, merge the chain — not one PR at the end.
+- Land each milestone as its criteria go green — commit in worktree, open PR, merge to main — not one giant untracked patch at the end.
 - Dispatch live-system work **with** its access: MCP/API tools named in the launch, production
   **reads** included, data shape pinned in the brief, read-back required.
 - Reviewer always a Claude subagent, never `agy`; escalate out of the tool, not to it.
@@ -128,16 +128,16 @@ No role reads the whole corpus — each gets the Office Kernel plus the spokes b
 
 One todo per phase; close each with `compact: yes|no — why` (core evidence floor).
 
-**Phase 1 — Plan (Planner).** File the tracking issue, interview to 95%, pin every touched
-interface verbatim, write the plan (Context / Global Constraints incl. blast-radius ceiling /
-tagged tasks / waves / out of scope), declare routing, get approval. →
-[`agy-planning`](skills/agy-planning/SKILL.md).
+**Phase 1 — Plan (Planner).** File tracking issue, interview to 95%, pre-create the isolated
+git worktree (`.worktrees/<slug>`), pin every touched interface verbatim, write the plan (Context /
+Global Constraints incl. blast-radius ceiling / tagged tasks / waves / out of scope), declare routing,
+get approval. → [`agy-planning`](skills/agy-planning/SKILL.md).
 
-**Phase 2 — Execute (Executor).** Record `BASE`, build the packet, launch per
+**Phase 2 — Execute (Executor).** Record `BASE`, build the packet for the worktree, launch per
 [`agy-cli`](skills/agy-cli/SKILL.md), never edit the tree it writes to, handle its
 `## Upline`. → [`agy-executor`](skills/agy-executor/SKILL.md).
 
-**Phase 2b — Verify (Planner), mandatory.** Run all seven checks; fix and re-verify any confirmed
+**Phase 2b — Verify (Planner), mandatory.** Run all seven checks in the worktree; fix and re-verify any confirmed
 defect before dispatching the reviewer. **Not review** — no spec judgement, no approving. →
 [`agy-verification`](skills/agy-verification/SKILL.md).
 
@@ -145,9 +145,9 @@ defect before dispatching the reviewer. **Not review** — no spec judgement, no
 Constraints, handoff, diff, your Phase 2b evidence; triage/fix; re-run Phase 2b + the gate each
 round; cap 5. → [`agy-reviewer`](skills/agy-reviewer/SKILL.md).
 
-**Phase 4 — Closeout (Planner).** Commit, verify the gate, PR + automerge, document, sync main,
-remove the worktree, close every open Upline entry, report in ≤6 lines. →
-[`agy-closeout`](skills/agy-closeout/SKILL.md).
+**Phase 4 — Closeout (Planner).** Commit in worktree, verify gate, push branch, open PR (`gh pr create`),
+merge to main (`gh pr merge --auto --squash` or standard merge), sync local `main`, remove the worktree,
+close every open Upline entry, report in ≤6 lines. → [`agy-closeout`](skills/agy-closeout/SKILL.md).
 
 ## Composing with other skills
 
