@@ -15,7 +15,7 @@ procedure lives in the spokes it routes to.
 | Role | Owner | Default model | Responsibility |
 |---|---|---|---|
 | Planner | Active Codex session | current session | scope, plan, escalation, closeout |
-| Executor | Fresh `codex exec` session | `gpt-5.6-terra` | implements the approved plan |
+| Executor | Fresh `codex exec` session | `gpt-5.6-luna` `xhigh` | implements the approved plan |
 | Reviewer | Separate fresh `codex exec` session | `gpt-5.6-sol` high effort | adversarial gate and re-review |
 
 ## Invocation gate and caller overrides

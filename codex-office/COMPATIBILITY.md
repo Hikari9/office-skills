@@ -1,6 +1,6 @@
 # Compatibility
 
-- **Plugin version:** `1.5.0` (see `.claude-plugin/plugin.json`)
+- **Plugin version:** `2.1.0` (see `.claude-plugin/plugin.json`)
 - **Supported core range:** `>=2.0.0 <3.0.0`
 - **Vendored snapshot:** `office-core/`, with `office-core/SNAPSHOT.json` recording the exact core
   version and content hash this plugin ships against. The vendored copy is authoritative for an

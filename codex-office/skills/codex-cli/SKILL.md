@@ -10,7 +10,7 @@ Assumes: the Office Kernel is already in the packet.
 
 Pass `-m` explicitly on every invocation — never rely on a default.
 
-- `gpt-5.6-terra` — ordinary implementation (executor default).
+- `gpt-5.6-luna`, `xhigh` reasoning effort — ordinary implementation (executor default).
 - `gpt-5.6-sol`, high reasoning effort — hard diagnosis, or any reviewer dispatch.
 
 ## The safety boundary

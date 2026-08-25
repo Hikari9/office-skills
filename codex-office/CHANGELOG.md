@@ -3,6 +3,18 @@
 All notable changes to the `codex-office` plugin are documented in this file. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 2.1.0 — 2026-08-25
+
+### Codex executor default is `gpt-5.6-luna` at `xhigh`
+
+The executor role and the `codex-cli` model-selection list now name `gpt-5.6-luna` `xhigh` instead
+of `gpt-5.6-terra`, matching the standing user default already recorded in `auto-routing`. Read it
+as a cost-and-speed trade, not an upgrade: Luna xhigh scores **50** on the AA Intelligence Index
+against Terra max's **55**, at **$0.17/M vs $0.73/M**. An executor implements an already-reviewed
+plan, so the index gap buys less than the price gap costs.
+
+The reviewer floor is untouched — `gpt-5.6-sol` at high effort, as before.
+
 ## 2.0.0 — 2026-08-14
 
 Core `2.0.0`. Adopts the release's three protocol changes and fixes the delegation bug behind

@@ -77,8 +77,8 @@ exceptions:
   - id: auto-mandated-executor-tier
     owner: auto-office
     reason: >
-      Every executor runs at sonnet-tier, high effort, regardless of task difficulty: sonnet high
-      for claude, codex-terra high for codex, agy high for agy. No self-escalation and no model
+      Every executor runs at its brand's fixed default tier, regardless of task difficulty: sonnet
+      high for claude, `gpt-5.6-luna` xhigh for codex, `gemini-3.7-flash-high` for agy. No self-escalation and no model
       substitution without an explicit caller override. A worker's brand and tier are assigned by
       the planner in the plan and may exceed the executor's tier — which core's delegation test
       anticipates, since a delegation is allowed to buy tier — but a worker is never promoted at run
