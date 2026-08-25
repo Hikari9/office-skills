@@ -137,6 +137,13 @@ tree; a newer overlapping writer is stopped before it can edit.
 
 Pre-existing dirty changes are preserved and named as **protected paths** in the plan.
 
+**The planner works in the run's worktree too, and its scratch lives there.** Plans, briefs, review
+rounds, and state files go in the run's worktree — never the target repo's primary checkout. A
+shared checkout is not durable: a concurrent agent advanced `main` and deleted a live run's brief
+directory out from under it mid-run. Create the worktree before the first artifact; if a plan must
+exist first, hold it in session scratch and copy it in. Working directly in the primary checkout
+requires the **user** naming that checkout — a planner never defaults to it.
+
 ## Fit test — before the office runs at all
 
 The delegation test below prices one task. The **fit test** prices the whole run, and it comes

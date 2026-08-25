@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:office-core:1.2.0:office-kernel.schema.json",
+  "$id": "urn:office-core:3.0.0:office-kernel.schema.json",
   "title": "Office Kernel",
   "description": "Immutable per-run packet header. Opens every planner, executor, verifier, and reviewer packet verbatim. Narrowing a field is allowed; widening it is not.",
   "type": "object",

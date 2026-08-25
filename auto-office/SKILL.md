@@ -18,11 +18,12 @@ Planner ─▶ Plan-reviewer ─▶ retires │ Planner ─▶ ONE Executor per 
 |---|---|---|---|
 | **Planner** | The current agent (you) | Interview → plan + GOAL → approval; **dispatch ONE executor per repo**; hold the review gate; answer consults; perform user-facing and irreversible actions | **Dispatch a per-task worker**; approve work, its own included |
 | **Plan-reviewer** | Fresh, planner's brand, Opus **low**. **Full gear only** | One adversarial pass before approval, then **retires** | Distribute work; return; hold a later gate |
-| **Executor** | **One per repo**, brand per plan, **sonnet-tier high always** | **Execute the WHOLE plan end to end** — every task in dependency order, fanning out its own workers per the plan's dispatch column; commit, push, open the PR; write `EXECUTOR-STATE.md` | Approve its own work; exceed the ceiling; amend a user-approved field |
+| **Executor** | **One per repo**, brand per plan, **sonnet-tier high always** | **Execute the WHOLE plan end to end** — every task in dependency order, fanning out its own workers per the plan's dispatch column; **self-review every task and the whole diff**; commit, push, open the PR; write `EXECUTOR-STATE.md` | Approve its own work; exceed the ceiling; amend a user-approved field |
 | **Worker** | Per task; **any** brand/model/effort the plan declares | One task, never a second writer | Widen scope; be promoted mid-run |
-| **Reviewer (code)** | Fresh `opus` high (`codex-sol` high when Codex *plans*) | Adversarial gate every round | Fix what it gates |
+| **Reviewer (code)** | Fresh `opus` **low** (`codex-luna` high when Codex *plans*) | Adversarial gate every round | Fix what it gates |
 
-**Core principle: no one gates their own work, and inline work is still reviewed.**
+**Core principle: no one gates their own work, and inline work is still reviewed.** The executor's
+mandatory self-review is a *pass*, never an approval — it precedes the gate and never stands in for it.
 
 **Second principle: the executor executes the plan; the planner does not execute it task by task.**
 The planner *designs* the dispatch — the assignment table stays the planner's — then hands the whole

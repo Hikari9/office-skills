@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:office-core:1.2.0:run-event.schema.json",
+  "$id": "urn:office-core:3.0.0:run-event.schema.json",
   "title": "Office run event",
   "description": "Emitted at explicit command dispatch. A transcript keyword match is a catalog mention, not an invocation, and never produces one of these. Stores counts and redacted labels only: no user prompts, secrets, or credentials.",
   "type": "object",

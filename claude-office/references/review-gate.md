@@ -14,9 +14,18 @@ Agent(
 )
 ```
 
-**The code-review floor is `opus` high.** In-session dispatch has no `effort` parameter, so the
-brief carries it as stated rigor: open the brief with *"Treat this as a high-effort review; do not
-stop at the first defect you find."* A CLI-launched reviewer passes `--effort high` explicitly.
+**The code-review floor is `opus` low.** The gate's strength is independence, freshness, and a
+pointed brief — not effort tier. In-session dispatch has no `effort` parameter, so the brief still
+carries the rigor as stated instruction: open it with *"Do not stop at the first defect you find."*
+A CLI-launched reviewer passes `--effort low` explicitly, and a missing `--effort` is a dispatch
+defect in either direction.
+
+**Before you dispatch: the handoff must carry a `## Self-review` section.** Core requires the
+executor to review its own work per task and once over the cumulative diff. If that section is
+missing or empty, return the handoff to the executor and do not dispatch review — the gate is not
+the place to catch what the author could have found for free. Read the section, then leave it in the
+handoff: **do not** copy its findings into the reviewer's brief. Handing a reviewer the author's own
+list anchors it and converts an independent pass into a verification of someone else's work.
 
 **Record the returned agent ID/name.** Every subsequent round goes back to that same agent via SendMessage so it keeps the full history of what it already flagged and accepted. A fresh reviewer per round re-litigates settled findings and cannot tell you whether round 2 regressed round 1.
 

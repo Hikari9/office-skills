@@ -11,7 +11,7 @@ Three roles, one session, for irreversible or production-facing work.
 |---|---|---|---|
 | **Planner** | The current agent (you) | session default | Interview → plan → approval; triage/apply review fixes; close out |
 | **Executor** | One dispatched subagent | `sonnet`, high | Implement the whole plan via subagents; self-check every task before handoff |
-| **Reviewer** | One fresh dispatched subagent | `opus`, high | Adversarial final review + each fix round; holds the approval gate |
+| **Reviewer** | One fresh dispatched subagent | `opus`, low | Adversarial final review + each fix round; holds the approval gate |
 
 **Core principle:** the planner never implements; the executor never approves its own work. Each
 gate is held by someone who did not do the work being gated.

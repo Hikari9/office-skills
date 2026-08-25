@@ -176,6 +176,13 @@ Task 1: complete (<commits>) — <one line>
 ## Files created that are not in the work items
 <Every untracked or added file no work item asked for, or "none". Be exhaustive.>
 
+## Self-review (required — see core `evidence-and-handoff.md`)
+Per task, before marking it complete: spec-compliance verdict + quality verdict,
+graded Critical / Important / Minor — including work you implemented inline.
+Then once over the whole `BASE..HEAD` diff after the gate is green.
+<one line per finding: grade — what — fixed (<commit>) | deferred (minor) | parked (<ruling>)>
+<"none" is a valid finding list; an absent or empty section is not.>
+
 ## Gate evidence
 $ <command>
 <actual pasted output>

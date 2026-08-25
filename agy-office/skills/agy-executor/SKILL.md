@@ -53,15 +53,19 @@ While the executor runs, the planner does non-conflicting prep only. Two writers
 and commit half of each other's changes — this applies to the planner as much as to a second agy
 process.
 
-## Standing clauses on every brief (core 1.2.0)
+## Standing clauses on every brief (core 3.0.0)
 
-Both are required fields of the packet contract, not optional additions:
+All three are required fields of the packet contract, not optional additions:
 
 1. **Verify the stated cause reproduces at `BASE` before implementing.** If it does not, return
    `BRIEF DEFECT` instead of implementing.
 2. **A task shipping a test must paste that test failing at `BASE`** (or against the reverted fix). A
    test that was green before the change proves nothing about it, and a green useless test is invisible
    to review.
+3. **Self-review your own work before handing off** — per task before marking it complete, and
+   once over the cumulative `BASE..HEAD` diff at Finish, including work you implemented inline.
+   Record it in the handoff's required `## Self-review` section. It never substitutes for the
+   review gate; a handoff without that section is returned unreviewed.
 
 ## `BRIEF DEFECT`
 

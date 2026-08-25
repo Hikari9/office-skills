@@ -1,5 +1,23 @@
 # Changelog — claude-office
 
+## 2.1.0 — 2026-08-25
+
+Core `3.0.0`. Two changes, both directed by the user.
+
+- **Code-review gate drops to `opus` low** (was `opus` high). The gate's strength is independence,
+  freshness, and a pointed brief — not effort tier. The plan-review floor was already `opus` low;
+  the two floors are still declared separately and neither promotes the other.
+- **Executor self-review is mandatory** (core 3.0.0). The executor reviews its own work per task
+  before marking it complete — **including work it implemented inline**, the only work with no other
+  reader before the gate — and once over the cumulative `BASE..HEAD` diff after the gate is green.
+  Findings go in a required `## Self-review` handoff section. A handoff without it is returned to the
+  executor **before** review is dispatched, and its findings are never copied into the reviewer's
+  brief (that anchors the gate). Self-review is a pass, never an approval.
+- The planner's own review pass is unchanged: planner-as-reviewer stays exactly as it was.
+- **Core protocol note:** the planner-works-in-the-worktree rule, previously only in agy-office's
+  vendored snapshot, now lives in the root `office-core` source so re-vendoring cannot drop it.
+
+
 ## 2.0.0 — 2026-08-14
 
 Core `2.0.0`. Adopts the release's three protocol changes and fixes the delegation bug behind
