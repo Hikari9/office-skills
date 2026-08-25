@@ -1,10 +1,32 @@
 # Closeout (core protocol)
 
-Run by the **planner**, after the reviewer returns `APPROVED`. Self-contained: it loads no
-other skill.
+Run by the **planner**, after the reviewer returns `APPROVED` — or invoked directly, standalone
+(see below), when there is no planner and no reviewer round to wait on. Self-contained: it loads
+no other skill.
 
 Each office narrows this with an adapter file naming its own gate command, its report fields,
 and where it records durable lessons. An adapter may add a step; it may not drop one.
+
+## Standalone invocation
+
+This file also runs with no planner, no Office Kernel packet, and no plan file — when an
+office's closeout skill is invoked directly to finish work that never went through the full
+pipeline (a quick fix, a one-off task, resuming a branch after the session that started it is
+gone). Nothing below changes: confirm target, commit, gate, PR, document, sync, cleanup, close
+loops all still apply exactly as written.
+
+What standalone invocation drops, because there is nothing to drop them from:
+
+- **Milestones.** There is one milestone — the current state of the worktree — so steps 0–6 run
+  in a single pass rather than splitting "every milestone" from "the last milestone only."
+- **The Office Kernel and `plan-contract.md`.** No milestone list, no `named_actions:`, no role
+  split from `roles-and-authority.md` to invoke — the session running this file holds whatever
+  authority a local commit-and-ship already implies, the same as any other direct push.
+
+What it keeps: **step 6 still closes every open Upline entry that actually exists.** If this
+branch carries a handoff file with open `[needs-user]` or `[needs-planner]` items — left by an
+earlier session on the same work — close them per step 6 exactly as in a full run. If no handoff
+file exists, there is nothing to close; don't invent one to satisfy the step.
 
 ## Closeout runs per milestone, not once per run
 
@@ -15,6 +37,8 @@ into the next one. The last milestone additionally runs steps 5 and 6.
 - **Steps 0–4 run at every milestone.** Commit, gate, PR, document.
 - **Steps 5 and 6 run once, at the end** — syncing main, removing the worktree, and closing loops
   are terminal acts. Removing a worktree at milestone 1 of 3 destroys the run.
+  (Standalone invocation has no milestone list to split against — see *Standalone invocation*
+  above; run every step in one pass.)
 - **A red gate stops that milestone, not silently the next one.** Commit and document, do not
   open the PR, and report — the run does not walk past a red milestone into the following one.
 - **The landed milestone is the resume record.** A run interrupted after milestone 2 resumes by
@@ -147,7 +171,10 @@ minimum:
 | Not verified | Every check that did not happen, named. **Never let an unrun check read as a passed one.** |
 | Still open | Deferred items and known gaps. If genuinely empty, say so rather than omitting the row. |
 
-An office may add fields; it may not drop one. **It may not turn the report into an essay** — a
+**Standalone invocation** (see above) drops `Rounds` — there is no plan and no reviewer round
+count to report — but keeps `Goal`, `Landed`, `Not verified`, and `Still open`.
+
+An office may add fields; it may not drop one otherwise. **It may not turn the report into an essay** — a
 record nobody finishes reading is a record that does not exist, and the accumulated habit of
 writing the run's whole biography into a ledger is a cost the run pays and the next run does not
 recover. State a durable lesson as a rule change in the file that owns the rule, or not at all.
