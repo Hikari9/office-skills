@@ -6,12 +6,28 @@ description: Mechanics of driving `codex exec` safely — models, worktrees, tel
 Loaded by: planner, at every phase that dispatches a `codex exec` process.
 Assumes: the Office Kernel is already in the packet.
 
-## Model selection
+## Model and effort selection
 
-Pass `-m` explicitly on every invocation — never rely on a default.
+**Pass BOTH `-m <model>` and `-c model_reasoning_effort="<effort>"` on every invocation — never rely
+on a default for either.**
 
-- `gpt-5.6-luna`, `xhigh` reasoning effort — ordinary implementation (executor default).
-- `gpt-5.6-sol`, high reasoning effort — hard diagnosis, or any reviewer dispatch.
+- `gpt-5.6-luna`, `xhigh` effort — ordinary implementation (executor default).
+- `gpt-5.6-luna`, `high` effort — hard diagnosis, or any reviewer dispatch.
+
+`gpt-5.6-sol` is no longer a routing option in this office; Luna covers both lanes.
+
+**`codex exec` has no `--effort` flag.** Effort is a config key, so it is set with `-c`:
+`-c model_reasoning_effort="xhigh"`. A dispatch passing only `-m` silently inherits
+`model_reasoning_effort` from `~/.codex/config.toml` — commonly `medium`. **Verified 2026-08-25:
+that is exactly what every office was doing**, so the role tables said `xhigh` and the process ran
+whatever the operator's config happened to say. Treat a missing `-c model_reasoning_effort=` as a
+**defect in the dispatch, not a detail** — the same rule `auto-routing` already applies to a
+`claude --model` without `--effort`.
+
+**Read the effort back out of the launch banner.** An unrecognised value is **not** rejected: the
+banner prints `reasoning effort: bogus` and the session runs anyway (verified 2026-08-25, Codex
+v0.149.1). The banner's `model:` and `reasoning effort:` lines are the only proof of what actually
+launched; record both in telemetry, and never infer them from the command you meant to type.
 
 ## The safety boundary
 
@@ -58,7 +74,7 @@ range and the reviewer's diff package both key off this value.
 ## Telemetry per launch
 
 Record, per `office-core/schemas/run-event.schema.json`: the `codex exec` launch id, worktree id,
-`BASE` commit, selected spokes, model name and effort, and (for reviewer dispatches) the review
+`BASE` commit, selected spokes, **the model name and effort as echoed by the launch banner**, and (for reviewer dispatches) the review
 round. This is what makes a duplicate writer or a skipped review observable after the fact — a
 transcript keyword match does not substitute for it.
 
@@ -68,8 +84,10 @@ transcript keyword match does not substitute for it.
 `.output` path.** Same rule `agy-cli` already carries — it is per dispatch mechanism, not per brand.
 
 ```bash
-codex exec --yolo -m <model> --cd "<abs repo path>" "$(cat <brief>)" < /dev/null 2>&1
+codex exec --yolo -m <model> -c model_reasoning_effort="<effort>" \
+  --cd "<abs repo path>" "$(cat <brief>)" < /dev/null 2>&1
 # run_in_background: true, timeout: 600000 — then hand the user the returned .output path
+# Then read the launch banner: `model:` and `reasoning effort:` must match what you intended.
 ```
 
 **Name the session by role.** The first line of the brief is `[ROLE] <repo> — <task>` — `[PLANNER]`,
@@ -104,12 +122,17 @@ Pass the same string to any label flag the brand exposes. The prefix is a displa
   the conclusions it already reached.
 - **`resume` takes a DIFFERENT flag set from `exec` — `--cd` is rejected.** Its usage is
   `codex exec resume --dangerously-bypass-approvals-and-sandbox --model <MODEL> <SESSION_ID> [PROMPT]`.
+  `-c model_reasoning_effort=` is accepted here too and is **required**: a resume inherits the
+  session's context, **not** its effort. Verified 2026-08-25 — resuming an `xhigh` session without
+  the flag launched at `reasoning effort: medium`, the config default. A long run split across
+  resumes silently degrades from the second dispatch onward if you drop it.
   Passing `--cd` fails instantly with `error: unexpected argument '--cd' found`. The resumed session
   keeps its original working directory, so `--cd` is unnecessary — but tell the agent which directory
   it should be in and have it confirm, rather than assuming.
 
   ```bash
-  codex exec resume --dangerously-bypass-approvals-and-sandbox --model <model> <session-id> \
+  codex exec resume --dangerously-bypass-approvals-and-sandbox --model <model> \
+    -c model_reasoning_effort="<effort>" <session-id> \
     "<continuation prompt>" < /dev/null 2>&1
   # run_in_background: true, timeout: 600000
   ```
@@ -161,6 +184,30 @@ dispatch mechanism, not per brand.
   ```bash
   ps -eo pid,comm | awk '$2=="codex"'   # empty  => no codex process, regardless of pgrep
   ```
+
+  **`comm == "codex"` is NOT universal — on an nvm-installed CLI it is `node`.** Measured
+  2026-08-25 on darwin with codex under `~/.nvm/versions/node/v24.13.1/bin/codex`: the live
+  dispatch showed `comm == node` (two PIDs: the JS entrypoint plus the vendored
+  `codex-darwin-arm64` binary), so the `$2=="codex"` filter returned **empty while the executor
+  was actively working and its output file was growing**. A planner trusting it would have
+  declared the run dead and re-dispatched into a tree that already had a live writer — the exact
+  corruption this section exists to prevent. The `comm=="codex"` check is safe only in the
+  *negative-to-positive* direction; a hit means alive, a miss means nothing.
+
+  **Match on the worktree path instead — it is unique per dispatch and brand-agnostic:**
+
+  ```bash
+  pgrep -f "<abs worktree path>" | wc -l    # 0 => dead; >0 => alive
+  ```
+
+  And confirm with two independent signals before concluding death: the output file's size
+  must be *static* across two samples, **and** the process count zero. A growing `.output` with
+  a "dead" process reading means your liveness check is wrong, not that the file is haunted.
+
+  **Never use `pgrep -fl` on a codex dispatch.** The entire brief lives in the command line, so
+  `-l` prints the whole prompt — twice, once per PID. Observed this run: a single `pgrep -fl`
+  dumped ~14 KB of brief text into the planner's context for a one-bit answer. Use
+  `pgrep -f <path> | wc -l`, or pipe through `cut -c1-120`.
 
   Same run, the inverse error: a dispatch the harness reported as `killed` was read as "still alive"
   from a `pgrep` hit and written up as a race with teardown. It was not a race — it was the wrapper.

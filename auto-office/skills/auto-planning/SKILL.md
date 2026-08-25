@@ -28,7 +28,7 @@ Announce before doing anything else:
 ```
 auto-office · gear: <express|full> (<the fit-test reason, one clause>)
 executors: <n> (<brand(s)>, <fit reason>) · milestones: <n>
-reviewer: opus high · plan-reviewer: <brand> <model> low   [full only]
+reviewer: opus low · plan-reviewer: <brand> <model> low   [full only]
 headroom: <only if probed — per window, with reset times, UNKNOWN where a probe failed>
 loop: on · overrides: <none|…>
 ```
@@ -162,7 +162,7 @@ PLANNER (opus, this session)
   │     ├─ T4 ─── worker claude opus (in-sess) ─┘  arbitration, runs alongside T3
   │     └─ T5 ─── in-session --bg (blocking wait)
   │
-  ├─▶ CODE REVIEWER  opus high  (fresh, resumed across rounds)   ← planner-dispatched, per task
+  ├─▶ CODE REVIEWER  opus low   (fresh, resumed across rounds)   ← planner-dispatched, per task
   └─▶ [Phase 1 only] read-only scouts
 ```
 

@@ -3,6 +3,33 @@
 All notable changes to the `codex-office` plugin are documented in this file. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 2.2.0 — 2026-08-25
+
+Core `3.0.0`. Two changes, both directed by the user.
+
+- **Code-review gate drops to `opus` low** (was `opus` high). The gate's strength is independence,
+  freshness, and a pointed brief — not effort tier. The plan-review floor was already `opus` low;
+  the two floors are still declared separately and neither promotes the other.
+- **Executor self-review is mandatory** (core 3.0.0). The executor reviews its own work per task
+  before marking it complete — **including work it implemented inline**, the only work with no other
+  reader before the gate — and once over the cumulative `BASE..HEAD` diff after the gate is green.
+  Findings go in a required `## Self-review` handoff section. A handoff without it is returned to the
+  executor **before** review is dispatched, and its findings are never copied into the reviewer's
+  brief (that anchors the gate). Self-review is a pass, never an approval.
+- **`codex exec` dispatches now mandate `-c model_reasoning_effort="<effort>"`.** There is no
+  `--effort` flag on `codex exec`, so `-m` alone silently inherited `model_reasoning_effort` from
+  `~/.codex/config.toml` (`medium` on the machine checked) while the role tables said `xhigh` —
+  verified 2026-08-25 against Codex v0.149.1. An unrecognised effort is accepted silently and echoed
+  in the launch banner, so the banner's `model:` / `reasoning effort:` lines are now the required
+  read-back and the telemetry source.
+- The planner's own review pass is unchanged: planner-as-reviewer stays exactly as it was.
+- **Core protocol note:** the planner-works-in-the-worktree rule, previously only in agy-office's
+  vendored snapshot, now lives in the root `office-core` source so re-vendoring cannot drop it.
+- **Reviewer model moves to `gpt-5.6-luna` high** (was `gpt-5.6-sol` high). `gpt-5.6-sol` is no
+  longer a routing option in this office at all — Luna covers both the reviewer and hard-diagnosis
+  lanes.
+
+
 ## 2.1.0 — 2026-08-25
 
 ### Codex executor default is `gpt-5.6-luna` at `xhigh`
@@ -13,7 +40,7 @@ as a cost-and-speed trade, not an upgrade: Luna xhigh scores **50** on the AA In
 against Terra max's **55**, at **$0.17/M vs $0.73/M**. An executor implements an already-reviewed
 plan, so the index gap buys less than the price gap costs.
 
-The reviewer floor is untouched — `gpt-5.6-sol` at high effort, as before.
+The reviewer floor is untouched — `gpt-5.6-luna` at high effort, as before.
 
 ## 2.0.0 — 2026-08-14
 

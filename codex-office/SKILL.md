@@ -15,8 +15,8 @@ procedure lives in the spokes it routes to.
 | Role | Owner | Default model | Responsibility |
 |---|---|---|---|
 | Planner | Active Codex session | current session | scope, plan, escalation, closeout |
-| Executor | Fresh `codex exec` session | `gpt-5.6-luna` `xhigh` | implements the approved plan |
-| Reviewer | Separate fresh `codex exec` session | `gpt-5.6-sol` high effort | adversarial gate and re-review |
+| Executor | Fresh `codex exec` session | `gpt-5.6-luna`, `-c model_reasoning_effort="xhigh"` | implements the approved plan |
+| Reviewer | Separate fresh `codex exec` session | `gpt-5.6-luna`, `-c model_reasoning_effort="high"` | adversarial gate and re-review |
 
 ## Invocation gate and caller overrides
 
@@ -53,7 +53,9 @@ or three sentences and proceed. Full rule: `office-core/protocol/roles-and-autho
 - One writer per working tree; parallel work needs separate worktrees and disjoint paths.
 - `codex exec --yolo` has no sandbox or approval stop — the prompt and the stated blast-radius
   ceiling are the entire safety boundary.
-- Pass `-m` explicitly to every `codex exec`.
+- Pass **both** `-m <model>` and `-c model_reasoning_effort="<effort>"` to every `codex exec`.
+  There is no `--effort` flag; `-m` alone inherits the operator's config default (often `medium`),
+  and an unrecognised effort is accepted silently — read the launch banner back.
 - Executor authority is local edits and commits only; pushes, PRs, deploys, remote config,
   messages, and credentials are forbidden unless the prompt names that exact action. Those stay the
   **planner's** to perform — and the planner performs them without a fresh go-ahead only when the

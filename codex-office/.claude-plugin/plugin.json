@@ -1,6 +1,6 @@
 {
   "name": "codex-office",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Use only when explicitly named for production-facing or irreversible repository work. The active Codex session plans and closes out; fresh Codex CLI sessions execute and adversarially review.",
   "author": {
     "name": "office-skills"

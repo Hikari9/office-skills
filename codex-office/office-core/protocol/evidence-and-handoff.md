@@ -110,12 +110,46 @@ Required sections:
 - **Mutation table** — one row per new or amended test: what was broken, and that the test went
   red. Rows map 1:1 to tests.
 - **Files created that are not in the work items** — front-run or scratch output, listed.
+- **`## Self-review`** — the executor's own per-task and whole-run review findings, per
+  [Executor self-review](#executor-self-review-mandatory) below. Required; `"none"` is a valid
+  finding list, an absent section is not.
 - **`## Upline`** — every unresolved or self-resolved question, labelled `[needs-planner]`,
   `[needs-user]`, or `[decided]` per
   [`roles-and-authority.md`](roles-and-authority.md).
 
 The planner resolves every Upline item before dispatching review, and carries the `[decided]`
 list into the reviewer's packet **as written** — no editorializing, no marking entries settled.
+
+## Executor self-review (mandatory)
+
+**The executor reviews its own work before anyone else sees it — per task, and once over the whole
+run.** This is not the gate and never replaces it. It catches a different class of defect: the author
+knows what it hand-waved, while the fresh reviewer finds what the author could not see. The same
+argument that makes the planner's plan self-review mandatory applies one level down.
+
+Two passes, both required:
+
+- **Per task, before the task is marked complete.** Read the task's own diff (`BASE..HEAD` for that
+  task) and produce a spec-compliance verdict and a quality verdict, graded
+  Critical / Important / Minor. This applies to **work the executor implemented inline**, exactly as
+  it does to a worker's output — inline work is the case this rule exists for, because it is the only
+  work with no other reader before the gate. A task carrying an unresolved Critical or Important
+  finding is not complete.
+- **Once at Finish, over the cumulative diff,** after the full gate is green: re-read
+  `BASE..HEAD` for the whole run looking for what only shows across tasks — a contract two tasks
+  implemented differently, a helper duplicated, an earlier task's assumption a later one broke.
+
+Record both in the handoff under a required `## Self-review` section: what was checked, every finding
+with its grade, and for each one whether it was fixed (with the commit), deferred as a minor, or
+parked with a ruling. `"none"` is a valid finding list; an **absent or empty section is not**.
+
+**The planner rejects a handoff with no `## Self-review` section and returns it to the executor
+before dispatching the code reviewer.** Dispatching review over unreviewed work spends the expensive
+gate on defects the author could have found for free.
+
+The self-review's findings stay in the handoff and are **not** used to steer the reviewer's brief —
+handing a reviewer the author's own findings anchors it and converts an independent pass into a
+verification of someone else's list.
 
 ## Run-state durability and the compaction recommendation
 

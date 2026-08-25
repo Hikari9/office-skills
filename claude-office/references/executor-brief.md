@@ -167,6 +167,10 @@ Never ignore an escalation, and never force the same model to retry with nothing
 
 ### 4. Review the task — you do this yourself
 
+**This is the mandatory executor self-review, and it applies to every task — including the ones you
+implemented inline.** Inline work is the case the rule exists for: it is the only work with no other
+reader before the gate. Do not skip it because you wrote it and therefore "already know" it.
+
 Generate the diff to a file so it stays out of your prompt history but you can read it deliberately:
 
 ```bash
@@ -214,7 +218,12 @@ When every task is complete:
 
 1. **Run the full gate yourself** — `<validation commands>`, including the build. Capture the actual output. Lint and typecheck do not catch build-time failures; a green lint is not a green build.
 2. If the gate is red, fix it through the loop before handing off. Do not hand a red branch to the reviewer.
-3. Write `<workspace>/handoff.md`:
+3. **Whole-run self-review (mandatory).** With the gate green, re-read the cumulative `BASE..HEAD`
+   diff for what only shows across tasks: one contract implemented two ways, a helper duplicated, an
+   earlier task's assumption a later task broke. Grade findings the same way; Critical/Important ones
+   go through the fix loop before you hand off. This never replaces the reviewer's gate — it finds
+   what the author knows it hand-waved, while the fresh gate finds what the author could not see.
+4. Write `<workspace>/handoff.md`:
 
 ```markdown
 # Executor handoff — <plan slug>
@@ -245,6 +254,13 @@ Task 1: complete (<commits>) — <one line>
 ## Parked findings
 <Finding + ruling, or "none">
 
+## Self-review (required — see core `evidence-and-handoff.md`)
+Per task, before marking it complete: spec-compliance verdict + quality verdict,
+graded Critical / Important / Minor — including work you implemented inline.
+Then once over the whole `BASE..HEAD` diff after the gate is green.
+<one line per finding: grade — what — fixed (<commit>) | deferred (minor) | parked (<ruling>)>
+<"none" is a valid finding list; an absent or empty section is not.>
+
 ## Gate evidence
 $ <command>
 <actual pasted output>
@@ -253,4 +269,4 @@ $ <command>
 <Where you'd look first if something is wrong. Be honest — the reviewer will find it anyway.>
 ```
 
-4. Return to the planner: status, the commit range, the handoff path, and ≤3 lines of concerns. Nothing else — the planner reads the file.
+5. Return to the planner: status, the commit range, the handoff path, and ≤3 lines of concerns. Nothing else — the planner reads the file.

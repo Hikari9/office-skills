@@ -8,7 +8,8 @@ Assumes: the Office Kernel is already in the packet.
 
 ## Who reviews
 
-A fresh, separate `gpt-5.6-sol` session with high reasoning effort — never the executor, never a
+A fresh, separate `gpt-5.6-luna` session launched with `-c model_reasoning_effort="high"` — never
+the executor, never a
 session that did any of the work being gated. Mechanics live in
 [../../references/review-gate.md](../../references/review-gate.md); the exact prompt contract is
 [../../references/reviewer-brief.md](../../references/reviewer-brief.md). Both are read in full,

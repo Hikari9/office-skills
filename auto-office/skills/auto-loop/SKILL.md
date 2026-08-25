@@ -151,6 +151,16 @@ Beyond the plan path, GOAL block, blast-radius ceiling, and file scope:
 5. **You may fan out in-session** using your own harness's built-in sub-agent mechanism, within your
    file scope and under one-writer-per-tree. The brief never prescribes *how* — that is your office's
    mechanism, not this one's.
+6. **Self-review your own work — mandatory, and it covers what you implemented inline.** Per task,
+   before marking it complete: a spec-compliance verdict and a quality verdict, graded
+   Critical / Important / Minor. Then once at Finish, with the gate green, over the cumulative
+   `BASE..HEAD` diff, for what only shows across tasks. Record both in the handoff's required
+   `## Self-review` section. It is not the gate and never replaces it — self-review finds what the
+   author knows it hand-waved, the fresh reviewer finds what the author could not see. A handoff
+   arriving without that section goes **back to the executor**; the loop does not dispatch review
+   over unreviewed work, and does not copy the executor's findings into the reviewer's brief. Core:
+   [`evidence-and-handoff.md`](../../office-core/protocol/evidence-and-handoff.md) → *Executor
+   self-review*.
 
 ## Top of every iteration — the drift check
 

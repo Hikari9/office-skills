@@ -2,9 +2,9 @@
 
 | Line | Value |
 |---|---|
-| Plugin version | `2.10.0` (see `.claude-plugin/plugin.json`) |
-| Core protocol supported | `>=2.0.0 <3.0.0` |
-| Core protocol vendored | `2.0.0` (see `office-core/SNAPSHOT.json`) |
+| Plugin version | `3.2.0` (see `.claude-plugin/plugin.json`) |
+| Core protocol supported | `>=3.0.0 <4.0.0` |
+| Core protocol vendored | `3.0.0` (see `office-core/SNAPSHOT.json`) |
 | Vendored snapshot | `office-core/SNAPSHOT.json`, written by `scripts/vendor-core.sh` |
 | Sibling plugins required | `codex-office`, `claude-office`, `agy-office` — for the CLI, executor, reviewer, and closeout mechanics of whichever brand is routed to |
 
@@ -48,9 +48,9 @@ exceptions:
   - id: auto-opus-reviewer-floor
     owner: auto-office
     reason: >
-      The code-review floor is a fresh Opus subagent at high regardless of which brand executed.
-      The Codex Sol reviewer path applies only when Codex is the planner. This is strictly narrower
-      than core, which permits any independent reviewer. Core 1.2.0 states that a declared floor
+      The code-review floor is a fresh Opus subagent at low regardless of which brand executed.
+      The Codex Luna reviewer path applies only when Codex is the planner. This is strictly narrower
+      than core, which permits any independent reviewer. Core 3.0.0 states that a declared floor
       binds the gate it was declared for, so this floor is the code-review gate's alone.
     widens_core_authority: false
   - id: auto-plan-review-gate
@@ -58,9 +58,9 @@ exceptions:
     reason: >
       A plan-review gate runs between the planner's self-review and user approval: one adversarial
       pass over the plan document by a fresh agent of the planner's own brand, at that brand's
-      Opus-tier low effort, which then retires permanently. Core 1.2.0 explicitly permits an office
+      Opus-tier low effort, which then retires permanently. Core 3.0.0 explicitly permits an office
       to add a plan-review gate ahead of user approval, and this one adds a gate rather than
-      absorbing any existing one — the code-review gate, its opus-medium floor, and every verdict
+      absorbing any existing one — the code-review gate, its opus-low floor, and every verdict
       are untouched. Its floor is declared separately (opus low) and binds only itself. It runs
       exactly once and is never recalled, so it can never gate work it previously approved.
     widens_core_authority: false
@@ -116,13 +116,13 @@ The remaining exceptions were re-checked against core `2.0.0` and all remain
 - `auto-orchestrator-selection` — still a runtime-mechanics choice about which brand fills the
   executor role, with every gate applying unchanged. The exception id is kept as-is for traceability
   even though this office's prose now says **Executor** rather than Orchestrator.
-- `auto-task-subdelegation` — unchanged, and core 1.2.0's dispatch-form rule narrows it further:
+- `auto-task-subdelegation` — unchanged, and core 3.0.0's dispatch-form rule narrows it further:
   same-brand fan-out is in-session, cross-brand is CLI, and neither creates a second writer.
 - `auto-goal-locked-autonomy` — unchanged. The loop still cannot raise a cap, remove a phase,
   downgrade a reviewer, or widen its blast radius, and it gained a stop (`BRIEF DEFECT`) rather than
   losing one.
 - `auto-opus-reviewer-floor` — reworded above to name the **code**-review gate explicitly, which is
-  what core 1.2.0 now requires of a declared floor. Still strictly narrower than core.
+  what core 3.0.0 now requires of a declared floor. Still strictly narrower than core.
 
 **Confirmed: no existing exception covered "the planner does not implement."** The four declared were
 `auto-orchestrator-selection`, `auto-task-subdelegation`, `auto-goal-locked-autonomy`, and

@@ -26,7 +26,7 @@ While the executor runs, the planner does non-conflicting prep only — reading 
 drafting the reviewer dispatch. It never edits the tree the executor is writing to, and never
 runs two writers against one working tree.
 
-## Standing clauses on every brief (core 1.2.0)
+## Standing clauses on every brief (core 3.0.0)
 
 The planner fills these into the brief, and the executor is bound by them even if the wording drifts:
 
@@ -35,6 +35,10 @@ The planner fills these into the brief, and the executor is bound by them even i
 2. **A task shipping a test must paste that test failing at `BASE`** (or against the reverted fix). A
    test that passes before the change and after it has demonstrated nothing, and a green useless test
    is invisible to review — it looks exactly like a passing test that works.
+3. **Self-review your own work before handing off** — per task before marking it complete, and
+   once over the cumulative `BASE..HEAD` diff at Finish, including work you implemented inline.
+   Record it in the handoff's required `## Self-review` section. It never substitutes for the
+   review gate; a handoff without that section is returned unreviewed.
 
 ## `BRIEF DEFECT` — the return only the executor can make
 

@@ -79,11 +79,11 @@ Not derived from the benchmark table, and a leaderboard movement does not change
 
 | Role | claude | codex | agy | Fixed? |
 |---|---|---|---|---|
-| Planner | `opus` (the session) | `codex-sol` | `agy` | fixed |
-| **Plan-reviewer** (full gear only) | `opus` **low** | `codex-sol` **low** | `agy` **high** | fixed |
+| Planner | `opus` (the session) | `codex-luna` | `agy` | fixed |
+| **Plan-reviewer** (full gear only) | `opus` **low** | `codex-luna` **low** | `agy` **high** | fixed |
 | Executor | `sonnet` **high** | **`gpt-5.6-luna` `xhigh`** | **`gemini-3.7-flash-high`** | **fixed** |
 | Worker | `sonnet` high *default* | `gpt-5.6-luna` xhigh *default* | `gemini-3.7-flash-high` *default* | **ANY brand/model/effort the planner declares** |
-| Reviewer (code) | `opus` **high** | `codex-sol` high *(only when codex is planner)* | never reviews | fixed |
+| Reviewer (code) | `opus` **low** | `codex-luna` high *(only when codex is planner)* | never reviews | fixed |
 
 **The plan-reviewer's brand is always the planner's brand** — it is not routed by fit. It reads one
 document the planner just wrote; same-brand is an advantage there, not the conflict of interest it
@@ -147,11 +147,12 @@ Three conditions on any worker that is not the executor's default, all binding:
 task is hard" produced the last run's silent over-provisioning. "This needs a judgement the executor's
 tier cannot make" is the real distinction, and the plan is where you argue it.
 
-**Two floors, not one.** `opus` high is the floor for the **code**-review gate. The **plan**-review
-gate's floor is `opus` low. Both are stated here explicitly because
-[delegation-map.md](../../references/delegation-map.md)'s "stricter rule wins" clause would otherwise
-promote plan review to high and quietly double its cost for no extra gate strength. A floor binds
-the gate it was declared for.
+**Two floors, declared separately.** `opus` low is the floor for the **code**-review gate, and
+`opus` low is the floor for the **plan**-review gate. They coincide today but remain two
+declarations: [delegation-map.md](../../references/delegation-map.md)'s "stricter rule wins" clause
+resolves conflicting rules *within* one gate and never promotes one gate to the other's tier. A floor
+binds the gate it was declared for. Reviewer strength comes from independence, freshness, and a
+pointed brief — not from effort tier.
 
 **High is the ceiling *for the office*. `xhigh`, `ultra`, and `max` are user-invoked only** — which
 is exactly what the codex executor's standing `xhigh` default is: user-invoked once, durably, and
@@ -192,14 +193,27 @@ passing only `--model sonnet` silently runs at the CLI's default (medium), so th
 the process runs medium, and nothing in the output says so.
 
 ```bash
+# claude
 --model sonnet --effort high      # executor
---model opus   --effort high      # code reviewer
+--model opus   --effort low       # code reviewer
 --model opus   --effort low       # plan reviewer
+
+# codex — there is NO --effort flag; effort is a config override
+-m gpt-5.6-luna -c model_reasoning_effort="xhigh"   # executor
+-m gpt-5.6-luna -c model_reasoning_effort="high"    # code reviewer (codex-as-planner)
+-m gpt-5.6-luna -c model_reasoning_effort="low"     # plan reviewer
 ```
 
-Treat a missing `--effort` as a defect in the dispatch, not a detail. Read the launched agent's
+**The codex form is the one this rule was written for.** Verified 2026-08-25: no office was passing
+`-c model_reasoning_effort=` at all, so every `codex exec` dispatch inherited
+`model_reasoning_effort` from `~/.codex/config.toml` — `medium` on the machine checked — while the
+role tables said `xhigh`. `-m` alone is not the assignment either. Mechanics stay with the brand:
+[`codex-office/skills/codex-cli`](../../../codex-office/skills/codex-cli/SKILL.md).
+
+Treat a missing effort flag as a defect in the dispatch, not a detail. Read the launched agent's
 actual model **and** effort back before reporting a dispatch, exactly as you would read back a
-live-system write.
+live-system write — for codex that is the launch banner's `model:` / `reasoning effort:` lines,
+which echo an unrecognised value rather than rejecting it.
 
 ### Anything with a blocking wait goes to a background process, or you keep it
 
@@ -349,7 +363,7 @@ The reviewer must explicitly check, with evidence, that agy did not:
 
 ## Reviewer selection
 
-**Code review: fresh Opus, high, by default, always.** The `codex-sol` reviewer path applies only
+**Code review: fresh Opus, low, by default, always.** The `codex-luna` reviewer path applies only
 when **Codex is the planner** (i.e. a Codex session invoked this workflow), not merely when codex
 executed. A caller may add a second opinion; a caller may not drop below the floor. **agy never holds
 the code-review gate** — long, adversarial, multi-round work against a diff is its documented

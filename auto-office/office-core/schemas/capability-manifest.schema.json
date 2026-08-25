@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:office-core:1.2.0:capability-manifest.schema.json",
+  "$id": "urn:office-core:3.0.0:capability-manifest.schema.json",
   "title": "Capability manifest",
   "description": "The skills actually selected for a packet. Replaces copying the available-skills catalog or the bodies of task skills into a brief.",
   "type": "object",

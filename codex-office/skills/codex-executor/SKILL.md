@@ -22,13 +22,17 @@ not authorized, not "use judgment."
 The executor never approves its own work. It writes the handoff; it does not review the diff
 against the plan and declare success.
 
-## Standing clauses on every brief (core 1.2.0)
+## Standing clauses on every brief (core 3.0.0)
 
 1. **Verify the stated cause reproduces at `BASE` before implementing.** If it does not, return
    `BRIEF DEFECT` — do not implement anyway.
 2. **A task shipping a test must paste that test failing at `BASE`** (or against the reverted fix). A
    test green before the change proves nothing about the change, and a green useless test is
    invisible to review.
+3. **Self-review your own work before handing off** — per task before marking it complete, and
+   once over the cumulative `BASE..HEAD` diff at Finish, including work you implemented inline.
+   Record it in the handoff's required `## Self-review` section. It never substitutes for the
+   review gate; a handoff without that section is returned unreviewed.
 
 ## `BRIEF DEFECT` — the return the executor alone can make
 
@@ -57,7 +61,7 @@ brief that is silent about it is not forbidding it.
 The handoff is a **file** at the Kernel's handoff path, per
 `office-core/protocol/evidence-and-handoff.md`'s handoff schema — never a chat summary. It
 includes commits, interfaces verified with real signatures, validation output, a mutation table,
-files created outside the named work items, and an `## Upline` section.
+files created outside the named work items, a `## Self-review` section, and an `## Upline` section.
 
 ## Upline resolution
 
