@@ -9,7 +9,7 @@ An "office" is a strict, role-separated delivery process. A planner plans, a sep
 | Plugin | Executor | Shape |
 |---|---|---|
 | [auto-office](auto-office/) | **Chosen** — codex, agy, or claude | Plan + GOAL, plan-review, route, then a goal-locked autonomous loop to closeout |
-| [codex-office](codex-office/) | Fresh `codex exec` sessions | Plan, execute, adversarial review, closeout |
+| [codex-office](codex-office/) | Codex in-session workers when planner and assignee are Codex; otherwise CLI | Plan, execute, adversarial review, closeout |
 | [claude-office](claude-office/) | A `claude --bg --remote-control` agent, or an in-session subagent | Plan, execute, adversarial review, closeout |
 | [agy-office](agy-office/) | The `agy` CLI (Antigravity/Gemini) | Plan, execute, **independent verification**, adversarial review, closeout |
 
@@ -23,8 +23,9 @@ requires the other three to be installed.
 
 Three decisions, not a tier ladder: **which brand is the executor** (one per repo, the only writer),
 **which brand and tier each worker gets** per task, and **how each is dispatched** — and the third is
-derived, not chosen (planner fans out to a CLI process, an executor fans out in-session, work a
-delegation buys nothing for is done inline). The executor is pinned to sonnet-tier, so a hard task
+derived, not chosen (same-brand planner/worker pairs use in-session subagents, cross-brand pairs
+use the assignee's CLI, and work a delegation buys nothing for is done inline). The executor is
+pinned to sonnet-tier, so a hard task
 gets a better *plan*, not a bigger executor; a worker may be assigned higher when the sub-task is a
 different *kind* of question, declared in the plan and never promoted mid-run. The plan itself is
 gated twice before it costs anything: the planner self-reviews, then one fresh Opus-tier

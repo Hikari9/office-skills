@@ -1,7 +1,9 @@
 # Reviewer prompt contract
 
-Use a fresh `codex exec -m gpt-5.6-luna -c model_reasoning_effort="high"` session. Both flags are
-required: `-m` alone runs at the operator's configured default, not at high.
+Use a fresh, separate Codex reviewer identity at `gpt-5.6-luna` high effort. When the planner is
+Codex, this is a fresh in-session subagent; when the planner is another brand, use
+`codex exec -m gpt-5.6-luna -c model_reasoning_effort="high"`. Both CLI flags are required:
+`-m` alone runs at the operator's configured default, not at high.
 Give it the absolute repo path, branch, plan path, BASE..HEAD range, diff
 package, executor handoff, copied global constraints and blast-radius ceiling,
 the Upline `[decided]` entries, protected paths, and the complete validation
@@ -53,4 +55,3 @@ than `PENDING` is then a positive claim that the work behind it was done.
 Corollary for the planner: on any killed reviewer, read the partial file before counting its verdict.
 A `PENDING` stub — or a stamped verdict with an empty findings section — is **not** a round. Do not
 advance the round counter or the rejection counter for it. Re-dispatch instead.
-

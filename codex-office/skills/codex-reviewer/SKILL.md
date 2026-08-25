@@ -3,14 +3,15 @@ name: codex-reviewer
 description: Adversarial review gate mechanics and the fix loop. Loaded by the codex-office hub; not invoked directly.
 ---
 
-Loaded by: planner (to build the dispatch), and by the dispatched `codex exec` reviewer, at Phase 3.
+Loaded by: planner (to build the dispatch), and by the assigned reviewer, at Phase 3. The reviewer
+may be a fresh in-session Codex subagent or a CLI worker, according to the hub's Dispatch routing.
 Assumes: the Office Kernel is already in the packet.
 
 ## Who reviews
 
-A fresh, separate `gpt-5.6-luna` session launched with `-c model_reasoning_effort="high"` — never
-the executor, never a
-session that did any of the work being gated. Mechanics live in
+A fresh, separate `gpt-5.6-luna` reviewer identity at high effort — in-session when both planner
+and reviewer are Codex, otherwise launched through CLI — never the executor, never a session that
+did any of the work being gated. Mechanics live in
 [../../references/review-gate.md](../../references/review-gate.md); the exact prompt contract is
 [../../references/reviewer-brief.md](../../references/reviewer-brief.md). Both are read in full,
 not summarized from here.

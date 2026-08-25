@@ -3,6 +3,16 @@
 All notable changes to the `codex-office` plugin are documented in this file. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 2.3.0 — 2026-08-25
+
+- **Codex same-brand workers now run in-session.** When the planner and assigned executor or
+  reviewer are both Codex, the office uses fresh in-session Codex subagents. A non-Codex planner
+  continues to use the assignee's CLI adapter, and cross-brand assignments remain CLI-routed.
+- Independent review is preserved: the reviewer gets a fresh subagent identity and is never the
+  planner or executor.
+- Re-vendored core `3.1.1`, which clarifies that telemetry dispatch form follows each office's
+  brand-routing rule.
+
 ## 2.2.1 — 2026-08-25
 
 Core `3.1.0` (minor, additive). Re-vendored only — no adapter-specific change.

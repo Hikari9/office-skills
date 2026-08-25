@@ -3,8 +3,11 @@ name: codex-cli
 description: Mechanics of driving `codex exec` safely — models, worktrees, telemetry. Loaded by the codex-office hub; not invoked directly.
 ---
 
-Loaded by: planner, at every phase that dispatches a `codex exec` process.
+Loaded by: planner, only when Dispatch routing selects the Codex CLI path.
 Assumes: the Office Kernel is already in the packet.
+
+When the planner and assigned worker are both Codex, the hub routes the worker to a fresh
+in-session Codex subagent instead. This spoke's CLI mechanics do not apply to that path.
 
 ## Model and effort selection
 

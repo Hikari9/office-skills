@@ -7,7 +7,8 @@ the place to catch what the author could have found for free. Read the section, 
 handoff: **do not** copy its findings into the reviewer's brief. Handing a reviewer the author's own
 list anchors it and converts an independent pass into a verification of someone else's work.
 
-The reviewer is a fresh, independent Codex session. It reviews every changed
+The reviewer is a fresh, independent Codex worker identity, either an in-session subagent when
+the planner is Codex or a CLI session otherwise. It reviews every changed
 line and surrounding code, the plan, all constraints, handoff deviations,
 deferred items, Upline decisions, scope containment, and validation output.
 
@@ -20,4 +21,3 @@ than consuming a fix round.
 
 Live writes require read-back of the artifact and behavior verification;
 writer exit status is never enough.
-

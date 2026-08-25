@@ -59,7 +59,7 @@ it's core by default. Core is the narrow, deliberately short list in
 | `gh issue create` before interviewing, automatic, no approval needed | claude adapter / agy adapter (independent, not shared) | `claude-office/skills/claude-planning/SKILL.md`; `agy-office/skills/agy-planning/SKILL.md` | Each office's hub Phase 1 line | Pre-restructure `claude-office/SKILL.md` and `agy-office/SKILL.md`, "Issue tracking (default, automatic)" |
 | Strategy/effort tags INLINE/HAIKU/SONNET/OPUS, with justification ≤8 words | claude adapter | `claude-office/skills/claude-planning/SKILL.md` | `claude-office/references/discernment.md` (model matrix) | Pre-restructure `claude-office/SKILL.md` Phase 1 |
 | Strategy tags INLINE/FLASH/PRO/ELSEWHERE/PLANNER-HELD, both paid tiers resolve to one model | agy adapter | `agy-office/skills/agy-planning/SKILL.md` | `agy-office/references/routing.md` (model tiers) | Pre-restructure `agy-office/SKILL.md` Phase 1 |
-| `codex exec` model routing: `gpt-5.6-luna` xhigh default, `gpt-5.6-luna` high effort for review/hard diagnosis | codex adapter | `codex-office/SKILL.md` (role table); `codex-office/skills/codex-cli/SKILL.md` | `codex-office/references/reviewer-brief.md` | Pre-restructure `codex-office/SKILL.md` role table and "Essential operating rules" |
+| Codex worker routing: same-brand Codex planner/assignee uses in-session subagents; cross-brand assignments use the assignee CLI; Codex CLI uses `gpt-5.6-luna` xhigh by default and high for review/hard diagnosis | codex adapter | `codex-office/SKILL.md` (Dispatch routing and role table); `codex-office/skills/codex-cli/SKILL.md` | `codex-office/references/reviewer-brief.md` | Pre-restructure `codex-office/SKILL.md` role table and "Essential operating rules" |
 | Pin every touched interface verbatim (file:line) during planning | agy adapter | `agy-office/skills/agy-planning/SKILL.md` | `agy-office/references/executor-brief.md`, `agy-office/references/verification.md`, `agy-office/references/reviewer-brief.md` | Pre-restructure `agy-office/SKILL.md` Phase 1 |
 
 ### Blast radius and authority
@@ -74,10 +74,9 @@ it's core by default. Core is the narrow, deliberately short list in
 | Escalation ownership: `[needs-planner]` / `[needs-user]` / `[decided]`, batched with a recommendation, never inferred | core | `office-core/protocol/roles-and-authority.md` (Escalation ownership) | `claude-office/references/escalation.md`, `agy-office/references/escalation.md`, `codex-office/skills/codex-executor/SKILL.md` (Upline resolution, condensed) | Each pre-restructure hub's escalation material |
 | Pre-existing dirty changes are protected paths, never touched or reverted | core | `office-core/protocol/roles-and-authority.md` (One writer per working tree) | `codex-office/skills/codex-cli/SKILL.md`, `claude-office/references/discernment.md` | Pre-restructure `codex-office/SKILL.md` "Essential operating rules" |
 
-*Note on the routing gap:* `codex-office` has no `references/routing.md` or equivalent
-fan-out discernment file, in either the pre- or post-restructure layout. Codex's design is
-simpler by construction, one executor per repo, no in-session subagent fan-out, so this
-is an inherent asymmetry between the three offices, not something the restructure dropped.
+*Note on the routing shape:* `codex-office` keeps its brand-routing rule in the hub rather than a
+separate `references/routing.md`. Same-brand Codex workers use in-session subagents; cross-brand
+assignments use the assignee's CLI adapter. The executor still remains one writer per repository.
 
 ### Dispatch and runtime
 

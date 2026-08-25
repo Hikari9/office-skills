@@ -1,22 +1,22 @@
 ---
 name: codex-office
-description: Use only when explicitly named for production-facing or irreversible repository work. The active Codex session plans and closes out; fresh Codex CLI sessions execute and adversarially review.
+description: Use only when explicitly named for production-facing or irreversible repository work. The active planner plans and closes out; Codex planners use in-session Codex subagents for Codex workers, while non-Codex planners use CLI workers.
 ---
 
 # Codex Office
 
 A strict four-phase delivery process — **plan, execute, adversarial review, closeout** — for
-production-facing or irreversible repository work. The active session plans and closes out; fresh
-`codex exec` sessions execute and adversarially review. This file is orientation and dispatch only;
-procedure lives in the spokes it routes to.
+production-facing or irreversible repository work. The active planner plans and closes out; worker
+dispatch uses the routing rule below. This file is orientation and dispatch only; procedure lives
+in the spokes it routes to.
 
 ## Roles
 
 | Role | Owner | Default model | Responsibility |
 |---|---|---|---|
 | Planner | Active Codex session | current session | scope, plan, escalation, closeout |
-| Executor | Fresh `codex exec` session | `gpt-5.6-luna`, `-c model_reasoning_effort="xhigh"` | implements the approved plan |
-| Reviewer | Separate fresh `codex exec` session | `gpt-5.6-luna`, `-c model_reasoning_effort="high"` | adversarial gate and re-review |
+| Executor | Fresh Codex in-session subagent when planner and assignee are Codex; otherwise the assignee's CLI | `gpt-5.6-luna`, xhigh | implements the approved plan |
+| Reviewer | Separate fresh Codex in-session subagent when planner and assignee are Codex; otherwise the assignee's CLI | `gpt-5.6-luna`, high | adversarial gate and re-review |
 
 ## Invocation gate and caller overrides
 
@@ -28,6 +28,21 @@ Caller tweaks after invocation are honored and echoed back in the kickoff line (
 role, skip a phase with an approved plan path, extra reviewer rubric items, skip closeout). No
 caller override may: skip an independent review, reuse the executor as its own reviewer, downgrade
 the reviewer below its stated floor, or widen the blast-radius ceiling implicitly.
+
+## Dispatch routing
+
+Route each assigned worker by the **planner brand** and **assignee brand**:
+
+- If both the planner and the assigned executor or reviewer are Codex, use a fresh in-session
+  Codex subagent. The reviewer is a new subagent identity, separate from both the planner and
+  executor; in-session does not mean inline planner work or executor reuse.
+- If the planner is not Codex — for example Claude or Agy — use the assignee's CLI adapter. A
+  Codex assignee therefore runs through `codex exec` when the planner is Claude or Agy.
+- If the planner is Codex but the assignee is another brand, use that brand's CLI adapter.
+
+The assignee brand is the model family, not the display tier. A Codex model at any permitted tier
+still qualifies for the Codex in-session path. Record the selected form as `in-session` or `cli` in
+run telemetry.
 
 ## Fit test — first, before anything, and it picks a gear
 
@@ -53,7 +68,8 @@ or three sentences and proceed. Full rule: `office-core/protocol/roles-and-autho
 - One writer per working tree; parallel work needs separate worktrees and disjoint paths.
 - `codex exec --yolo` has no sandbox or approval stop — the prompt and the stated blast-radius
   ceiling are the entire safety boundary.
-- Pass **both** `-m <model>` and `-c model_reasoning_effort="<effort>"` to every `codex exec`.
+- When routing to Codex CLI, pass **both** `-m <model>` and
+  `-c model_reasoning_effort="<effort>"` to every `codex exec`.
   There is no `--effort` flag; `-m` alone inherits the operator's config default (often `medium`),
   and an unrecognised effort is accepted silently — read the launch banner back.
 - Executor authority is local edits and commits only; pushes, PRs, deploys, remote config,
@@ -69,7 +85,7 @@ or three sentences and proceed. Full rule: `office-core/protocol/roles-and-autho
 - A deployment or migration is planner-held unless explicitly authorized, and is verified by a
   read-back of the live artifact and observable behavior.
 - Preserve pre-existing dirty worktree changes as protected paths.
-- The reviewer is fresh and separate; verdicts are `APPROVED`, `CHANGES REQUIRED`, or
+- The reviewer is fresh and separate, whether dispatched in-session or through CLI; verdicts are `APPROVED`, `CHANGES REQUIRED`, or
   `PLAN DEFECT`; no approval without real validation output; 5-round cap.
 - Never silently skip review or reuse the executor as reviewer.
 
@@ -97,7 +113,7 @@ below it selects, and nothing else.
 |---|---|---|
 | Plan contract | `office-core/protocol/plan-contract.md` | Planner, before writing the plan |
 | Review verdicts | `office-core/protocol/review-states.md` | Planner, before dispatching the reviewer |
-| Driving `codex exec` safely | `skills/codex-cli/SKILL.md` | Any phase that dispatches a Codex process |
+| Driving `codex exec` safely | `skills/codex-cli/SKILL.md` | Any phase whose routing selects Codex CLI |
 | Executor role and packet contract | `skills/codex-executor/SKILL.md` | Phase 2, building or receiving the executor dispatch |
 | Reviewer role and fix loop | `skills/codex-reviewer/SKILL.md` | Phase 3, building or receiving the reviewer dispatch |
 | Closeout and planner-held actions | `skills/codex-closeout/SKILL.md` | Phase 4, planner only |
@@ -108,11 +124,12 @@ below it selects, and nothing else.
    verbatim blast-radius ceiling, numbered tasks with dependencies and model strategy,
    verification, out-of-scope). Obtain explicit approval before dispatch. Load
    `office-core/protocol/plan-contract.md`.
-2. **Execute.** Record `BASE=$(git rev-parse HEAD)`, dispatch one executor per repository, read
-   its handoff, resolve every Upline item before review. Load `skills/codex-executor/SKILL.md`
-   (and `skills/codex-cli/SKILL.md` for the dispatch mechanics).
-3. **Review.** Dispatch a fresh reviewer; triage findings and re-dispatch fixes via a fresh scoped
-   executor; cap at 5 rounds. Load `skills/codex-reviewer/SKILL.md`.
+2. **Execute.** Record `BASE=$(git rev-parse HEAD)`, assign one executor per repository using
+   Dispatch routing, read its handoff, and resolve every Upline item before review. Load
+   `skills/codex-executor/SKILL.md` and `skills/codex-cli/SKILL.md` only when the route is CLI.
+3. **Review.** Assign a fresh reviewer using Dispatch routing; triage findings and reassign fixes
+   via a fresh scoped executor; cap at 5 rounds. Load `skills/codex-reviewer/SKILL.md` and
+   `skills/codex-cli/SKILL.md` only when the route is CLI.
 4. **Closeout.** Verify the gate, commit, and PR only when authorized; report plan, commit range,
    review rounds, gate result, and anything unresolved. Load `skills/codex-closeout/SKILL.md`.
 
@@ -123,10 +140,11 @@ write it to a file, which turns it into a `yes`.
 
 ## Run telemetry
 
-At each explicit dispatch, record an event per `office-core/schemas/run-event.schema.json`: the
-`codex exec` launch id, worktree id, base commit, selected spokes, model name and effort, and the
-reviewer round. This is what makes a duplicate writer or a missing review observable after the
-fact. A transcript keyword match is not an invocation and does not produce one of these events.
+At each explicit worker assignment, record an event per
+`office-core/schemas/run-event.schema.json`: the in-session subagent identity or CLI launch id,
+dispatch form, worktree id, base commit, selected spokes, model name and effort, and reviewer
+round. This is what makes a duplicate writer or a missing review observable after the fact. A
+transcript keyword match is not an invocation and does not produce one of these events.
 
 ## Maintenance and release
 

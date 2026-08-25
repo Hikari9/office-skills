@@ -3,7 +3,8 @@ name: codex-executor
 description: The executor's role contract and authority limits. Loaded by the codex-office hub; not invoked directly.
 ---
 
-Loaded by: planner (to build the dispatch), and by the dispatched `codex exec` executor, at Phase 2.
+Loaded by: planner (to build the dispatch), and by the assigned executor, at Phase 2. The executor
+may be an in-session Codex subagent or a CLI worker, according to the hub's Dispatch routing.
 Assumes: the Office Kernel is already in the packet.
 
 ## Contract
