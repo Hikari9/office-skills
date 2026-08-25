@@ -143,6 +143,18 @@ Before dispatch, confirm no other writer is live in the target tree. Match on **
 come back as the entire prompt text) and on the **worktree's actual path**, never on a
 `--remote-control` display label. A newer overlapping writer is stopped before it can edit.
 
+## Enabling Remote Control on an already-running session
+
+**`--remote-control` is a launch-time flag only.** If you forgot to pass it when starting a session, you can enable it later from inside the live session by sending the slash command `/remote-control` and submitting it. Once enabled, the session can be attached/steered from elsewhere without restarting it.
+
+**Verified evidence:** on `claude-code 2.1.237` this was used to enable Remote Control for an active local session, and the session remained in `claude agents --json` afterward as the same session; no new session id appeared.
+
+**Preferred delivery:** if the session is at an input prompt, send `/remote-control` plus Enter through the in-session REPL or another trusted input path to that exact session. Do not use `--resume <id> --bg` for this — that path forks unconditionally and does not steer the original.
+
+**Important caveat — do not inject into a busy turn.** If the session is actively mid-turn (`state` is `working` / `busy`), there is no verified safe way to send mid-run input from outside the session. Wait until it reaches an input prompt before sending `/remote-control`; otherwise your input may queue, be ignored, or interfere with the current turn.
+
+**What this does not do:** enabling Remote Control is not the same as answering a raised `AskUserQuestion`-style menu. For blocked menus, use the digit/`\r` recipes in `claude-cli-send-message`. `/remote-control` is a session-state change, not an answer to a prompt.
+
 ## What to record per launch
 
 For the run-telemetry event this office emits at each explicit dispatch (see the hub's Run
@@ -164,3 +176,6 @@ rather than appending a scenario.
 - [`../../references/discernment.md`](../../references/discernment.md) — model selection, effort
   tuning, stdin prompts, unattended permissions, parallel worktrees, and the full pitfalls list.
 - [`../claude-cli-send-message/SKILL.md`](../claude-cli-send-message/SKILL.md) — the answer-in-place mechanism.
+- Local slash-command activation for Remote Control: send `/remote-control` from inside a live
+  session to enable steering after launch. Only for sessions already at an input prompt; do not
+  inject while a turn is in progress.
