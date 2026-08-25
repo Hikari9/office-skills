@@ -85,7 +85,7 @@
     },
     "dispatch_form": {
       "enum": ["cli", "in-session", "inline"],
-      "description": "How the work was dispatched, not how expensive it was. Derived from who dispatched whom: planner fans out to CLI, an executor fans out in-session, work the delegation test says buys nothing is inline."
+      "description": "How the work was dispatched, not how expensive it was. Derived from the office's brand-routing rule: same-brand planner/worker pairs may use in-session subagents, cross-brand assignments use the assignee's CLI, and work the delegation test says buys nothing is inline."
     },
     "review_rounds": {
       "type": "integer",

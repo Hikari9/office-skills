@@ -1,9 +1,10 @@
 # Executor prompt contract
 
-Every `codex exec` prompt includes: absolute repo/worktree path; branch; plan
-path; git-ignored workspace path; BASE SHA; exact in-scope work; protected and
+Every executor packet includes: absolute repo/worktree path; branch; plan path;
+git-ignored workspace path; BASE SHA; exact in-scope work; protected and
 out-of-scope paths; the blast-radius ceiling copied verbatim; allowed side
-effects; full validation commands; and a handoff path. It must also say:
+effects; full validation commands; and a handoff path. For a CLI executor, its
+`codex exec` prompt carries this packet. It must also say:
 
 > Do not stop to ask questions; make reasonable decisions yourself and implement the entire brief.
 
@@ -40,4 +41,3 @@ $ <full command>
 Unless explicitly authorized, the executor may only edit and commit in the
 named worktree. It must not push, open a PR, deploy, alter remotes, message
 anyone, or touch credentials.
-
