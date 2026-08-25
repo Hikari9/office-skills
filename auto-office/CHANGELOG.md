@@ -1,5 +1,15 @@
 # Changelog — auto-office
 
+## 3.2.1 — 2026-08-25
+
+Core `3.1.0` (minor, additive). Re-vendored only — no adapter-specific change.
+
+- Core `closeout.md` now documents a **standalone invocation** mode: confirm target, commit,
+  gate, PR, document, sync, cleanup, and close loops all still apply, but with no milestone list,
+  no Office Kernel packet, and no plan file — for closeout run directly on work that never went
+  through the full pipeline. Existing Upline-closing behavior is unchanged; it still applies
+  whenever a handoff file with open entries actually exists.
+
 ## 3.2.0 — 2026-08-25
 
 Core `3.0.0`. Two changes, both directed by the user.

@@ -2,9 +2,9 @@
 
 | Line | Value |
 |---|---|
-| Plugin version | `2.1.0` (see `.claude-plugin/plugin.json`) |
+| Plugin version | `2.1.1` (see `.claude-plugin/plugin.json`) |
 | Core protocol supported | `>=3.0.0 <4.0.0` |
-| Core protocol vendored | `3.0.0` (see `office-core/SNAPSHOT.json`) |
+| Core protocol vendored | `3.1.0` (see `office-core/SNAPSHOT.json`) |
 | Vendored snapshot | `office-core/SNAPSHOT.json`, written by `scripts/vendor-core.sh` |
 
 This plugin is an adapter over `office-core`. It restates or links every core gate that applies
