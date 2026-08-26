@@ -80,7 +80,7 @@ Not derived from the benchmark table, and a leaderboard movement does not change
 | Role | claude | codex | agy | Fixed? |
 |---|---|---|---|---|
 | Planner | `opus` (the session) | `codex-luna` | `agy` | fixed |
-| **Plan-reviewer** (full gear only) | `opus` **low** | `codex-luna` **low** | `agy` **high** | fixed |
+| **Plan-reviewer** (full gear only) | `opus` **low** | `codex-luna` **high** | `agy` **high** | fixed |
 | Executor | `sonnet` **high** | **`gpt-5.6-luna` `xhigh`** | **Flash latest `high`** | **fixed** |
 | Worker | `sonnet` high *default* | `gpt-5.6-luna` xhigh *default* | Flash latest `high` *default* | **ANY brand/model/effort the planner declares** |
 | Reviewer (code) | `opus` **low** | `codex-luna` high *(only when codex is planner)* | never reviews | fixed |
@@ -202,7 +202,7 @@ the process runs medium, and nothing in the output says so.
 # codex — there is NO --effort flag; effort is a config override
 -m gpt-5.6-luna -c model_reasoning_effort="xhigh"   # executor
 -m gpt-5.6-luna -c model_reasoning_effort="high"    # code reviewer (codex-as-planner)
--m gpt-5.6-luna -c model_reasoning_effort="low"     # plan reviewer
+-m gpt-5.6-luna -c model_reasoning_effort="high"    # plan reviewer
 ```
 
 **The codex form is the one this rule was written for.** Verified 2026-08-25: no office was passing

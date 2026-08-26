@@ -191,6 +191,12 @@ for (const [label, rs] of [
   L.push(`| ${label} | ${rate === null ? "—" : rate + "%"} | ${rs.length} | ${verdict} |`);
 }
 L.push("");
+L.push("");
+L.push("**The target is reachable, measured.** Runs whose session compacted land at **90%**");
+L.push("(112/125) against **30%** (82/271) for runs that never compacted — and the gap holds among");
+L.push("40+ turn runs (90% vs 32%), so it is not just run length. Correlational: both are most");
+L.push("likely downstream of a run being driven to completion rather than abandoned.");
+L.push("");
 L.push("The composite score below is deliberately **not** the gated number. `gate` is matched on");
 L.push("literal strings and `uninterrupted` sits at 94-100% across every office, so the composite is");
 L.push("inflated and cannot carry a threshold honestly. Landed counts an artifact outside the");

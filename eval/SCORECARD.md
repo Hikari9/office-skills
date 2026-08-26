@@ -1,7 +1,7 @@
 # Skill scorecard (backfilled)
 
-Generated 2026-08-26T03:23:50.238Z by `eval/score.mjs` from 396 backfilled office invocations
-across 107 sessions. Version tree at `a10bbce`.
+Generated 2026-08-26T03:54:53.976Z by `eval/score.mjs` from 396 backfilled office invocations
+across 107 sessions. Version tree at `36f0ec4`.
 
 Scope: the four offices and their spokes only — 738 invocations of
 skills this plugin does not own were recorded by the backfill and are excluded here.
@@ -10,7 +10,7 @@ Score is `landed(35) · uninterrupted(25) · clean_tools(20) · gate(10) · effi
 renormalised over the components that apply to each skill. **`n` is the number that matters**:
 fewer than 15 runs is marked *thin* and the score is noise, not a measurement.
 
-## Current version (`a10bbce`, from 2026-08-25 20:46)
+## Current version (`36f0ec4`, from 2026-08-26 11:25)
 
 | Skill | n | score | interrupted | PRs | med rounds | med tok | med wall |
 |---|---|---|---|---|---|---|---|
@@ -28,8 +28,14 @@ Older rows are learnings, not a verdict on shipping code.
 | Scope | landed | runs | vs goal |
 |---|---|---|---|
 | Current version | 0% | 1 | -80 *(reporting only, n<15)* |
-| Last 14 days | 54% | 136 | **-26 FAIL** |
+| Last 14 days | 55% | 134 | **-25 FAIL** |
 | Lifetime | 49% | 396 | **-31 FAIL** |
+
+
+**The target is reachable, measured.** Runs whose session compacted land at **90%**
+(112/125) against **30%** (82/271) for runs that never compacted — and the gap holds among
+40+ turn runs (90% vs 32%), so it is not just run length. Correlational: both are most
+likely downstream of a run being driven to completion rather than abandoned.
 
 The composite score below is deliberately **not** the gated number. `gate` is matched on
 literal strings and `uninterrupted` sits at 94-100% across every office, so the composite is

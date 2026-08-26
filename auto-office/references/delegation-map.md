@@ -33,7 +33,7 @@ Keep emitting `executor` as the role id in schema fields (`office-kernel`, `run-
 | CLI launch mechanics | `codex-office/skills/codex-cli` | `auto-office/skills/claude-cli` | `agy-office/skills/agy-cli` |
 | Executor packet / brief contract | `codex-office/skills/codex-executor` | `auto-office/skills/claude-executor` | `agy-office/skills/agy-executor` |
 | Independent verification pass | — | — | `agy-office/skills/agy-verification` (**mandatory**) |
-| **Plan-review** gate | `codex-office/skills/codex-reviewer` at `codex-luna` **low** | `auto-office/skills/claude-reviewer` at `opus` **low** | `agy-office/skills/agy-reviewer` at `agy` **high** |
+| **Plan-review** gate | `codex-office/skills/codex-reviewer` at `codex-luna` **high** | `auto-office/skills/claude-reviewer` at `opus` **low** | `agy-office/skills/agy-reviewer` at `agy` **high** |
 | **Code-review** gate | `codex-office/skills/codex-reviewer` | `auto-office/skills/claude-reviewer` | **never** — agy does not hold this gate |
 | Answering a blocked background agent | — | `auto-office/skills/claude-cli-send-message` | — |
 | Closeout mechanics | `codex-office/skills/codex-closeout` | `auto-office/skills/claude-closeout` | `agy-office/skills/agy-closeout` |
@@ -51,11 +51,13 @@ so it needs no diff package and no gate output — and it runs exactly once.
   Opus, which is the default regardless of who executed. The `codex-reviewer` / `agy-reviewer` spokes
   are loaded only when a caller override, the Codex-as-planner case, or a **plan** review puts that
   brand in the chair.
-- **Two floors, declared separately, both `opus` low.** The **code**-review floor is `opus` low and
-  the **plan**-review floor is `opus` low. They are stated separately because they are separate
-  declarations that happen to coincide — the "stricter rule wins" clause below is about conflicting
-  rules for the *same* gate, and never promotes one gate to the other's tier. Reviewer strength here
-  comes from independence and a pointed brief, not from effort tier.
+- **Two floors, declared separately, per brand.** On the claude route both are `opus` low; on the
+  codex route both are `codex-luna` high. They are stated separately because they are separate
+  declarations — the "stricter rule wins" clause below is about conflicting rules for the *same*
+  gate, and never promotes one gate to the other's tier, or one brand's floor to another's.
+  Reviewer strength comes from independence and a pointed brief, not from effort tier; the codex
+  floor sits at high because `codex-luna` low is a materially weaker reader than `opus` low, not
+  because plan review deserves more effort than code review.
 - **Dispatch form follows brand match.** Planner → executor is **CLI**. Executor → worker of the
   **same** brand is **in-session**; a worker of a **different** brand is **CLI**, necessarily.
   Work a delegation buys nothing for is **inline**. The brief says the executor *may* fan out; it

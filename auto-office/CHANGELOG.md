@@ -1,5 +1,15 @@
 # Changelog — auto-office
 
+## 4.0.1 — 2026-08-26
+
+- **Codex plan-review floor raised to `codex-luna` high** (was low), matching the codex code-review
+  floor. `codex-luna` low is a materially weaker reader than `opus` low, so the two brands' floors
+  were not equivalent despite reading as a matched pair. Fixed in the role table, the delegation
+  map, and the `codex exec` flag block — all three had said `low`.
+- The two-floor rule now states floors **per brand** rather than asserting both are `opus` low.
+- `eval/gate.mjs` reports the compaction segment beside the goal: runs whose session compacted land
+  at 90% vs 30% for runs that did not, and the gap holds among 40+ turn runs (90% vs 32%). That is
+  the evidence the 80% target is reachable rather than aspirational.
 ## 4.0.0 — 2026-08-26
 
 Core `4.0.0`. **Breaking: claude-office is absorbed into this office and no longer ships.**

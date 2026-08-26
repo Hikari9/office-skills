@@ -68,6 +68,17 @@ exists.
 **Landed rate ≥ 80%** — the share of office runs that open a PR. Checked by `eval/gate.mjs`,
 enforced once a scope holds 15+ runs, reported below that.
 
+**80% is not aspirational; this corpus already reaches it in one segment.** Office runs whose
+session compacted land at **90%** (112/125). Runs that never compacted land at **30%** (82/271). The
+gap survives controlling for length — among runs of 40+ turns it is still **90% vs 32%** — so it is
+not simply that long runs compact.
+
+That is the bar this document sets before a warning becomes a gate: a threshold is realistic when
+something already clears it. The relationship is correlational, and the likeliest reading is that
+both are downstream of a run being *actively driven to completion* rather than abandoned. So the
+segment is reported beside the goal rather than turned into a rule that says "compact more" —
+`dispatched-but-never-landed` in the debrief is where the other 70% actually lives.
+
 Landed is the gated number because it counts an artifact **outside** the transcript. The composite
 score in [`../eval/SCORECARD.md`](../eval/SCORECARD.md) is not gated: its `gate` component is matched
 on literal strings, and `uninterrupted` sits at 94–100% across every office, so the composite is

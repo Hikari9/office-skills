@@ -13,6 +13,18 @@
  *
  * Below MIN_N the goal reports and does not fail. A threshold enforced on four
  * runs measures the sample, not the office.
+ *
+ * **Why 80% is the number.** Office runs whose session compacted land at 90%
+ * (112/125); runs that never compacted land at 30% (82/271). That gap survives
+ * controlling for length — among runs of 40+ turns it is still 90% vs 32% — so
+ * it is not merely "long runs compact." 80% therefore sits below a rate this
+ * corpus already reaches, which is exactly the bar telemetry-event-model.md sets
+ * before a warning is promoted to a gate.
+ *
+ * The relationship is correlational. The likeliest reading is that both are
+ * downstream of a run being actively driven to completion rather than abandoned,
+ * which is why the segment below is reported next to the goal rather than turned
+ * into a rule that says "compact more".
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -46,6 +58,21 @@ for (const [label, rs] of scopes) {
   console.log(`  ${label.padEnd(16)} ${String(rate).padStart(3)}%  (${landed}/${rs.length})  ${mark}`);
   if (enforced && !pass) failed++;
 }
+
+// The segment that shows the goal is reachable, and where the misses concentrate.
+const seg = (rs) => {
+  if (!rs.length) return "—";
+  const landed = rs.filter((r) => r.parts.landed === 1).length;
+  return `${Math.round((landed / rs.length) * 100)}% (${landed}/${rs.length})`;
+};
+const compacted = rows.filter((r) => r.session_compactions > 0);
+const uncompacted = rows.filter((r) => !r.session_compactions);
+const longRuns = rows.filter((r) => r.attributed_turns >= 40);
+console.log("\nsegment (lifetime):");
+console.log(`  session compacted      ${seg(compacted)}`);
+console.log(`  never compacted        ${seg(uncompacted)}`);
+console.log(`  40+ turns, compacted   ${seg(longRuns.filter((r) => r.session_compactions > 0))}`);
+console.log(`  40+ turns, not         ${seg(longRuns.filter((r) => !r.session_compactions))}`);
 
 if (failed) {
   console.log(`\n${failed} scope(s) below the ${GOAL}% goal.`);
