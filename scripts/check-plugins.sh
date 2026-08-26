@@ -7,7 +7,7 @@ set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC="$ROOT/office-core"
-PLUGINS=(codex-office claude-office agy-office auto-office)
+PLUGINS=(codex-office agy-office auto-office)
 FAILED=0
 WARNED=0
 
@@ -169,7 +169,16 @@ RULES
   while IFS= read -r ref; do
     [ -z "$ref" ] && continue
     base="$(basename "$ref")"
-    if [ ! -f "$ROOT/scripts/$base" ] && [ ! -f "$dir/scripts/$base" ]; then
+    found=0
+    [ -f "$ROOT/scripts/$base" ] && found=1
+    [ -f "$dir/scripts/$base" ] && found=1
+    # A sibling plugin's script is a legitimate reference: the delegation map
+    # points auto-office at agy-office/scripts/ by design, and a route that
+    # resolves a model slug there is not a broken link.
+    for sib in "${PLUGINS[@]}"; do
+      [ -f "$ROOT/$sib/scripts/$base" ] && found=1
+    done
+    if [ "$found" -eq 0 ]; then
       fail "$p references a script that exists nowhere: $ref"
       missing_scripts=$((missing_scripts + 1))
     fi

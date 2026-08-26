@@ -1,5 +1,20 @@
 # Changelog — agy-office
 
+## 3.0.0 — 2026-08-26
+
+Core `4.0.0`.
+
+- **Self-review is mandatory for every role** (core `4.0.0`). `agy-reviewer` self-reviews its
+  findings every round; `agy-verification` self-reviews its own PASS list against the one question
+  that matters — *which check passed that had no way to fail?*
+- **Flash latest, resolved at dispatch.** `scripts/agy-model.sh` reads `agy models` behind a 5s
+  timeout with a pinned fallback. agy publishes no `latest` alias, so every written slug is pinned
+  to the day it was written — this office had named 3.1, 3.5, 3.6 and 3.7 across four files
+  simultaneously.
+- **`agy models` does not hang.** The `agy-cli` spoke said not to call it dynamically; measured, it
+  returns in well under a second. That instruction is removed.
+- **Telemetry moved into hooks.**
+- Sibling references repointed: the claude route's spokes now live in `auto-office`.
 ## 2.2.1 — 2026-08-25
 
 Core `3.1.0` (minor, additive). Re-vendored only — no adapter-specific change.

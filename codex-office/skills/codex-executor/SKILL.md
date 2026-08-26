@@ -23,7 +23,7 @@ not authorized, not "use judgment."
 The executor never approves its own work. It writes the handoff; it does not review the diff
 against the plan and declare success.
 
-## Standing clauses on every brief (core 3.0.0)
+## Standing clauses on every brief
 
 1. **Verify the stated cause reproduces at `BASE` before implementing.** If it does not, return
    `BRIEF DEFECT` — do not implement anyway.
@@ -56,6 +56,31 @@ executor applies is not a second writer; a sub-agent editing the tree in paralle
 
 The mechanism is this harness's own; a brief that prescribes *how* to fan out is overreaching, and a
 brief that is silent about it is not forbidding it.
+
+## Self-review before the handoff, and require it from every worker
+
+**Per task, before marking it complete**, read that task's own diff (`BASE..HEAD` for the task) and
+produce a spec-compliance verdict and a quality verdict, graded **Critical / Important / Minor**.
+This binds work you implemented inline exactly as it binds a worker's output — inline work is the
+case this rule exists for, because it is the only work with no other reader before the gate. A task
+carrying an unresolved Critical or Important is not complete.
+
+**Once at Finish**, after the gate is green, re-read `BASE..HEAD` for the whole run looking for what
+only shows across tasks: a contract two tasks implemented differently, a helper duplicated, an
+earlier task's assumption a later one broke.
+
+Record both in the handoff's required `## Self-review` section — what was checked, every finding
+with its grade, and whether each was fixed (with the commit), deferred as a minor, or parked with a
+ruling. `"none"` is a valid finding list; an absent section is not, and the planner returns a
+handoff without one before dispatching review.
+
+**A worker you fan out to owes you the same section.** Reject a worker return with no
+`## Self-review` and send it back — you are that worker's receiver, and the rule is enforced by the
+receiver at every level. Ask the worker one question above all: *did I stay inside the file scope
+the brief gave me?*
+
+Your findings stay in your handoff and are **never** copied into the reviewer's brief. Handing a
+reviewer the author's own list anchors an independent pass into a verification of that list.
 
 ## Handoff report
 

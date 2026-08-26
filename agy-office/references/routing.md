@@ -30,7 +30,7 @@ There are only three things it can buy:
 
 | Purchase | You are buying | Signal |
 |---|---|---|
-| **Tier** | A different model than the rest of the plan gets for one task | One task needs `Gemini 3.1 Pro (High)` while the bulk is formulaic enough for Flash — or one task is pure transcription and the rest isn't |
+| **Tier** | A different model than the rest of the plan gets for one task | One task needs a Pro tier while the bulk is formulaic enough for Flash latest — or one task is pure transcription and the rest isn't |
 | **Isolation** | Keeping a large, self-contained context out of the main run's window | The task's files are big and nothing else in the plan needs them |
 | **Parallelism** | Wall-clock, when two slices genuinely cannot block each other | No data dependency **and** disjoint `Touches:` **and** separate worktrees **and** the latency actually matters |
 
@@ -118,8 +118,8 @@ the `agy` skill). The catalog as of 2026-07-10:
 
 | Task shape | `--model` | Notes |
 |---|---|---|
-| Codemods, renames, boilerplate, doc/config churn — formulaic and trivially verifiable | `Gemini 3.5 Flash (Medium)` or `(High)` | Fastest/cheapest. Default model if you pass nothing, which is why you always pass something. |
-| **Default workhorse** — well-briefed features, mid-size changes with a detailed spec, test writing | `Gemini 3.1 Pro (High)` | Flash (High) is where the invented-signature and narrow-guard failures were observed; do not make it the default for real implementation work. |
+| Codemods, renames, boilerplate, doc/config churn — formulaic and trivially verifiable | **Flash latest**, `medium` or `high` | Fastest/cheapest. Resolve the slug with `scripts/agy-model.sh`; agy's own bare default is a Flash tier, which is why you always pass `--model`. |
+| **Default workhorse** — well-briefed features, mid-size changes with a detailed spec, test writing | **Flash latest**, `high` | Resolve with `scripts/agy-model.sh`. The invented-signature and narrow-guard failures were observed on a Flash tier, so pair this tier with Phase 2b verification rather than with trust. |
 | Hard debugging, architectural work, anything where a wrong answer is expensive | **Do not route this through agy** — recommend `claude-office` to the user, out loud and unprompted | See below. |
 
 **On the Claude models in agy's catalog.** `agy models` offers `Claude Sonnet 4.6 (Thinking)` and
@@ -149,7 +149,7 @@ is the recommendation you should make unprompted when the plan's hardest task la
 ## Declare the routing
 
 ```
-Routing: 1 agy dispatch (Gemini 3.1 Pro (High), whole plan) · 3 INLINE · 1 planner-held
+Routing: 1 agy dispatch (Flash latest high, whole plan) · 3 INLINE · 1 planner-held
 Dispatches: 1 — plus 1 fix dispatch budgeted
 Waves: 5 (sequential inside the run) — critical path T1→T2→T4→T5→T7
 ```

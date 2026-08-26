@@ -41,7 +41,7 @@ leaderboard.
 | Claude Fable 5 | 60 | 66 | 3.15 | — |
 | GPT-5.6 Sol (max) | 59 | 63 | 1.86 | — (no longer a routing option) |
 | **Claude Opus 5 (high)** | **59** | 53 | 1.23 | **planner** |
-| **Gemini 3.7 Flash (high)** | **56** | **340** | 0.58 | **agy executor default** |
+| **Gemini 3.7 Flash (high)** | **56** | **340** | 0.58 | **agy executor default — via Flash latest, not this slug** |
 | Claude Opus 5 (medium) | 56 | 53 | 0.72 | — |
 | GPT-5.6 Terra (max) | 55 | 126 | 0.73 | — |
 | Claude Sonnet 5 (max) | 53 | 74 | 1.72 | — |
@@ -51,7 +51,7 @@ leaderboard.
 | Gemini 3.7 Flash (low) | 51 | — | — | bulk mechanical work |
 | Gemini 3.6 Flash (high) | 50 | 217–304 | 0.56 | superseded by 3.7 |
 | Gemini 3.5 Flash | 50 | 171 | 0.69 | — |
-| **GPT-5.6 Luna (xhigh)** | **50** | 140 | **0.17** | **codex executor — standing user default** |
+| **GPT-5.6 Luna (xhigh)** | **50** | 140 | **0.17** | **codex plan- and code-review gates** |
 | GPT-5.6 Luna (high) | 47 | — | — | **code reviewer when Codex plans; hard diagnosis** |
 
 **Two orderings in this table are counter-intuitive and are the reason it exists.** Luna **max (52)

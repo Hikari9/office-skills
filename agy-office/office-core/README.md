@@ -24,7 +24,7 @@ office-core/
     ├── office-kernel.schema.json    # the immutable per-run packet header
     ├── handoff.schema.json          # executor → planner report
     ├── capability-manifest.schema.json  # selected skills, instead of a catalog dump
-    └── run-event.schema.json        # telemetry emitted at dispatch, not inferred from transcripts
+    └── run-event.schema.json        # telemetry shape; the SessionEnd hook fills it from the transcript
 ```
 
 ## Source of truth and vendoring

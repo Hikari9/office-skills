@@ -1,5 +1,62 @@
 # Changelog — auto-office
 
+## 4.1.0 — 2026-08-26
+
+**Codex effort inverts: effort goes to the gates, not the implementation** (standing user
+decision, 2026-08-26).
+
+| Role | Was | Now |
+|---|---|---|
+| codex executor | `gpt-5.6-luna` xhigh | `gpt-5.6-luna` **high** |
+| codex worker (default) | xhigh | **high** |
+| codex **plan**-review gate | low → high (earlier today) | **xhigh** |
+| codex **code**-review gate | high | **xhigh** |
+
+The reasoning was already on record in this spoke and now the defaults match it: *a bigger
+executor does not fix a wrong brief, it implements it more convincingly.* Effort buys more at
+the gate that catches the wrong brief than in the process producing one.
+
+On the index this is −3 for the executor and +3 for each gate — Luna scores **52 / 50 / 47**
+across max / xhigh / high. Both remain well under Terra max's 55 at a fifth of the price; the
+whole codex row stays a deliberate cost trade the user owns.
+
+- The "user-invoked only" ceiling rule now cites the **reviewers'** standing xhigh rather than
+  the executor's, which no longer exists.
+- The code-review row in the delegation map now states its per-brand efforts, matching the
+  plan-review row that already did.
+## 4.0.1 — 2026-08-26
+
+- **Codex plan-review floor raised to `codex-luna` high** (was low), matching the codex code-review
+  floor. `codex-luna` low is a materially weaker reader than `opus` low, so the two brands' floors
+  were not equivalent despite reading as a matched pair. Fixed in the role table, the delegation
+  map, and the `codex exec` flag block — all three had said `low`.
+- The two-floor rule now states floors **per brand** rather than asserting both are `opus` low.
+- `eval/gate.mjs` reports the compaction segment beside the goal: runs whose session compacted land
+  at 90% vs 30% for runs that did not, and the gap holds among 40+ turn runs (90% vs 32%). That is
+  the evidence the 80% target is reachable rather than aspirational.
+## 4.0.0 — 2026-08-26
+
+Core `4.0.0`. **Breaking: claude-office is absorbed into this office and no longer ships.**
+
+- **The claude route lives here now.** `claude-cli`, `claude-cli-send-message`, `claude-executor`,
+  `claude-reviewer`, and `claude-closeout` moved into `skills/`; their references moved into
+  `references/`. `claude-planning` was dropped — `auto-planning` already owns the planner role, and
+  it scored lowest of every office skill (58 over 5 runs).
+  The reason it lives here rather than staying a sibling: **`claude-reviewer` is the default
+  code-review gate for every route**, whoever executed. A gate every run depends on cannot sit in a
+  plugin a run might not have installed.
+- `references/routing.md` → `references/fan-out.md`, so it stops reading as a sibling of
+  `auto-routing`, which decides something entirely different.
+- **Self-review is mandatory for every role**, not just the executor (core `4.0.0`).
+- **Telemetry moved into hooks.** The hub no longer instructs anyone to record events;
+  `eval/hooks/` reads the transcript. The old instruction produced zero records in three weeks.
+- **Hub cut to 11,992 bytes**, under the 12,000 budget for the first time. The 24-row Red Flags
+  table moved to `references/red-flags.md` behind a branch-naming pointer, and now also carries the
+  pre-dispatch checklist and the four recurring planner defects distilled from the 2026-08-04
+  Opus-5 mistake catalogue.
+- **agy model slugs are resolved, not pinned.** Everything that named a Gemini version now says
+  *Flash latest* and resolves it via `agy-office/scripts/agy-model.sh`. Four files had named four
+  different versions.
 ## 3.2.1 — 2026-08-25
 
 Core `3.1.0` (minor, additive). Re-vendored only — no adapter-specific change.

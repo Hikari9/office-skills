@@ -9,3 +9,7 @@ auto-office/references/routing-outcomes.local.md
 .env.development
 
 .DS_Store
+
+# Backfilled telemetry and the slug -> real-repo map it produces. Derived output
+# and workspace-local; regenerate with `node eval/backfill.mjs`.
+eval/out/

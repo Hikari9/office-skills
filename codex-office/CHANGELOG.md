@@ -1,5 +1,24 @@
 # Changelog
 
+## 3.1.0 — 2026-08-26
+
+**Effort inverts: executor to `high`, reviewer to `xhigh`** (standing user decision, 2026-08-26).
+
+- `gpt-5.6-luna` **high** is the executor default; **xhigh** is now any reviewer dispatch, plan or
+  code, plus hard diagnosis. Updated in the hub role table, `codex-cli`, `codex-reviewer`, and
+  `reviewer-brief.md` — the brief matters most, since it carries the literal
+  `-c model_reasoning_effort=` a dispatch copies.
+## 3.0.0 — 2026-08-26
+
+Core `4.0.0`.
+
+- **Self-review is mandatory for every role** (core `4.0.0`), not only the executor. `codex-executor`
+  gains the per-task and whole-run read-back plus the obligation to reject a worker return with no
+  `## Self-review`; `codex-reviewer` gains a self-review of its own findings before every verdict.
+- **Telemetry moved into hooks.** The hub's "record an event at each dispatch" instruction is
+  replaced by a pointer to `eval/hooks/`. It produced zero records in three weeks because obeying it
+  was optional at the moment of dispatch.
+- Sibling references repointed: the claude route's spokes now live in `auto-office`.
 All notable changes to the `codex-office` plugin are documented in this file. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 

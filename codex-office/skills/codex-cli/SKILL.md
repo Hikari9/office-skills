@@ -14,8 +14,8 @@ in-session Codex subagent instead. This spoke's CLI mechanics do not apply to th
 **Pass BOTH `-m <model>` and `-c model_reasoning_effort="<effort>"` on every invocation — never rely
 on a default for either.**
 
-- `gpt-5.6-luna`, `xhigh` effort — ordinary implementation (executor default).
-- `gpt-5.6-luna`, `high` effort — hard diagnosis, or any reviewer dispatch.
+- `gpt-5.6-luna`, `high` effort — ordinary implementation (executor default).
+- `gpt-5.6-luna`, `xhigh` effort — any reviewer dispatch (plan or code), and hard diagnosis.
 
 `gpt-5.6-sol` is no longer a routing option in this office; Luna covers both lanes.
 
@@ -49,7 +49,7 @@ reachable just because `--yolo` is set.
 
 - **Check before routing, not after the dispatch comes back empty.** Confirm the server is
   configured for this CLI; if it is not, either configure it or route that task to a brand whose
-  launch can carry the tools (see `claude-office/skills/claude-cli` → the allowlist section).
+  launch can carry the tools (see `auto-office/skills/claude-cli` → the allowlist section).
 - **Do not conclude "delegates can't do MCP work."** The failure is per-brand and per-config, and
   the same task frequently succeeds on another brand's launch form.
 - **Where the API is reachable over plain HTTP, prefer it.** An MCP server refusing or lacking a

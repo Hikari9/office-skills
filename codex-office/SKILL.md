@@ -15,8 +15,8 @@ in the spokes it routes to.
 | Role | Owner | Default model | Responsibility |
 |---|---|---|---|
 | Planner | Active Codex session | current session | scope, plan, escalation, closeout |
-| Executor | Fresh Codex in-session subagent when planner and assignee are Codex; otherwise the assignee's CLI | `gpt-5.6-luna`, xhigh | implements the approved plan |
-| Reviewer | Separate fresh Codex in-session subagent when planner and assignee are Codex; otherwise the assignee's CLI | `gpt-5.6-luna`, high | adversarial gate and re-review |
+| Executor | Fresh Codex in-session subagent when planner and assignee are Codex; otherwise the assignee's CLI | `gpt-5.6-luna`, high | implements the approved plan |
+| Reviewer | Separate fresh Codex in-session subagent when planner and assignee are Codex; otherwise the assignee's CLI | `gpt-5.6-luna`, xhigh | adversarial gate and re-review |
 
 ## Invocation gate and caller overrides
 
@@ -140,11 +140,13 @@ write it to a file, which turns it into a `yes`.
 
 ## Run telemetry
 
-At each explicit worker assignment, record an event per
-`office-core/schemas/run-event.schema.json`: the in-session subagent identity or CLI launch id,
-dispatch form, worktree id, base commit, selected spokes, model name and effort, and reviewer
-round. This is what makes a duplicate writer or a missing review observable after the fact. A
-transcript keyword match is not an invocation and does not produce one of these events.
+**The harness records it; you do not.** `eval/hooks/session-end.mjs` reads the session transcript
+and emits one event per `office-core/schemas/run-event.schema.json` per explicit dispatch. It ran
+this way because the previous rule — "record an event at each dispatch" — was an instruction to the
+model, and produced zero records in three weeks.
+
+Install with `node eval/hooks/install.mjs`. Nothing in a run needs to emit, count, or remember an
+event.
 
 ## Maintenance and release
 
