@@ -1,6 +1,6 @@
 # office-skills
 
-Hey! This repo holds 3 offices for irreversible or production-facing work, plus the shared protocol they all agree on.
+Hey! This repo holds 3 offices for irreversible or production-facing work, plus the shared protocol they all agree on, plus the harness that measures whether any of it works.
 
 An "office" is a strict, role-separated delivery process. A planner plans, a separate executor implements, and a fresh reviewer holds the approval gate. Nobody approves their own work, ever.
 
@@ -10,16 +10,18 @@ An "office" is a strict, role-separated delivery process. A planner plans, a sep
 |---|---|---|
 | [auto-office](auto-office/) | **Chosen** — codex, agy, or claude | Plan + GOAL, plan-review, route, then a goal-locked autonomous loop to closeout |
 | [codex-office](codex-office/) | Codex in-session workers when planner and assignee are Codex; otherwise CLI | Plan, execute, adversarial review, closeout |
-| [claude-office](claude-office/) | A `claude --bg --remote-control` agent, or an in-session subagent | Plan, execute, adversarial review, closeout |
 | [agy-office](agy-office/) | The `agy` CLI (Antigravity/Gemini) | Plan, execute, **independent verification**, adversarial review, closeout |
 
 Each one installs, versions, and rolls back on its own. Improving one office never quietly changes the others.
 
-`auto-office` is a router, not a fourth executor. It owns two things the others don't — **which brand
-should do this work** (by capability role and measured quota, not by habit) and **an end-to-end run**
-that takes one plan approval and continues to closeout without further go-aheads. Every phase's
-mechanics still come from the tool office being routed to, so a CLI fix lands in one place. It
-requires the other three to be installed.
+`auto-office` is a router first. It owns **which brand should do this work** (by capability and
+measured quota, not habit) and **an end-to-end run** that takes one plan approval and continues to
+closeout without further go-aheads. Codex and agy mechanics still come from those offices, so a CLI
+fix lands in one place.
+
+It also owns the **claude route** outright, as of `4.0.0`. `claude-office` was absorbed rather than
+deleted, because `claude-reviewer` is the default code-review gate for *every* route whoever
+executed — and a gate every run depends on cannot live in a plugin a run might not have installed.
 
 Three decisions, not a tier ladder: **which brand is the executor** (one per repo, the only writer),
 **which brand and tier each worker gets** per task, and **how each is dispatched** — and the third is
@@ -46,10 +48,10 @@ Each office is a **hub and spoke** plugin:
 office-skills/
 ├── office-core/            shared protocol source, the only editable copy
 ├── codex-office/           plugin root, hub, spokes, references, vendored core
-├── claude-office/          plugin root, hub, spokes, references, vendored core
 ├── agy-office/             plugin root, hub, spokes, references, vendored core
-├── auto-office/            router office: routing rubric, quota probe, goal loop
+├── auto-office/            router office + the claude route: routing, goal loop, review gate
 ├── scripts/                vendor-core.sh, check-plugins.sh
+├── eval/                   run telemetry, version tree, scorecard, hooks, debrief
 ├── docs/                   packaging, telemetry, canaries, rule ownership
 └── .claude-plugin/         local marketplace listing every plugin
 ```
@@ -69,7 +71,7 @@ office-skills/
 * [Telemetry event model](docs/telemetry-event-model.md), for how a run gets measured and why transcript matches do not count.
 * [Canaries and rollback](docs/canaries-and-rollback.md), for what each office has to prove before it ships.
 * [Rule ownership matrix](docs/rule-ownership-matrix.md), for who owns which rule and where it lives.
-* [The optimization plan](docs/plans/office-skills-optimization-plan.md), the approved plan this structure came from.
+* [Eval harness](eval/README.md), for the version tree, the scorecard, the hooks, and the 80% goal.
 
 ## One thing to keep in mind
 

@@ -6,7 +6,10 @@ Three things live here, and they answer three different questions.
 |---|---|---|
 | What did the offices actually do, historically? | `backfill.mjs` → `SCORECARD.md` | free, already ran |
 | Which version was that? | `build-version-tree.mjs` → `VERSION-TREE.md` | free |
+| Are we hitting the goal? | `gate.mjs` — landed rate ≥ 80% | free |
+| What should we change about it? | `debrief.mjs` → `out/DEBRIEF.md` | free |
 | What do they do now, before anyone uses them? | `../*-office/evals/*.yaml` in CI | API spend per PR |
+| Is this lull compactable? | the `Stop` hook, every lull | free |
 
 ## Why the existing schema produced nothing
 
@@ -86,17 +89,61 @@ the fuzzy stamp exists.
 ## 3. The live hook
 
 ```
-node eval/hooks/install.mjs           # adds a SessionEnd hook to ~/.claude/settings.json
+node eval/hooks/install.mjs           # install all three
+node eval/hooks/install.mjs --uninstall
 ```
 
-Runs the same parser over the transcript of the session that just ended and appends
-to `~/.claude/office-skills-telemetry/run-events.jsonl` — outside this repo, per the
-run-state rule in `evidence-and-handoff.md`. Records are tagged
-`source: "session-end-hook"` where the backfill's say `"backfill"`, so a retro number
-is never mistaken for a live one, and both are computed by the same code path.
+| Hook | Event | Does |
+|---|---|---|
+| `session-end.mjs` | `SessionEnd` | Emits run events, same parser as the backfill |
+| `pre-compact.mjs` | `PreCompact` | Writes the run-state scratchpad + a `run.compacted` marker |
+| `compact-advisor.mjs` | `Stop` | Prints `compact: yes\|no — <driver>` at every lull |
 
-The hook never writes stdout, never blocks, and always exits 0. Telemetry that can
-fail a session is worse than no telemetry.
+All three write to `~/.claude/office-skills-telemetry/` — outside this repo, per the
+run-state rule in `evidence-and-handoff.md`. Records are tagged `source:
+"session-end-hook"` where the backfill's say `"backfill"`, so a retro number is never
+mistaken for a live one, and both come from the same code path. Installing is
+idempotent and preserves any hooks you already had on those events.
+
+**Why the `Stop` hook exists.** Core has required a `compact: yes|no` recommendation at
+every boundary since `2.0.0`, and the transcripts say it rarely happened — it asked the
+planner to remember a rule at exactly the moment its context was fullest. The hook runs
+core's own arithmetic instead. A hook cannot forget.
+
+**Why `PreCompact` exists.** Session id already survives compaction in practice — 48 of
+49 compacted transcripts keep a single id, so a PR opened after a mid-run compact is
+already matched to the same run. But "in practice" is not a record, and the one outlier
+is why the marker is written.
+
+Every hook never writes to stdout on failure, never blocks, and always exits 0.
+Telemetry that can fail a session is worse than no telemetry.
+
+## 5. The goal
+
+```
+node eval/gate.mjs                    # exits 1 below target
+```
+
+**Landed rate ≥ 80%** — the share of office runs that open a PR. Enforced once a scope
+holds 15+ runs, reported below that: a threshold on four runs measures the sample.
+
+Deliberately **not** gated on the composite score. `gate` is string-matched and
+`uninterrupted` sits at 94–100% across every office, so the composite is inflated and
+cannot carry a threshold honestly. Landed counts an artifact outside the transcript.
+
+The second 80% is skill-eval's `pass-threshold` in CI — the only number that exists
+before a version has been used by anyone.
+
+## 6. The debrief
+
+```
+node eval/debrief.mjs                 # -> eval/out/DEBRIEF.md
+```
+
+Groups runs by **failure signature** and names the file that owns the violated rule, so
+a lesson lands in the skill instead of being relearned. A rule fails to land one of two
+ways, needing opposite fixes: **never read** (sharpen the pointer) or **read and
+ignored** (make the harness enforce it). The telemetry rewrite was the second kind.
 
 ## 4. The eval cases
 
@@ -131,8 +178,8 @@ The suite deliberately grades two things and not a third:
 ## Regenerating everything
 
 ```
-node eval/build-version-tree.mjs && node eval/backfill.mjs && node eval/score.mjs
-node eval/validate-cases.mjs
+node eval/build-version-tree.mjs && node eval/backfill.mjs && node eval/score.mjs && node eval/debrief.mjs
+node eval/validate-cases.mjs && node eval/gate.mjs
 ```
 
 `eval/out/` is gitignored. `VERSION-TREE.md` and `SCORECARD.md` are generated —

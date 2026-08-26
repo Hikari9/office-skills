@@ -53,7 +53,7 @@ While the executor runs, the planner does non-conflicting prep only. Two writers
 and commit half of each other's changes — this applies to the planner as much as to a second agy
 process.
 
-## Standing clauses on every brief (core 3.0.0)
+## Standing clauses on every brief
 
 All three are required fields of the packet contract, not optional additions:
 

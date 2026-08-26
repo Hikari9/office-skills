@@ -11,7 +11,7 @@ Same discipline as `claude-office`, with the `agy` CLI (Antigravity/Gemini) as E
 | Role | Who | Model | Job |
 |---|---|---|---|
 | **Planner** | The current agent (you) | session's own | Plan → approval; **independently verify**; fix/close out |
-| **Executor** | `agy --print`, unsandboxed | `gemini-3.7-flash-high` | Implement ≤3 tasks; commit; write handoff |
+| **Executor** | `agy --print`, unsandboxed | **Flash latest**, resolved at dispatch | Implement ≤3 tasks; commit; write handoff |
 | **Reviewer** | One fresh Claude subagent | `opus`, low | Adversarial review each round; holds the gate |
 
 **Core principle:** the planner never implements the plan; the executor never approves its own
@@ -42,7 +42,7 @@ Anything after `/agy-office` overrides one default; honor it, echo it, keep the 
 
 | Tweak | Example | Effect |
 |---|---|---|
-| Executor model | `use gemini-3.1-pro-high` | Change `--model` |
+| Executor model | `use gemini-3.1-pro-high` | Override the resolved Flash-latest slug |
 | Reviewer model | `reviewer: sonnet` | Change reviewer model |
 | Skip a phase | `plan already approved: <path>` | Start at Phase 2 |
 | No closeout | `skip cleanup` | Stop after approval |
@@ -157,10 +157,13 @@ skill is not a competing orchestrator** — this office's CLI reference. One con
 
 ## Run telemetry
 
-Record one event per
-[`run-event.schema.json`](office-core/schemas/run-event.schema.json) per explicit dispatch: agy
-launch id, model, workspace/worktree id, base commit, selected spokes, quota/stall events, Phase
-2b results, reviewer round. A transcript keyword match is a catalog mention, never an invocation.
+**The harness records it; you do not.** `eval/hooks/session-end.mjs` reads the session transcript
+and emits one event per `office-core/schemas/run-event.schema.json` per explicit dispatch. It ran
+this way because the previous rule — "record an event at each dispatch" — was an instruction to the
+model, and produced zero records in three weeks.
+
+Install with `node eval/hooks/install.mjs`. Nothing in a run needs to emit, count, or remember an
+event.
 
 ## Maintenance and release
 

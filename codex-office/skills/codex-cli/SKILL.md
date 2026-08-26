@@ -49,7 +49,7 @@ reachable just because `--yolo` is set.
 
 - **Check before routing, not after the dispatch comes back empty.** Confirm the server is
   configured for this CLI; if it is not, either configure it or route that task to a brand whose
-  launch can carry the tools (see `claude-office/skills/claude-cli` → the allowlist section).
+  launch can carry the tools (see `auto-office/skills/claude-cli` → the allowlist section).
 - **Do not conclude "delegates can't do MCP work."** The failure is per-brand and per-config, and
   the same task frequently succeeds on another brand's launch form.
 - **Where the API is reachable over plain HTTP, prefer it.** An MCP server refusing or lacking a

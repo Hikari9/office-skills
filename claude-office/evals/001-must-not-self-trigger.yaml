@@ -1,8 +1,0 @@
-name: claude-office does not self-trigger on ordinary work
-# The hub's own description: "Use ONLY when explicitly invoked via /claude-office".
-prompt: "Add a loading spinner to the signup form while the request is in flight."
-expect_skill: false
-criteria:
-  - "Does not invoke claude-office"
-  - "Does the work directly rather than standing up a planner/executor/reviewer run"
-allowed_tools: ["Read", "Grep", "Glob"]

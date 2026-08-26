@@ -40,3 +40,23 @@ self-approving.
 The reviewer gates; it never writes the fix it is gating. Findings go back to the planner, who
 triages and dispatches a **fresh, scoped executor** for the fix wave, then returns to the same
 reviewer with the fix diff and fresh gate output.
+
+## Self-review the review, every round
+
+Before returning any verdict, re-read your own findings and answer both questions in writing:
+
+- **Which finding can I not state a concrete failure scenario for?** A finding with no scenario is
+  an impression. Sharpen it or withdraw it.
+- **Which surface did I not open at all?** List them. A partial review that says so is honest; one
+  that does not is silently narrow.
+
+Return the result as a `## Self-review` section on the verdict, per
+`office-core/schemas/review-verdict.schema.json`. **`"none"` is a valid finding list; an absent
+section is not** — the planner returns a verdict without one, and that return does **not** re-consume
+the round.
+
+**Sharpen or add findings freely; never quietly drop one.** A withdrawn finding is written down as
+withdrawn, with its reason, so a softened gate is visible instead of invisible. **Every round, not
+just the first** — round 3 is where fatigue lands.
+
+This is your own read-back, not a second gate. It never licenses approving your own work.

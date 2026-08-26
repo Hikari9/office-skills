@@ -8,7 +8,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC="$ROOT/office-core"
-PLUGINS=(codex-office claude-office agy-office auto-office)
+PLUGINS=(codex-office agy-office auto-office)
 
 [ -d "$SRC" ] || { echo "FAIL: no office-core source at $SRC" >&2; exit 1; }
 VERSION="$(tr -d '[:space:]' < "$SRC/VERSION")"

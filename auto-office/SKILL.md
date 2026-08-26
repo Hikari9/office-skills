@@ -1,6 +1,6 @@
 ---
 name: auto-office
-description: Use ONLY when explicitly invoked via /auto-office. Router office — a fit test picks the gear (direct / express / full), the current agent plans and interviews to clarity, then hands the whole plan to ONE codex / agy / claude executor per repo which runs it end to end and fans out its own workers. Goal-locked with no further go-aheads, landing a PR at every milestone. Opus gates the code. Never self-triggered.
+description: Use ONLY when explicitly invoked via /auto-office; never self-triggered by task shape. Router office — a fit test picks the gear, then ONE codex / agy / claude executor per repo runs the whole approved plan end to end, goal-locked, landing a PR at every milestone. Opus gates the code.
 ---
 
 # Auto Office
@@ -22,18 +22,16 @@ Planner ─▶ Plan-reviewer ─▶ retires │ Planner ─▶ ONE Executor per 
 | **Worker** | Per task; **any** brand/model/effort the plan declares | One task, never a second writer | Widen scope; be promoted mid-run |
 | **Reviewer (code)** | Fresh `opus` **low** (`codex-luna` high when Codex *plans*) | Adversarial gate every round | Fix what it gates |
 
-**Core principle: no one gates their own work, and inline work is still reviewed.** The executor's
-mandatory self-review is a *pass*, never an approval — it precedes the gate and never stands in for it.
+**Core principle: no one gates their own work, and inline work is still reviewed.** Self-review is
+mandatory for **every** role and is a *pass*, never an approval
+([evidence-and-handoff.md](office-core/protocol/evidence-and-handoff.md)).
 
-**Second principle: the executor executes the plan; the planner does not execute it task by task.**
-The planner *designs* the dispatch — the assignment table stays the planner's — then hands the whole
-plan to **one** executor that performs every dispatch in it. Per-task dispatching pays opus rates to
-re-derive a plan opus already wrote and had reviewed, plus a round-trip each time, while a sonnet
-executor is near-parity at ~⅙ the price **and already holds that plan**. Nine dispatches for nine
-tasks means the office is an expensive scheduler. **No PM** (removed 3.0.0); ≥2 repos means ≥2
-executors, coordinated between, never inside one. Core §35 still permits planner-implements, but its
-live range is narrow — **a fix whose brief would exceed the edit**; never volume, never "the chain is
-linear anyway."
+**Second principle: the planner designs the dispatch; ONE executor performs it.** The assignment
+table stays the planner's; the whole plan then goes to one executor per repo. Nine dispatches for
+nine tasks makes this office an expensive scheduler — it pays opus rates to re-derive a plan opus
+already wrote, while a sonnet executor is near-parity at ~⅙ the price and already holds it. **No
+PM**; ≥2 repos means ≥2 executors, coordinated between, never inside one. Planner-implements stays
+legal for **a fix whose brief would exceed the edit** — never volume, never "the chain is linear."
 
 ## Invocation gate and caller overrides
 
@@ -63,9 +61,8 @@ adversarial reader plausibly catch something?
 tasks — size is what makes one review round defensible. It drops **phases, never floors**: every rule
 under *Non-bypassable safety rules* below still binds.
 
-**State the gear and why in two or three sentences, then proceed** — a discernment step, not a new
-approval gate. Never downgrade for quota; that is a routing problem. A caller may name a gear, but
-none may name express for a run that answered yes to (1). Full rule:
+**State the gear and why in two or three sentences, then proceed** — discernment, not a new gate.
+Never downgrade for quota; that is a routing problem. Full rule:
 `office-core/protocol/roles-and-authority.md` → *Fit test*.
 
 ## Routing, in one screen
@@ -79,12 +76,11 @@ approved run); executor → workers in-session, or CLI for a different brand; in
 more thought than the change. **The planner plans every task's dispatch form and must say why; the
 executor performs it.** Near-ties: same tier, both fit, pick one.
 
-**Ownership once approved — the planner keeps only what the *user* must see, the *anti-self-gating*
-gate, and *irreversible outward* actions.** Everything else is the executor's: every task, all
-preview/staging writes and live reads, fixes, commits, pushing its branch, the PR, non-deploying
-merges. **Five fields it may never amend** — `goal`, `done_criteria`, `blast_radius`,
-`named_actions`, `non_goals`; it amends the *how* freely and reports hash + rationale. Table and
-rationale: [auto-loop](skills/auto-loop/SKILL.md) → *Ownership*.
+**Ownership once approved — the planner keeps only what the *user* must see, the gate, and
+*irreversible outward* actions.** Everything else is the executor's: every task, preview/staging
+writes, live reads, fixes, commits, its branch, the PR, non-deploying merges. **Five fields it may
+never amend** — `goal`, `done_criteria`, `blast_radius`, `named_actions`, `non_goals`; it amends the
+*how* freely, reporting hash + rationale. [auto-loop](skills/auto-loop/SKILL.md) → *Ownership*.
 
 **Headroom is probed on demand, not by ritual** — a long run, a thin brand, or the user asking. Then
 weigh it; never gate on a number. UNKNOWN means unavailable. Agy: **3 consecutive tasks**, hard cap.
@@ -117,7 +113,7 @@ production reads included, shape pinned in the brief, read-back required.
   the plan did not **name them verbatim** with preconditions (dry run, revert target, read-back). The
   loop never widens blast radius or adds a repo/environment.
 
-Implements office-core `2.0.0`, vendored at `office-core/`. Mandatory read:
+Implements office-core `4.0.0`, vendored at `office-core/`. Mandatory read:
 `office-core/protocol/roles-and-authority.md`.
 
 ## The autonomous run
@@ -158,48 +154,28 @@ one. Protocol amnesia past Phase 2 is the observed failure; a re-read is the che
 | Headroom, **only when you have a reason to probe** | [quota-probe.md](references/quota-probe.md) |
 | Doubt about core — the plan/evidence/verdict floor | `office-core/protocol/*` |
 
-auto-office owns **routing and the loop**, never CLI or sub-agent mechanics — every phase loads the
-sibling spoke for the chosen brand. Where two rules bind the **same** gate the stricter wins; a
-sibling's *role* narrowing is never imported ([delegation-map.md](references/delegation-map.md)).
+auto-office owns **routing, the loop, and the claude route**; codex and agy mechanics load from the
+sibling office. Where two rules bind the **same** gate the stricter wins; a sibling's *role*
+narrowing is never imported.
 
 ## Telemetry and maintenance
 
-One event per `office-core/schemas/run-event.schema.json` per explicit dispatch, plus `gear`,
-`routing_reason`, `loop_iteration`, `milestone`, `reroute_from` — and `headroom_percent` per window
-only when a probe ran. Match on session/worktree identity, never a display label.
+**The harness records it; you do not.** `eval/hooks/session-end.mjs` reads the transcript and emits
+run events; `eval/hooks/pre-compact.mjs` preserves run state across a compaction; the `Stop` hook
+prints the `compact:` recommendation at every lull. Install with `node eval/hooks/install.mjs`.
+Nothing in a run emits, counts, or remembers an event.
 
 Bump `plugin.json` `version` to match the new `CHANGELOG.md` heading, re-vendor core if changed, run
 `check-plugins.sh` from the **office-skills root**.
 
-**Docs self-heal: compiled, not appended forever.** Every long-lived `.md` a run reads — this hub
-included, and `check-plugins.sh` enforces its byte budget — compiles **weekly, or past ~150 lines /
-3,000 words**. **An essay that adds tokens without changing a decision is a defect in the document.**
-Procedure, rules, and log: [routing-outcomes.md](references/routing-outcomes.md) → *Weekly
-compaction*. A shared invariant is a core change proposal,
-never a local edit; editing these skills is Opus-planner-only.
+**Docs compile, they do not accrete.** An essay that adds tokens without changing a decision is a
+defect in the document. Procedure and log: [routing-outcomes.md](references/routing-outcomes.md) →
+*Weekly compaction*. A shared invariant is a core change proposal, never a local edit.
 
-## Red Flags — stop and correct
+## Red flags
 
-| Thought | Reality |
-|---|---|
-| "This is routable, I'll auto-invoke" | Only an explicit `/auto-office` invokes this. |
-| "It's only a few files, I'll do it" | You are the priciest writer in the office. Volume is a purchase. Justify the inline row in a clause, or delegate it. |
-| "Task 1 is recon, I'll dispatch it myself, then start the executor" | Recon inside an approved plan is **task 1 of the executor's run**. Planner scouts are Phase 1 and read-only; if it writes anything — even a reverted probe — it is the executor's. |
-| "The brief isn't writable until task 1 answers X" | The plan names both branches; that is what a branch point *is*. The executor picks by evidence. If the plan doesn't name them, fix the plan. |
-| "The memory cap means I must split the tasks myself" | The executor re-briefs *itself* from `EXECUTOR-STATE.md`. Reclaiming tasks is the cap disciplining the wrong role. |
-| "The preview apply is a live write, so it's mine" | **Preview/staging writes are delegated**, with the read-back. Only production and irreversible actions are planner-held. |
-| "Codex is at 14%, so it's out" / "better probe quota first" | No threshold exists — weigh it and spend it if it's worth it. And probe only with a reason; the ritual probe is gone. |
-| "This task is hard, I'll use Opus" | The executor is pinned; a bigger *worker* is legal only if the plan declared it. |
-| "I fixed it inline, so it's mine to approve" | Planner-implements did not lift planner-never-approves. Fresh reviewer, every time. |
-| "Agy is on task 5 and doing fine" | It forgets past 3. Re-brief or re-route. |
-| "The plan's done, I'll ask before executing" | You have approval. The run is end-to-end. |
-| "It's a prod apply, so the loop stops" | Only if the plan didn't name it. A named action with preconditions met runs — and *you* perform it. |
-| "'Deploy when done' — that's named" | It names nothing. Exact command, target, dry run, revert, read-back. Vague = unauthorized = stop. |
-| "I'll PR everything at the end" | Land each milestone. A run with no landed checkpoint has no re-entry point. |
-| "This needs MCP, so I'll keep it" | Delegate it *with* the tools enumerated, production reads included. Withholding access is a dispatch bug. |
-| "CLI was blocked last time" | A past denial is not evidence about now; the dispatch form is an assignment. Attempt it. |
-| "My worker said it'll report back" | That is a *return*. An in-session subagent unwinds once it has no live children. Blocking waits go `--bg`, or you hold them. |
-| "Executor says done" / "agy can review agy" | Nobody gates their own work; the **code** gate is a fresh Opus reviewer. |
-| "Round 6 will converge" | Past the cap the failure is structural. Report the deadlock. |
-| "Express needs a third round" | Two is the cap. A 2nd `CHANGES REQUIRED` promotes to full; it buys no extra round. |
-| "The loop can add one more repo" | That widens the blast radius. Not the loop's call. |
+**Rationalisations this office produces, with what was true instead:**
+[red-flags.md](references/red-flags.md). Reach for it when you catch yourself about to
+self-invoke, do a task inline, reclaim a task from the executor, keep a live-system tool,
+skip a review round, stop the loop for something the plan already named, or hold a PR
+to the end.

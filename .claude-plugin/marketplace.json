@@ -4,15 +4,15 @@
     "name": "office-skills"
   },
   "metadata": {
-    "description": "Independently versioned offices for irreversible or production-facing work, sharing the office-core protocol, plus a router office that selects among them.",
-    "version": "3.0.0"
+    "description": "Independently versioned offices for irreversible or production-facing work, sharing the office-core protocol, plus a router office that selects among them and owns the claude route.",
+    "version": "4.0.0"
   },
   "plugins": [
     {
       "name": "codex-office",
       "source": "./codex-office",
       "description": "Codex office. The active planner plans and closes out; Codex planners use in-session Codex subagents for Codex workers, while non-Codex planners use CLI workers.",
-      "version": "2.3.0",
+      "version": "3.0.0",
       "author": {
         "name": "office-skills"
       },
@@ -26,27 +26,10 @@
       "category": "workflow"
     },
     {
-      "name": "claude-office",
-      "source": "./claude-office",
-      "description": "Claude office. Planner interviews to 95% clarity, a Sonnet executor implements, a fresh Opus reviewer adversarially gates on evidence.",
-      "version": "2.0.0",
-      "author": {
-        "name": "office-skills"
-      },
-      "keywords": [
-        "office",
-        "claude",
-        "orchestration",
-        "adversarial-review",
-        "production-safety"
-      ],
-      "category": "workflow"
-    },
-    {
       "name": "agy-office",
       "source": "./agy-office",
       "description": "Agy office. The agy CLI executes, the planner independently verifies in a mandatory Phase 2b, and a non-agy reviewer holds the gate.",
-      "version": "2.0.0",
+      "version": "3.0.0",
       "author": {
         "name": "office-skills"
       },
@@ -64,7 +47,7 @@
       "name": "auto-office",
       "source": "./auto-office",
       "description": "Auto office. Routes each unit of work to a codex, agy, or claude executor by capability and measured quota, gates the plan before user approval, then runs goal-locked end-to-end to closeout behind an Opus code-review gate.",
-      "version": "3.0.0",
+      "version": "4.0.0",
       "author": {
         "name": "office-skills"
       },

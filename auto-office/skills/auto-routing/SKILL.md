@@ -81,8 +81,8 @@ Not derived from the benchmark table, and a leaderboard movement does not change
 |---|---|---|---|---|
 | Planner | `opus` (the session) | `codex-luna` | `agy` | fixed |
 | **Plan-reviewer** (full gear only) | `opus` **low** | `codex-luna` **low** | `agy` **high** | fixed |
-| Executor | `sonnet` **high** | **`gpt-5.6-luna` `xhigh`** | **`gemini-3.7-flash-high`** | **fixed** |
-| Worker | `sonnet` high *default* | `gpt-5.6-luna` xhigh *default* | `gemini-3.7-flash-high` *default* | **ANY brand/model/effort the planner declares** |
+| Executor | `sonnet` **high** | **`gpt-5.6-luna` `xhigh`** | **Flash latest `high`** | **fixed** |
+| Worker | `sonnet` high *default* | `gpt-5.6-luna` xhigh *default* | Flash latest `high` *default* | **ANY brand/model/effort the planner declares** |
 | Reviewer (code) | `opus` **low** | `codex-luna` high *(only when codex is planner)* | never reviews | fixed |
 
 **The plan-reviewer's brand is always the planner's brand** — it is not routed by fit. It reads one
@@ -94,7 +94,7 @@ would be on a diff. Executor and worker brand *is* routed by fit.
 | Executor brand | Model + effort | Status |
 |---|---|---|
 | claude | `sonnet` high | office default |
-| agy | `gemini-3.7-flash-high` | office default (see note) |
+| agy | **Flash latest** `high` | office default; resolve with `agy-office/scripts/agy-model.sh` |
 | **codex** | **`gpt-5.6-luna` `xhigh`** | **standing user default, set 2026-08-14** |
 
 The codex row is a **caller override made durable**, not a self-escalation — it is the one legitimate
@@ -121,15 +121,16 @@ figures are in [model-benchmarks.md](../../references/model-benchmarks.md), and 
 
 | Kind of sub-task | Reach for | Because |
 |---|---|---|
-| Bulk mechanical edit, rename sweep, file-by-file application | `haiku`, `gemini-3.7-flash-low` (51) | Index barely moves the outcome; speed and price do |
-| Read-only recon, breadth-first search across many files | `gemini-3.7-flash-high` (56, ~340 tok/s) | Highest index available at flash speed — N in parallel beat one deep read |
+| Bulk mechanical edit, rename sweep, file-by-file application | `haiku`, Flash latest `low` | Index barely moves the outcome; speed and price do |
+| Read-only recon, breadth-first search across many files | Flash latest `high` | Highest index available at flash speed — N in parallel beat one deep read |
 | Ordinary implementation inside a clear brief | executor's own tier | The default; a bigger model implements a wrong brief more convincingly |
 | Long backend/data chain, terminal-heavy | `gpt-5.6-luna` xhigh (50) or `gpt-5.6-terra` (55) | Agentic-coding strength and per-token price, not raw index |
 | Arbitration, conflicting invariants, unconfirmed diagnosis | `opus` high (59) | A different *kind* of question — the only case that reliably repays the tier |
 
 **Effort is a real axis, not a synonym for "try harder", and the index is where you read it.** Within
 one model the index moves with effort — Gemini 3.7 Flash is **56 / 53 / 51** across high / medium /
-low, Luna is **52 / 50 / 47** across max / xhigh / high. Two consequences the office keeps getting
+low, Luna is **52 / 50 / 47** across max / xhigh / high. Those figures pin a snapshot; the slug
+never is — agy has no `latest` alias, so resolve Flash latest at dispatch. Two consequences the office keeps getting
 wrong: a cheaper model at high effort often outscores a pricier one at low, so brand-then-effort is
 the wrong order to decide in; and **effort does not always rise monotonically with the flag name** —
 Luna *max* (52) outscores Luna *xhigh* (50). Read the table; do not infer from the label.
@@ -392,8 +393,13 @@ The snapshot in [model-benchmarks.md](../../references/model-benchmarks.md) carr
 5. Local experience outranks a leaderboard where they conflict — the agy 3-task cap is observed
    behavior in this workspace and stays until observed otherwise.
 
-Record `routing_reason`, `brand`, `dispatch_form`, `headroom_percent` per window, and
-`benchmark_snapshot_date` in the run event, so a bad route is diagnosable later.
+6. **Model slugs are resolved, never written down.** agy publishes no `latest` alias, so
+   `agy-office/scripts/agy-model.sh` resolves Flash latest at dispatch. A slug in prose is pinned to
+   the day it was written — this office once named four Gemini versions across four files.
+
+The run event records `routing_reason`, `brand`, and `dispatch_form` automatically; the
+`SessionEnd` hook writes it from the transcript, so a bad route stays diagnosable without anyone
+remembering to log it.
 
 ## Red Flags — routing edition
 

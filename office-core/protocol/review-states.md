@@ -28,6 +28,21 @@ raised.
 A reviewer that approves without pasted validation output is sent back. Approval is refused, not
 assumed, in the absence of evidence.
 
+**Every verdict carries the reviewer's own `## Self-review`**, per
+[`evidence-and-handoff.md`](evidence-and-handoff.md#self-review-before-handoff-mandatory-every-role).
+Before returning, the reviewer re-reads its findings and asks the two questions that find real
+defects: *which finding can I not state a concrete failure scenario for*, and *which surface did I
+not open at all*. Surfaces it did not open are listed — a partial review that says so is honest;
+one that does not is silently narrow.
+
+**The self-review may sharpen or add findings; it may never quietly drop one.** A withdrawn finding
+is recorded as withdrawn with its reason, so a softened gate is visible. **Every round self-reviews,
+not only the first** — round 3 is where fatigue lands.
+
+A verdict returned with no self-review goes back to the reviewer to complete, and **does not
+re-consume the round.** Schema:
+[`../schemas/review-verdict.schema.json`](../schemas/review-verdict.schema.json).
+
 ### `PLAN DEFECT`
 
 Treating a wrong plan as `CHANGES REQUIRED` cannot converge — it asks the executor to fix a

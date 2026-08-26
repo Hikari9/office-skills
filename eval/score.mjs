@@ -168,6 +168,35 @@ const partMeans = (rows) => {
   return out;
 };
 
+const GOAL = Number(process.env.LANDED_GOAL || 80);
+const landedRows = scored.filter((r) => r.parts.landed !== undefined);
+const landedRate = (rs) =>
+  rs.length ? Math.round((rs.filter((r) => r.parts.landed === 1).length / rs.length) * 100) : null;
+const recent = landedRows.filter((r) => Date.parse(r.timestamp) > Date.now() - 14 * 864e5);
+
+L.push("## The goal");
+L.push("");
+L.push(`**Landed rate target: ${GOAL}%** — the share of office runs that open a PR. Checked by`);
+L.push("`eval/gate.mjs`, enforced once a scope has 15+ runs and reported below that.");
+L.push("");
+L.push("| Scope | landed | runs | vs goal |");
+L.push("|---|---|---|---|");
+for (const [label, rs] of [
+  ["Current version", landedRows.filter((r) => r.version_is_current && r.version_boundary !== "fuzzy")],
+  ["Last 14 days", recent],
+  ["Lifetime", landedRows],
+]) {
+  const rate = landedRate(rs);
+  const verdict = rate === null ? "—" : rs.length < 15 ? `${rate >= GOAL ? "+" : ""}${rate - GOAL} *(reporting only, n<15)*` : rate >= GOAL ? `**+${rate - GOAL} PASS**` : `**${rate - GOAL} FAIL**`;
+  L.push(`| ${label} | ${rate === null ? "—" : rate + "%"} | ${rs.length} | ${verdict} |`);
+}
+L.push("");
+L.push("The composite score below is deliberately **not** the gated number. `gate` is matched on");
+L.push("literal strings and `uninterrupted` sits at 94-100% across every office, so the composite is");
+L.push("inflated and cannot carry a threshold honestly. Landed counts an artifact outside the");
+L.push("transcript, so it can.");
+L.push("");
+
 L.push("## Ranking");
 L.push("");
 L.push("Components are the mean of each part where it applied, so a score reads back to a cause.");

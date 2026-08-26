@@ -41,7 +41,7 @@ leaderboard.
 | Claude Fable 5 | 60 | 66 | 3.15 | — |
 | GPT-5.6 Sol (max) | 59 | 63 | 1.86 | — (no longer a routing option) |
 | **Claude Opus 5 (high)** | **59** | 53 | 1.23 | **planner** |
-| **Gemini 3.7 Flash (high)** | **56** | **340** | 0.58 | **agy executor default** |
+| **Gemini 3.7 Flash (high)** | **56** | **340** | 0.58 | **agy executor default — via Flash latest, not this slug** |
 | Claude Opus 5 (medium) | 56 | 53 | 0.72 | — |
 | GPT-5.6 Terra (max) | 55 | 126 | 0.73 | — |
 | Claude Sonnet 5 (max) | 53 | 74 | 1.72 | — |

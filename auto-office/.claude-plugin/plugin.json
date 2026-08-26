@@ -1,7 +1,7 @@
 {
   "name": "auto-office",
-  "version": "3.2.1",
-  "description": "Use ONLY when explicitly invoked via /auto-office. Router office \u2014 the current agent plans and interviews to 95% clarity, routes each task to a codex / agy / claude executor by capability and live quota, and runs goal-locked to closeout with no further go-aheads. Opus gates the plan and the code. Never self-triggered.",
+  "version": "4.0.0",
+  "description": "Use ONLY when explicitly invoked via /auto-office. Router office — the current agent plans and interviews to 95% clarity, routes each task to a codex / agy / claude executor by capability and live quota, and runs goal-locked to closeout with no further go-aheads. Opus gates the plan and the code. Never self-triggered.",
   "author": {
     "name": "office-skills"
   },

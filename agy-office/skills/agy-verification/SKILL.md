@@ -37,6 +37,21 @@ will not go red is a **confirmed defect**: fix it (via the Phase 3b fix matrix, 
 INLINE) and **re-run this entire pass** before the reviewer is dispatched. Never hand the reviewer
 a diff you know already fails one of these seven.
 
+## Self-review the verification
+
+Before reporting the result, re-read your own PASS/FAIL list and answer one question in writing:
+**which check passed that had no way to fail?**
+
+A control run against a case that *should* fail is the only thing that answers it. If the control
+comes back identical to the real run, the check measured nothing — that is a second defect. Fix the
+check, then report the original claim honestly as *unverified* and name who can obtain the proof.
+
+Record this as a `## Self-review` section on the verification result: what was checked, every
+finding graded **Critical / Important / Minor**, and each one's disposition. `"none"` is a valid
+finding list; an absent section is not.
+
+This is your own read-back, not a gate. Phase 2b still never approves the work it verifies.
+
 ## What this pass is not
 
 - **Not a review.** No spec-compliance judgement, no quality findings, no approving anything. Phase

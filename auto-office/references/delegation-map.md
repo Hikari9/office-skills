@@ -1,12 +1,15 @@
 # Delegation map
 
-auto-office owns routing and the loop. It owns **no CLI mechanics and no sub-agent mechanics of its
-own**. Every phase loads the sibling office's spoke for the brand actually in use, so a fix to the
-`agy` launch form, the `claude --cli` fork gotcha, or the `codex exec` background-launch rule lands in
-exactly one place and this office inherits it.
+auto-office owns routing, the loop, **and the claude route's mechanics**. For the codex and agy
+routes it owns nothing: each phase loads that sibling office's spoke, so a fix to the `agy` launch
+form or the `codex exec` background-launch rule lands in one place and this office inherits it.
 
-Paths are given as installed plugin roots (`agy-office/`, `claude-office/`, `codex-office/`), which
-is how they resolve once installed alongside this plugin.
+The claude route lives here because `claude-reviewer` is the default code-review gate for **every**
+route, whoever executed. A gate every run depends on does not belong in a plugin a run might not
+have installed.
+
+Sibling paths (`agy-office/`, `codex-office/`) are installed plugin roots. Claude paths are local to
+this plugin.
 
 ## Vocabulary
 
@@ -27,13 +30,13 @@ Keep emitting `executor` as the role id in schema fields (`office-kernel`, `run-
 
 | Need | codex route | claude route | agy route |
 |---|---|---|---|
-| CLI launch mechanics | `codex-office/skills/codex-cli` | `claude-office/skills/claude-cli` | `agy-office/skills/agy-cli` |
-| Executor packet / brief contract | `codex-office/skills/codex-executor` | `claude-office/skills/claude-executor` | `agy-office/skills/agy-executor` |
+| CLI launch mechanics | `codex-office/skills/codex-cli` | `auto-office/skills/claude-cli` | `agy-office/skills/agy-cli` |
+| Executor packet / brief contract | `codex-office/skills/codex-executor` | `auto-office/skills/claude-executor` | `agy-office/skills/agy-executor` |
 | Independent verification pass | — | — | `agy-office/skills/agy-verification` (**mandatory**) |
-| **Plan-review** gate | `codex-office/skills/codex-reviewer` at `codex-luna` **low** | `claude-office/skills/claude-reviewer` at `opus` **low** | `agy-office/skills/agy-reviewer` at `agy` **high** |
-| **Code-review** gate | `codex-office/skills/codex-reviewer` | `claude-office/skills/claude-reviewer` | **never** — agy does not hold this gate |
-| Answering a blocked background agent | — | `claude-office/skills/claude-cli-send-message` | — |
-| Closeout mechanics | `codex-office/skills/codex-closeout` | `claude-office/skills/claude-closeout` | `agy-office/skills/agy-closeout` |
+| **Plan-review** gate | `codex-office/skills/codex-reviewer` at `codex-luna` **low** | `auto-office/skills/claude-reviewer` at `opus` **low** | `agy-office/skills/agy-reviewer` at `agy` **high** |
+| **Code-review** gate | `codex-office/skills/codex-reviewer` | `auto-office/skills/claude-reviewer` | **never** — agy does not hold this gate |
+| Answering a blocked background agent | — | `auto-office/skills/claude-cli-send-message` | — |
+| Closeout mechanics | `codex-office/skills/codex-closeout` | `auto-office/skills/claude-closeout` | `agy-office/skills/agy-closeout` |
 
 The plan-review row uses the same reviewer spoke as code review, with a **plan-review rubric**: read
 the plan for contradictions, unexecutable assignments, rules the plan's own changes made dead, gates
@@ -44,7 +47,7 @@ so it needs no diff package and no gate output — and it runs exactly once.
 
 - **Load only the spoke for the brand you are dispatching.** A role never receives another office's
   material, and never the whole corpus.
-- **Code-review mechanics come from `claude-office/skills/claude-reviewer`** whenever the reviewer is
+- **Code-review mechanics come from `auto-office/skills/claude-reviewer`** whenever the reviewer is
   Opus, which is the default regardless of who executed. The `codex-reviewer` / `agy-reviewer` spokes
   are loaded only when a caller override, the Codex-as-planner case, or a **plan** review puts that
   brand in the chair.
@@ -70,11 +73,11 @@ so it needs no diff package and no gate output — and it runs exactly once.
   one. Two named consequences, because both have misfired:
   - It does not promote plan review to the code-review floor (see the two-floor rule above).
   - It does not restore "the planner never implements." The sibling hubs declare that as a local
-    narrowing of core; auto-office runs core `3.0.0` unnarrowed, so the planner may implement
+    narrowing of core; auto-office runs core unnarrowed, so the planner may implement
     inline here — and, exactly as everywhere else, still never gates its own work.
 - **A missing sibling plugin is a hard stop for that route.** If the chosen brand's office is not
   installed, re-route to an installed one and say so — never improvise the CLI mechanics from
-  memory.
+  memory. The claude route is always available: its spokes ship here.
 - **Sub-delegation inherits the brief's limits.** A worker dispatched by the executor gets the
   executor's file scope and constraints, never a wider one.
 

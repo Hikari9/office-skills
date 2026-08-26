@@ -6,7 +6,7 @@
 | Core protocol supported | `>=3.0.0 <4.0.0` |
 | Core protocol vendored | `3.1.0` (see `office-core/SNAPSHOT.json`) |
 | Vendored snapshot | `office-core/SNAPSHOT.json`, written by `scripts/vendor-core.sh` |
-| Sibling plugins required | `codex-office`, `claude-office`, `agy-office` — for the CLI, executor, reviewer, and closeout mechanics of whichever brand is routed to |
+| Sibling plugins required | `codex-office`, `agy-office` — for the CLI, executor, and closeout mechanics of those two routes. The claude route ships in this plugin as of `4.0.0`. |
 
 This plugin is a **router** over `office-core` and the three tool offices. It restates or links
 every core gate that applies to it, narrows several, and never widens authority, drops a gate,
@@ -78,7 +78,7 @@ exceptions:
     owner: auto-office
     reason: >
       Every executor runs at its brand's fixed default tier, regardless of task difficulty: sonnet
-      high for claude, `gpt-5.6-luna` xhigh for codex, `gemini-3.7-flash-high` for agy. No self-escalation and no model
+      high for claude, `gpt-5.6-luna` xhigh for codex, Flash latest high for agy. No self-escalation and no model
       substitution without an explicit caller override. A worker's brand and tier are assigned by
       the planner in the plan and may exceed the executor's tier — which core's delegation test
       anticipates, since a delegation is allowed to buy tier — but a worker is never promoted at run

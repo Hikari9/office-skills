@@ -20,6 +20,7 @@ for (const office of readdirSync(root)) {
 
 let bad = 0;
 let negatives = 0;
+const perOffice = new Map();
 for (const f of files) {
   const src = readFileSync(f, "utf8");
   const rel = f.slice(root.length + 1);
@@ -28,10 +29,14 @@ for (const f of files) {
   if (!/^prompt:\s*\S/m.test(src)) problems.push("missing `prompt`");
   if (!/^criteria:\s*$/m.test(src)) problems.push("missing `criteria` list");
   else if (!/^\s+-\s+\S/m.test(src.slice(src.indexOf("criteria:")))) problems.push("empty `criteria`");
-  if (/^expect_skill:\s*false/m.test(src)) negatives++;
+  const office = rel.split("/")[0];
+  if (!perOffice.has(office)) perOffice.set(office, 0);
+  if (/^expect_skill:\s*false/m.test(src)) { negatives++; perOffice.set(office, perOffice.get(office) + 1); }
   if (problems.length) { bad++; console.error(`FAIL ${rel}: ${problems.join(", ")}`); }
 }
 
 console.log(`${files.length} cases, ${negatives} negative controls, ${bad} malformed`);
-if (negatives < 4) { console.error("FAIL: each office needs at least one `expect_skill: false` control"); bad++; }
+for (const [office, n] of perOffice) {
+  if (n === 0) { console.error(`FAIL ${office}: no \`expect_skill: false\` control — nothing tests over-triggering`); bad++; }
+}
 process.exit(bad ? 1 : 0);

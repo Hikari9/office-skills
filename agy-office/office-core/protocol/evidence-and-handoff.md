@@ -110,9 +110,9 @@ Required sections:
 - **Mutation table** — one row per new or amended test: what was broken, and that the test went
   red. Rows map 1:1 to tests.
 - **Files created that are not in the work items** — front-run or scratch output, listed.
-- **`## Self-review`** — the executor's own per-task and whole-run review findings, per
-  [Executor self-review](#executor-self-review-mandatory) below. Required; `"none"` is a valid
-  finding list, an absent section is not.
+- **`## Self-review`** — the executor's own per-task and whole-run findings, per
+  [Self-review before handoff](#self-review-before-handoff-mandatory-every-role) below. Required;
+  `"none"` is a valid finding list, an absent section is not.
 - **`## Upline`** — every unresolved or self-resolved question, labelled `[needs-planner]`,
   `[needs-user]`, or `[decided]` per
   [`roles-and-authority.md`](roles-and-authority.md).
@@ -120,36 +120,64 @@ Required sections:
 The planner resolves every Upline item before dispatching review, and carries the `[decided]`
 list into the reviewer's packet **as written** — no editorializing, no marking entries settled.
 
-## Executor self-review (mandatory)
+## Self-review before handoff (mandatory, every role)
 
-**The executor reviews its own work before anyone else sees it — per task, and once over the whole
-run.** This is not the gate and never replaces it. It catches a different class of defect: the author
-knows what it hand-waved, while the fresh reviewer finds what the author could not see. The same
-argument that makes the planner's plan self-review mandatory applies one level down.
+**No artifact leaves the role that produced it unread by its author.** Planner, executor, worker,
+verifier, and reviewer all self-review.
 
-Two passes, both required:
+**Self-review is not self-approval, and the two are opposites.** Self-approval is a role clearing
+its own work through the gate, and it stays forbidden everywhere. Self-review is a role reading its
+own work *before* handing it to whoever holds the gate. The first removes a reader; the second adds
+one. Any office text reading "never self-review" means *never self-approve* and is corrected to say
+so. This is never the gate and never replaces it — it catches a
+different class of defect. The author knows what it hand-waved; the fresh reader finds what the
+author could not see. Both passes are cheap relative to the round they prevent.
 
-- **Per task, before the task is marked complete.** Read the task's own diff (`BASE..HEAD` for that
-  task) and produce a spec-compliance verdict and a quality verdict, graded
-  Critical / Important / Minor. This applies to **work the executor implemented inline**, exactly as
-  it does to a worker's output — inline work is the case this rule exists for, because it is the only
-  work with no other reader before the gate. A task carrying an unresolved Critical or Important
-  finding is not complete.
-- **Once at Finish, over the cumulative diff,** after the full gate is green: re-read
-  `BASE..HEAD` for the whole run looking for what only shows across tasks — a contract two tasks
-  implemented differently, a helper duplicated, an earlier task's assumption a later one broke.
+Two passes for every role:
 
-Record both in the handoff under a required `## Self-review` section: what was checked, every finding
-with its grade, and for each one whether it was fixed (with the commit), deferred as a minor, or
-parked with a ruling. `"none"` is a valid finding list; an **absent or empty section is not**.
+- **Per artifact, before it is called complete.** Read back what you produced — the diff, the plan,
+  the findings list, the verification result — and grade every issue **Critical / Important /
+  Minor**. An artifact carrying an unresolved Critical or Important is not complete.
+- **Once at the end, across everything the role produced,** looking for what only shows in
+  aggregate: a contract two tasks implemented differently, a helper duplicated, an earlier
+  assumption a later artifact broke, two findings that contradict each other.
 
-**The planner rejects a handoff with no `## Self-review` section and returns it to the executor
-before dispatching the code reviewer.** Dispatching review over unreviewed work spends the expensive
-gate on defects the author could have found for free.
+Record both under a required `## Self-review` heading in the role's own output: what was checked,
+every finding with its grade, and for each one whether it was fixed (with the commit or edit),
+deferred as a minor, or parked with a ruling. **`"none"` is a valid finding list; an absent or
+empty section is not.**
 
-The self-review's findings stay in the handoff and are **not** used to steer the reviewer's brief —
-handing a reviewer the author's own findings anchors it and converts an independent pass into a
-verification of someone else's list.
+### What each role reads back
+
+| Role | Reads back | The question that finds real defects |
+|---|---|---|
+| **Planner** | the plan, before plan-review or user approval | Which claim about this codebase did I not verify at `file:line`? Which task's verification cannot actually fail? |
+| **Executor** | `BASE..HEAD` per task, then for the whole run | What did I implement around instead of returning as a `BRIEF DEFECT`? |
+| **Worker** | its own diff, before returning to its dispatcher | Did I stay inside the file scope the brief gave me? |
+| **Verifier** | its own PASS/FAIL list | Which check passed that had no way to fail? A control run answers this; nothing else does. |
+| **Reviewer** | its own findings, before returning the verdict | Which finding can I not state a concrete failure scenario for? Which surface did I not open at all? |
+
+**A reviewer's self-review may sharpen or add findings; it may never quietly drop one.** Softening
+under time pressure is the failure mode a self-reviewing reviewer invites, and it converts the gate
+into a formality. A withdrawn finding is written down as withdrawn, with the reason. Every round
+self-reviews, not only the first: round 3 is where fatigue lands.
+
+**Each role's self-review stays in that role's own output and never steers the next reader.** Handing
+a reviewer the executor's findings, or a planner the reviewer's self-doubts, anchors an independent
+pass into a verification of someone else's list.
+
+### Who rejects a missing self-review
+
+The **receiver** of an artifact rejects it and returns it, before spending anything else on it:
+
+- The planner rejects an executor handoff with no `## Self-review` and returns it **before**
+  dispatching the code reviewer. Dispatching review over unreviewed work spends the expensive gate
+  on defects the author could have found free.
+- The executor rejects a worker return with no `## Self-review`.
+- The planner rejects a review verdict with no `## Self-review` and asks the reviewer to complete
+  it — the verdict does not take effect until it does, and the round is **not** re-consumed.
+- A planner whose own plan carries no `## Self-review` cannot dispatch. Nobody else can catch this
+  one, which is exactly why it is written down.
 
 ## Run-state durability and the compaction recommendation
 

@@ -1,16 +1,16 @@
 # Skill scorecard (backfilled)
 
-Generated 2026-08-26T02:50:03.933Z by `eval/score.mjs` from 396 backfilled office invocations
-across 107 sessions. Version tree at `7546ab1`.
+Generated 2026-08-26T03:23:50.238Z by `eval/score.mjs` from 396 backfilled office invocations
+across 107 sessions. Version tree at `a10bbce`.
 
-Scope: the four offices and their spokes only — 737 invocations of
+Scope: the four offices and their spokes only — 738 invocations of
 skills this plugin does not own were recorded by the backfill and are excluded here.
 
 Score is `landed(35) · uninterrupted(25) · clean_tools(20) · gate(10) · efficiency(10)`,
 renormalised over the components that apply to each skill. **`n` is the number that matters**:
 fewer than 15 runs is marked *thin* and the score is noise, not a measurement.
 
-## Current version (`7546ab1`, from 2026-08-25 20:46)
+## Current version (`a10bbce`, from 2026-08-25 20:46)
 
 | Skill | n | score | interrupted | PRs | med rounds | med tok | med wall |
 |---|---|---|---|---|---|---|---|
@@ -19,6 +19,22 @@ fewer than 15 runs is marked *thin* and the score is noise, not a measurement.
 ## All versions, by skill
 
 Older rows are learnings, not a verdict on shipping code.
+
+## The goal
+
+**Landed rate target: 80%** — the share of office runs that open a PR. Checked by
+`eval/gate.mjs`, enforced once a scope has 15+ runs and reported below that.
+
+| Scope | landed | runs | vs goal |
+|---|---|---|---|
+| Current version | 0% | 1 | -80 *(reporting only, n<15)* |
+| Last 14 days | 54% | 136 | **-26 FAIL** |
+| Lifetime | 49% | 396 | **-31 FAIL** |
+
+The composite score below is deliberately **not** the gated number. `gate` is matched on
+literal strings and `uninterrupted` sits at 94-100% across every office, so the composite is
+inflated and cannot carry a threshold honestly. Landed counts an artifact outside the
+transcript, so it can.
 
 ## Ranking
 

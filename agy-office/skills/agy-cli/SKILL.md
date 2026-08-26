@@ -29,10 +29,11 @@ Pass the same string to any label flag the brand exposes. The prefix is a displa
 
 - `--dangerously-skip-permissions` — required for unattended work.
 - `--print-timeout 45m` — defaults to 5m; **always raise it** or the run dies mid-task.
-- `--model "<exact display name>"` — the literal model slug (default: `gemini-3.7-flash-high`, see
-  the `agy` skill for verified slugs). Pass it directly; do not block on `agy models` dynamically
-  as `agy models` has been observed lagging/hanging. Never omit `--model`: agy's own default is Flash,
-  where the invented-signature failures were observed.
+- `--model "<slug>"` — **resolve Flash latest at dispatch**:
+  `--model "$(<plugin>/scripts/agy-model.sh high)"`. agy publishes no `latest` alias, so any slug
+  written into a document is pinned to the day it was written. The resolver reads `agy models`
+  behind a 5s timeout and falls back to a pinned slug, so it never stalls a launch.
+  Never omit `--model`: agy's bare default is a Flash tier chosen for it, not by you.
 - `--add-dir "<abs path>"` — **does not reliably set the workspace.** The prompt text itself must
   state the absolute workspace root and forbid the scratch dir; the flag alone has produced "no
   active workspace selected."
@@ -51,7 +52,7 @@ the **MCP servers configured for agy** — not the connectors the planner's harn
 needing Rock, Basecamp, or Sheets is not reachable just because permissions are skipped.
 
 - **Check before routing.** If the server is not configured for this CLI, route that task to a brand
-  whose launch can carry the tools (`claude-office/skills/claude-cli` → the allowlist section)
+  whose launch can carry the tools (`auto-office/skills/claude-cli` → the allowlist section)
   rather than concluding delegates cannot do MCP work at all.
 - **Prefer plain HTTP where the API allows it** — an MCP server lacking a tool is not the underlying
   system refusing the call.

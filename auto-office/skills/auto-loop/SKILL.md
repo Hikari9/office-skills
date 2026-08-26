@@ -101,7 +101,7 @@ condition* is correct and is what this rule requires; what is forbidden is endin
 dispatch with no condition attached, which is waiting for nothing.
 
 **Mechanism is the sibling office's** — `codex-office/skills/codex-cli`,
-`claude-office/skills/claude-cli`, `agy-office/skills/agy-cli`. auto-office owns the *check*.
+`auto-office/skills/claude-cli`, `agy-office/skills/agy-cli`. auto-office owns the *check*.
 
 ## Every brief carries these
 
@@ -349,17 +349,18 @@ dispatch spends.
 
 ## The compaction recommendation, every task boundary
 
-Core owns this rule:
-[`evidence-and-handoff.md` § Run-state durability](../../office-core/protocol/evidence-and-handoff.md).
-Read it for when `yes` is warranted, what a `no` obliges, and why a live executor never withholds a
-`yes`. This office narrows it in exactly two ways:
+**A `Stop` hook computes and prints this — you do not.** `eval/hooks/compact-advisor.mjs` runs the
+arithmetic core specifies (context held vs. what a re-read costs at this tier) and emits
+`compact: yes|no — <driver>` at every lull. The rule existed since core `2.0.0` and was rarely
+followed, because it asked the planner to remember it at exactly the moment its context was fullest.
 
-- **The boundary is a task reaching `APPROVED`**, not merely a phase closing — this office runs a
-  loop, so it has more boundaries than a linear office and each one is a real offer. **A landed
-  milestone is the strongest boundary there is**: the state that must survive is a branch name and a
-  PR number, so recommend `yes` there almost always.
-- **The field is the last one on the status line above**, so it rides a line the user is already
-  reading and never becomes a message of its own.
+Two things still need you:
+
+- **A landed milestone is the strongest boundary there is** — the state that must survive is a branch
+  name and a PR number. The hook cannot see that a milestone just landed; say so when it does.
+- **A `no` reading "nothing points at a file" is a defect report, not a wait instruction.** Something
+  real exists only in this window. Write it down, and the answer becomes `yes`. A `PreCompact` hook
+  snapshots what it can, but it cannot write down what was never stated.
 
 **A compaction is a protocol boundary, so reload across it.** The first act after any compaction —
 and on entering any phase — is to re-read the [auto-office hub](../../SKILL.md) and this phase's

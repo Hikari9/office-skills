@@ -140,11 +140,13 @@ write it to a file, which turns it into a `yes`.
 
 ## Run telemetry
 
-At each explicit worker assignment, record an event per
-`office-core/schemas/run-event.schema.json`: the in-session subagent identity or CLI launch id,
-dispatch form, worktree id, base commit, selected spokes, model name and effort, and reviewer
-round. This is what makes a duplicate writer or a missing review observable after the fact. A
-transcript keyword match is not an invocation and does not produce one of these events.
+**The harness records it; you do not.** `eval/hooks/session-end.mjs` reads the session transcript
+and emits one event per `office-core/schemas/run-event.schema.json` per explicit dispatch. It ran
+this way because the previous rule — "record an event at each dispatch" — was an instruction to the
+model, and produced zero records in three weeks.
+
+Install with `node eval/hooks/install.mjs`. Nothing in a run needs to emit, count, or remember an
+event.
 
 ## Maintenance and release
 

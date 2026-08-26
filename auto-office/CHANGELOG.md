@@ -1,5 +1,28 @@
 # Changelog — auto-office
 
+## 4.0.0 — 2026-08-26
+
+Core `4.0.0`. **Breaking: claude-office is absorbed into this office and no longer ships.**
+
+- **The claude route lives here now.** `claude-cli`, `claude-cli-send-message`, `claude-executor`,
+  `claude-reviewer`, and `claude-closeout` moved into `skills/`; their references moved into
+  `references/`. `claude-planning` was dropped — `auto-planning` already owns the planner role, and
+  it scored lowest of every office skill (58 over 5 runs).
+  The reason it lives here rather than staying a sibling: **`claude-reviewer` is the default
+  code-review gate for every route**, whoever executed. A gate every run depends on cannot sit in a
+  plugin a run might not have installed.
+- `references/routing.md` → `references/fan-out.md`, so it stops reading as a sibling of
+  `auto-routing`, which decides something entirely different.
+- **Self-review is mandatory for every role**, not just the executor (core `4.0.0`).
+- **Telemetry moved into hooks.** The hub no longer instructs anyone to record events;
+  `eval/hooks/` reads the transcript. The old instruction produced zero records in three weeks.
+- **Hub cut to 11,992 bytes**, under the 12,000 budget for the first time. The 24-row Red Flags
+  table moved to `references/red-flags.md` behind a branch-naming pointer, and now also carries the
+  pre-dispatch checklist and the four recurring planner defects distilled from the 2026-08-04
+  Opus-5 mistake catalogue.
+- **agy model slugs are resolved, not pinned.** Everything that named a Gemini version now says
+  *Flash latest* and resolves it via `agy-office/scripts/agy-model.sh`. Four files had named four
+  different versions.
 ## 3.2.1 — 2026-08-25
 
 Core `3.1.0` (minor, additive). Re-vendored only — no adapter-specific change.
