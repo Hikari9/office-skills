@@ -49,13 +49,28 @@ node eval/backfill.mjs                # -> eval/out/run-events.jsonl
 node eval/score.mjs                   # -> eval/SCORECARD.md
 ```
 
-Walks `~/.claude/projects/**/*.jsonl` read-only. Per skill per session it collects
-what the harness recorded and nothing the agent asserted:
+Walks every installed harness's own session store, read-only:
+
+| Harness | Store | Sessions |
+|---|---|---|
+| claude | `~/.claude/projects/**/*.jsonl` | ~1,250 |
+| codex | `~/.codex/sessions/**/rollout-*.jsonl` | ~1,800 |
+| gemini | `~/.gemini/tmp/*/chats/**/*.jsonl` | ~86 |
+| hermes | `~/.hermes/state.db` (SQLite) | 0 so far |
+
+`--brand claude,codex` limits the scan. Per skill per session it collects what the
+harness recorded and nothing the agent asserted:
 
 - `Skill` tool calls — explicit dispatch, exactly the signal `docs/telemetry-event-model.md`
-  asks for and a keyword match is not.
+  asks for and a keyword match is not. **Claude Code only.**
 - `attributionSkill` on each turn — the harness's own attribution, which also catches
-  a skill that was loaded and followed without a tool call.
+  a skill that was loaded and followed without a tool call. **Claude Code only.**
+- `SKILL.md` reads — Codex, Gemini and Hermes have no Skill tool, so a skill enters
+  those runs when its file is read. Still an action, not a mention.
+
+**Fidelity differs and every event says which it is:** `signal: "skill-tool"` is a
+recorded dispatch, `signal: "skill-md-read"` is inferred. The scorecard segments by
+harness so a cross-harness comparison always states its measurement.
 - `usage` blocks, timestamps, tool-call and tool-error counts, subagent dispatches,
   `[Request interrupted by user`, `pr-link` records, compaction markers.
 
@@ -93,11 +108,25 @@ node eval/hooks/install.mjs           # install all three
 node eval/hooks/install.mjs --uninstall
 ```
 
-| Hook | Event | Does |
-|---|---|---|
-| `session-end.mjs` | `SessionEnd` | Emits run events, same parser as the backfill |
-| `pre-compact.mjs` | `PreCompact` | Writes the run-state scratchpad + a `run.compacted` marker |
-| `compact-advisor.mjs` | `Stop` | Prints `compact: yes\|no — <driver>` at every lull |
+Four harnesses, each wired only to events it actually has:
+
+| Harness | Config | Events | Hook |
+|---|---|---|---|
+| Claude Code | `~/.claude/settings.json` | `SessionEnd` / `PreCompact` / `Stop` | `session-end.mjs`, `pre-compact.mjs`, `compact-advisor.mjs` |
+| Codex | `~/.codex/hooks.json` | `SessionStart`, `PreCompact` | `catch-up.mjs --brand codex` |
+| Gemini CLI | `~/.gemini/config/hooks.json` | `SessionEnd`, `Stop` | `catch-up.mjs --brand gemini` |
+| Hermes | `~/.hermes/profiles/<active>/config.yaml` | `on_session_end`, `on_session_finalize` | `catch-up.mjs --brand hermes` |
+
+**Codex has no `SessionEnd`**, so the emitter is watermark-based rather than
+per-session: `catch-up.mjs` emits every session newer than the last watermark and
+is idempotent by session id, so it works off whatever event a harness does offer.
+Nothing is wired to an event that does not exist — a hook that goes silent because
+its event never fires reads exactly like "no runs happened".
+
+Two traps found the hard way: **Hermes reads the active profile's config**, so
+writing to `~/.hermes/config.yaml` installs nothing and reports success; and its
+shell hooks need first-use consent, showing `✗ not allowlisted` until approved
+once (`hermes hooks list` to check).
 
 All three write to `~/.claude/office-skills-telemetry/` — outside this repo, per the
 run-state rule in `evidence-and-handoff.md`. Records are tagged `source:

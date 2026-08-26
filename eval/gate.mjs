@@ -14,17 +14,17 @@
  * Below MIN_N the goal reports and does not fail. A threshold enforced on four
  * runs measures the sample, not the office.
  *
- * **Why 80% is the number.** Office runs whose session compacted land at 90%
- * (112/125); runs that never compacted land at 30% (82/271). That gap survives
- * controlling for length — among runs of 40+ turns it is still 90% vs 32% — so
- * it is not merely "long runs compact." 80% therefore sits below a rate this
- * corpus already reaches, which is exactly the bar telemetry-event-model.md sets
- * before a warning is promoted to a gate.
+ * **On the 80% figure.** It was set from Claude-only data, where runs whose
+ * session compacted landed at 90%. The Codex backfill moved that segment to
+ * ~74%, so 80% now sits above everything this corpus has reached: a direction,
+ * not a demonstrated ceiling. The segment printed below is computed, never
+ * hardcoded — the first version of this comment pasted in 90% and was wrong
+ * within a day.
  *
- * The relationship is correlational. The likeliest reading is that both are
- * downstream of a run being actively driven to completion rather than abandoned,
- * which is why the segment below is reported next to the goal rather than turned
- * into a rule that says "compact more".
+ * The compacted/uncompacted gap itself survived, and holds after controlling
+ * for length. It is correlational: both are most likely downstream of a run
+ * being driven to completion rather than abandoned, which is why the segment is
+ * reported beside the goal rather than becoming a rule that says "compact more".
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";

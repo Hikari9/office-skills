@@ -25,6 +25,20 @@ const scoreAll = process.env.SCORE_ALL === "1";
 const allEvents = readFileSync(join(outDir, "run-events.jsonl"), "utf8")
   .split("\n").filter(Boolean).map((l) => JSON.parse(l));
 const events = scoreAll ? allEvents : allEvents.filter((e) => e.is_office);
+
+// Fidelity is not uniform across harnesses and the scorecard never hides it.
+// Claude Code records a Skill tool call; the others infer a skill from its
+// SKILL.md being read. Both are actions, not keyword matches — but a run
+// counted one way is not the same measurement as a run counted the other.
+const byHarness = (rs) => {
+  const m = new Map();
+  for (const r of rs) {
+    const k = r.harness || "claude";
+    if (!m.has(k)) m.set(k, []);
+    m.get(k).push(r);
+  }
+  return m;
+};
 const tree = JSON.parse(readFileSync(join(outDir, "version-tree.json"), "utf8"));
 
 const median = (xs) => {
@@ -174,6 +188,22 @@ const landedRate = (rs) =>
   rs.length ? Math.round((rs.filter((r) => r.parts.landed === 1).length / rs.length) * 100) : null;
 const recent = landedRows.filter((r) => Date.parse(r.timestamp) > Date.now() - 14 * 864e5);
 
+L.push("## Coverage by harness");
+L.push("");
+L.push("| Harness | office runs | invocation signal |");
+L.push("|---|---|---|");
+for (const [h, rs] of [...byHarness(events)].sort((a, b) => b[1].length - a[1].length)) {
+  const sig = [...new Set(rs.map((r) => r.signal || "skill-tool"))].join(", ");
+  L.push(`| \`${h}\` | ${rs.length} | \`${sig}\` |`);
+}
+L.push("");
+L.push("`skill-tool` is a recorded dispatch — Claude Code is the only harness with a first-class");
+L.push("Skill tool and per-turn attribution. `skill-md-read` infers the invocation from the skill's");
+L.push("`SKILL.md` being read, which is what Codex, Gemini, and Hermes can offer. Both are actions");
+L.push("rather than keyword matches, so both count as invocations; they are **not** the same");
+L.push("measurement, and a cross-harness comparison has to say which it is using.");
+L.push("");
+
 L.push("## The goal");
 L.push("");
 L.push(`**Landed rate target: ${GOAL}%** — the share of office runs that open a PR. Checked by`);
@@ -192,10 +222,31 @@ for (const [label, rs] of [
 }
 L.push("");
 L.push("");
-L.push("**The target is reachable, measured.** Runs whose session compacted land at **90%**");
-L.push("(112/125) against **30%** (82/271) for runs that never compacted — and the gap holds among");
-L.push("40+ turn runs (90% vs 32%), so it is not just run length. Correlational: both are most");
-L.push("likely downstream of a run being driven to completion rather than abandoned.");
+const segRate = (rs) => {
+  if (!rs.length) return null;
+  const l = rs.filter((r) => r.parts.landed === 1).length;
+  return { pct: Math.round((l / rs.length) * 100), l, n: rs.length };
+};
+const comp = segRate(landedRows.filter((r) => r.session_compactions > 0));
+const uncomp = segRate(landedRows.filter((r) => !r.session_compactions));
+const lg = landedRows.filter((r) => r.attributed_turns >= 40);
+const lgC = segRate(lg.filter((r) => r.session_compactions > 0));
+const lgU = segRate(lg.filter((r) => !r.session_compactions));
+if (comp && uncomp) {
+  L.push(`**The best segment measured.** Runs whose session compacted land at **${comp.pct}%**`);
+  L.push(`(${comp.l}/${comp.n}) against **${uncomp.pct}%** (${uncomp.l}/${uncomp.n}) for runs that never`);
+  if (lgC && lgU) L.push(`compacted; among 40+ turn runs it is ${lgC.pct}% vs ${lgU.pct}%, so it is not just run length.`);
+  L.push("Correlational — both are most likely downstream of a run being driven to completion rather");
+  L.push("than abandoned.");
+  L.push("");
+  if (comp.pct >= GOAL) {
+    L.push(`That segment clears ${GOAL}%, which is the bar for promoting a warning to a gate.`);
+  } else {
+    L.push(`**No segment currently clears ${GOAL}%.** The target is set above everything this corpus`);
+    L.push("has reached, so treat it as a direction rather than a demonstrated ceiling. It was set when");
+    L.push("Claude-only data showed 90%; adding Codex, where most office runs actually happen, moved it.");
+  }
+}
 L.push("");
 L.push("The composite score below is deliberately **not** the gated number. `gate` is matched on");
 L.push("literal strings and `uninterrupted` sits at 94-100% across every office, so the composite is");
@@ -207,14 +258,15 @@ L.push("## Ranking");
 L.push("");
 L.push("Components are the mean of each part where it applied, so a score reads back to a cause.");
 L.push("");
-L.push("| Skill | n | score | landed | uninterr | tools | gate | effic | on current |");
-L.push("|---|---|---|---|---|---|---|---|---|");
+L.push("| Skill | n | harness | score | landed | uninterr | tools | gate | effic | on current |");
+L.push("|---|---|---|---|---|---|---|---|---|---|");
 for (const [skill, rows, a] of bySkill) {
   const m = partMeans(rows);
   const pct = (x) => (x === null ? "—" : `${x}%`);
   const thin = a.n < THIN ? " *thin*" : "";
   const cur = rows.filter((r) => r.version_is_current).length || "—";
-  L.push(`| \`${skill}\`${thin} | ${a.n} | **${a.score}** | ${pct(m.landed)} | ${pct(m.uninterrupted)} | ${pct(m.clean_tools)} | ${pct(m.gate)} | ${pct(m.efficiency)} | ${cur} |`);
+  const hs = [...new Set(rows.map((r) => r.harness || "claude"))].sort().join("+");
+  L.push(`| \`${skill}\`${thin} | ${a.n} | ${hs} | **${a.score}** | ${pct(m.landed)} | ${pct(m.uninterrupted)} | ${pct(m.clean_tools)} | ${pct(m.gate)} | ${pct(m.efficiency)} | ${cur} |`);
 }
 L.push("");
 for (const [skill, rows, a] of bySkill) {

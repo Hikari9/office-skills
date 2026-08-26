@@ -19,26 +19,49 @@ enforce it.** Everything below reads Claude Code's own transcripts.
 
 ## What collects it
 
-| Hook | Event | What it writes |
-|---|---|---|
-| `SessionEnd` | session ends | one run event per skill the session used |
-| `PreCompact` | before a compaction | run-state scratchpad + a `run.compacted` continuity marker |
-| `Stop` | every lull | the `compact: yes\|no — <driver>` recommendation |
+Four harnesses, which agree on almost nothing — different config files, different event names,
+different formats. Each gets only the events it actually has:
 
-Install: `node eval/hooks/install.mjs`. Remove: `--uninstall`. Sink:
+| Harness | Config | Events used |
+|---|---|---|
+| Claude Code | `~/.claude/settings.json` | `SessionEnd`, `PreCompact`, `Stop` |
+| Codex | `~/.codex/hooks.json` | `SessionStart`, `PreCompact` — it has no `SessionEnd` |
+| Gemini CLI | `~/.gemini/config/hooks.json` | `SessionEnd`, `Stop` (namespaced under `office-skills`) |
+| Hermes | `~/.hermes/profiles/<active>/config.yaml` | `on_session_end`, `on_session_finalize` |
+
+**Nothing is wired to an event a harness does not have.** A hook that goes silent because its event
+never fires is indistinguishable from "no runs happened", which is the failure this whole system
+exists to stop.
+
+Because Codex has no `SessionEnd`, the emitter is **watermark-based** rather than per-session:
+`catch-up.mjs` emits every session newer than the last watermark and is idempotent by session id, so
+it can hang off whatever event a harness does offer — `SessionStart` catches up the previous run.
+
+Install: `node eval/hooks/install.mjs`. Remove: `--uninstall`. Scope with `--brand`. Sink:
 `~/.claude/office-skills-telemetry/`, outside any repo, because committing run state beside a live
 executor orphaned two commits in one run.
+
+Two harness-specific traps, both found the hard way: Hermes reads the **active profile's** config,
+so writing to `~/.hermes/config.yaml` installs nothing and reports success. And its shell hooks need
+first-use consent — a newly installed hook shows `✗ not allowlisted` until it is approved once.
 
 ## What counts as an invocation
 
 Session logs repeat the whole skills catalog at startup, and planning text quotes commands verbatim,
 so a text match on `/auto-office` counts mentions rather than runs. Two signals are real:
 
-- **A `Skill` tool call** — explicit dispatch.
+- **A `Skill` tool call** — explicit dispatch. Claude Code only.
 - **`attributionSkill` on a turn** — the harness's own attribution, which also catches a skill that
-  was followed without a tool call.
+  was followed without a tool call. Claude Code only.
+- **A `SKILL.md` read** — Codex, Gemini, and Hermes have no Skill tool, so a skill enters those runs
+  by its file being read. That read is an action, not a mention, so it counts.
 
-A keyword match in prose is neither, and never produces an event.
+A keyword match in prose is none of these, and never produces an event.
+
+**The two signals are not interchangeable and events say which they are.** `signal: "skill-tool"` is
+a recorded dispatch; `signal: "skill-md-read"` is inferred, and it cannot see a skill already in
+context or bill turns the way per-turn attribution does. The scorecard segments by harness so a
+cross-harness comparison always states which measurement it is using.
 
 ## The schema
 
@@ -68,16 +91,20 @@ exists.
 **Landed rate ≥ 80%** — the share of office runs that open a PR. Checked by `eval/gate.mjs`,
 enforced once a scope holds 15+ runs, reported below that.
 
-**80% is not aspirational; this corpus already reaches it in one segment.** Office runs whose
-session compacted land at **90%** (112/125). Runs that never compacted land at **30%** (82/271). The
-gap survives controlling for length — among runs of 40+ turns it is still **90% vs 32%** — so it is
-not simply that long runs compact.
+**80% is a direction, not a demonstrated ceiling — and that is a correction.** It was set when the
+only data was Claude Code's, where runs whose session compacted landed at 90%. Adding the Codex
+backfill — 4,193 events, and where most office runs actually happen — moved the best segment to
+**74%**. Nothing in this corpus currently clears 80%.
 
-That is the bar this document sets before a warning becomes a gate: a threshold is realistic when
-something already clears it. The relationship is correlational, and the likeliest reading is that
-both are downstream of a run being *actively driven to completion* rather than abandoned. So the
-segment is reported beside the goal rather than turned into a rule that says "compact more" —
-`dispatched-but-never-landed` in the debrief is where the other 70% actually lives.
+The segment itself survived: compacted runs land far better than uncompacted ones, and the gap holds
+after controlling for length. The relationship is correlational, and the likeliest reading is that
+both are downstream of a run being *actively driven to completion* rather than abandoned. So it is
+reported beside the goal rather than turned into a rule that says "compact more" —
+`dispatched-but-never-landed` is where the missing runs actually live.
+
+**The live figures are computed by `eval/score.mjs`, never written into this file.** A measurement
+pasted into prose is a cache of a lookup, and this paragraph is the reason that rule exists: the
+first version of it hardcoded 90% and was wrong within a day.
 
 Landed is the gated number because it counts an artifact **outside** the transcript. The composite
 score in [`../eval/SCORECARD.md`](../eval/SCORECARD.md) is not gated: its `gate` component is matched

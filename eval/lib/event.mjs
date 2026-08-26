@@ -9,7 +9,7 @@
 import { attribute } from "./version-tree.mjs";
 import { sha8, OFFICE_PLUGINS } from "./transcript.mjs";
 
-export function toEvent({ session, skill: s, tree, source }) {
+export function toEvent({ session, skill: s, tree, source, brand }) {
   const at = s.first_at || session.started_at;
   const ver = at ? attribute(tree, at) : null;
   const pluginId = s.plugin || s.skill;
@@ -26,6 +26,12 @@ export function toEvent({ session, skill: s, tree, source }) {
 
     // --- extensions ---
     source,                       // "backfill" | "session-end-hook"
+    harness: brand || session.brand || "claude",
+    // How the invocation was observed. "skill-tool" is a recorded dispatch;
+    // "skill-md-read" is inferred from the skill file being read, which is the
+    // best any harness without a Skill tool can offer. Never compare them
+    // without saying which is which.
+    signal: s.signal || "skill-tool",
     skill: s.skill,
     is_office: isOffice,
     version_sha: ver?.sha ?? null,

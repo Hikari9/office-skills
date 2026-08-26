@@ -1,68 +1,79 @@
 #!/usr/bin/env node
 /**
- * Retro-emit run events from Claude Code transcripts, attributed to the plugin
- * version that was live when each run executed.
+ * Retro-emit run events from every installed harness's own session store,
+ * attributed to the plugin version that was live when each run executed.
  *
- * Reads  ~/.claude/projects/<slug>/<session>.jsonl  (never modified)
- * Writes eval/out/run-events.jsonl       one record per skill invocation
- *        eval/out/sessions.jsonl         one record per session that used a skill
- *        eval/out/repo-map.local.json    slug -> real cwd (gitignored)
+ * Reads (never modifies):
+ *   claude  ~/.claude/projects/<slug>/<session>.jsonl
+ *   codex   ~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl
+ *   gemini  ~/.gemini/tmp/<project>/chats/**\/*.jsonl
+ *   hermes  ~/.hermes/state.db  (SQLite)
  *
- * Privacy: no prompt text, no tool arguments, no file contents. Prompts are
- * reduced to a length and a truncated sha256. Repos are opaque slugs, matching
- * the convention the routing ledger already uses.
+ * Writes eval/out/run-events.jsonl, sessions.jsonl, repo-map.local.json
+ *
+ * `--brand claude,codex` limits the scan. Default is every harness present.
+ *
+ * Fidelity is not uniform and every event says so. Only Claude Code has a
+ * first-class Skill tool, so its events carry `signal: "skill-tool"`. The other
+ * three record a skill by its `SKILL.md` being read — `signal:
+ * "skill-md-read"`. Both are actions rather than keyword matches, so both
+ * satisfy the invocation rule; they are not interchangeable and the scorer
+ * never mixes them silently.
+ *
+ * Privacy: no prompt text, no tool arguments, no file contents. Prompts reduce
+ * to a length and a truncated sha256; repos to opaque slugs.
  */
-import { readdirSync, statSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
-import { homedir } from "node:os";
+import { writeFileSync, mkdirSync } from "node:fs";
 import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildVersionTree } from "./lib/version-tree.mjs";
-import { parseSession } from "./lib/transcript.mjs";
+import { ADAPTERS, BRANDS } from "./lib/adapters/index.mjs";
 import { toEvent } from "./lib/event.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
 const outDir = resolve(here, "out");
-const projectsDir = process.env.CC_PROJECTS_DIR || join(homedir(), ".claude", "projects");
-
-function walk(dir) {
-  const out = [];
-  for (const name of readdirSync(dir)) {
-    const p = join(dir, name);
-    let st;
-    try { st = statSync(p); } catch { continue; }
-    if (st.isDirectory()) out.push(...walk(p));
-    else if (name.endsWith(".jsonl")) out.push(p);
-  }
-  return out;
-}
 
 const tree = buildVersionTree(repoRoot);
 mkdirSync(outDir, { recursive: true });
 
-if (!existsSync(projectsDir)) {
-  console.error(`No transcripts at ${projectsDir}. Set CC_PROJECTS_DIR.`);
-  process.exit(1);
-}
+const flag = process.argv.indexOf("--brand");
+const wanted =
+  flag >= 0 ? (process.argv[flag + 1] || "").split(",").filter(Boolean) : BRANDS;
 
-const files = walk(projectsDir);
 const repoMap = new Map();
 const events = [];
 const sessions = [];
-let scanned = 0;
+const perBrand = {};
 
-for (const file of files) {
-  scanned++;
-  if (scanned % 100 === 0) process.stderr.write(`  ${scanned}/${files.length}\r`);
-  let parsed;
-  try { parsed = await parseSession(file, repoMap); } catch { continue; }
-  const { session, skills } = parsed;
-  if (!skills.length) continue;
-  sessions.push(session);
-  for (const skill of skills) events.push(toEvent({ session, skill, tree, source: "backfill" }));
+for (const brand of BRANDS) {
+  if (!wanted.includes(brand)) continue;
+  const adapter = ADAPTERS[brand];
+  let files = [];
+  try { files = adapter.listSessions() || []; } catch { files = []; }
+  perBrand[brand] = { found: files.length, parsed: 0, events: 0 };
+
+  let n = 0;
+  for (const file of files) {
+    n++;
+    if (n % 200 === 0) process.stderr.write(`  ${brand} ${n}/${files.length}\r`);
+    let parsed;
+    try { parsed = await adapter.parseSession(file, repoMap); } catch { continue; }
+    const { session, skills } = parsed || {};
+    if (!session || !skills?.length) continue;
+    perBrand[brand].parsed++;
+    sessions.push(session);
+    for (const skill of skills) {
+      events.push(toEvent({ session, skill, tree, source: "backfill", brand }));
+      perBrand[brand].events++;
+    }
+  }
+  process.stderr.write(
+    `  ${brand.padEnd(7)} ${String(perBrand[brand].events).padStart(5)} events  ` +
+    `${perBrand[brand].parsed}/${files.length} sessions\n`
+  );
 }
 
-process.stderr.write("\n");
 writeFileSync(join(outDir, "run-events.jsonl"), events.map((e) => JSON.stringify(e)).join("\n") + "\n");
 writeFileSync(join(outDir, "sessions.jsonl"), sessions.map((s) => JSON.stringify(s)).join("\n") + "\n");
 writeFileSync(
@@ -70,6 +81,5 @@ writeFileSync(
   JSON.stringify(Object.fromEntries([...repoMap].map(([k, v]) => [v, k])), null, 2)
 );
 
-console.log(`scanned ${files.length} transcripts`);
-console.log(`${sessions.length} sessions used a skill`);
+console.log(`${sessions.length} sessions used a skill, across ${Object.keys(perBrand).length} harnesses`);
 console.log(`${events.length} skill-invocation events -> eval/out/run-events.jsonl`);
