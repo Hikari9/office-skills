@@ -47,7 +47,7 @@ nothing; a rule in an owning file binds the next run. If a lesson has no owner, 
 
 **Reviewers are the best-spent tokens.**
 
-21. One **resumed** reviewer across tasks beats fresh ones — by round 4 it cites its own findings and has the codebase loaded. → `auto-loop`
+21. One **resumed** reviewer across tasks beats fresh ones — by round 4 it cites its own findings and has the codebase loaded. → `auto-loop`. **Recurrence (08-26, repo-g):** planner dispatched round 2 as a brand-new `Agent` call instead of `SendMessage` to the round-1 agent id — caught immediately by re-reading this rule mid-run, mitigated by pasting round-1 findings into the fresh prompt so verification stayed real, but the reviewer's own carried uncertainty was lost. The failure mode is muscle-memory: `Agent` is the tool that was just used for plan-review (a genuinely one-shot, no-resume gate), and code-review's differing resume requirement doesn't announce itself at the call site. **Before dispatching review round ≥2, check for a live agent id from round 1 first — resume it, don't re-launch.**
 22. Route the gate to a **different session** from the code, not merely a different brand. The fresh session finds bypasses the implementer's session had every reason to think covered.
 23. A **pointed** question outperforms "review this diff". "Can this misclassification reach beyond display?" surfaced a destructive write chain that compiled, linted, type-checked and passed every test. **Ask about blast radius, not correctness.**
 24. Every blocking finding came from *reproducing* a defect, not reasoning about it.
@@ -119,6 +119,7 @@ nothing; a rule in an owning file binds the next run. If a lesson has no owner, 
 | 08-11 | repo-c | attendance date shadowing | claude | `sonnet` | 0+1 BD | 531k | 1h30m | APPROVED | Plan review paid for itself again; closeout was ~8× impl and found a silently dropped 47 lines → §3, §28, §31 |
 | 08-12 | repo-g | Merge Person batch action | claude | `sonnet` | 5 | 906k rev | ~4h | APPROVED | Dominant cost was deploy completeness: one source, two live blocks, one re-applied → §29 |
 | 08-12 | repo-g | unified-chrome + PROD | agy + `opus` inline | flash / `opus` | 1 | n/a | ~90m | APPROVED | Exact-transcription brief → agy one dispatch, zero invention, ~3m. `git checkout` mutation-restore wiped uncommitted edits → §11, §35 |
+| 08-26 | repo-g | sunday-inputs settings-channel prod fix | codex | `gpt-5.6-luna` high | 2 | n/r | ~30m | APPROVED | Reviewer caught a create payload missing 2 non-null fields never exercised by preview's assert-only path; live throwaway create/read/delete probe against real preview closed it before prod. Round-2 review dispatched as a fresh agent instead of resumed — mitigated by pasting round-1 findings, but the resume-not-fresh rule was broken → new lesson below |
 
 ## Weekly compaction — the self-healing clause
 
