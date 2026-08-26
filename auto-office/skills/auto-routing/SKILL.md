@@ -80,10 +80,10 @@ Not derived from the benchmark table, and a leaderboard movement does not change
 | Role | claude | codex | agy | Fixed? |
 |---|---|---|---|---|
 | Planner | `opus` (the session) | `codex-luna` | `agy` | fixed |
-| **Plan-reviewer** (full gear only) | `opus` **low** | `codex-luna` **high** | `agy` **high** | fixed |
-| Executor | `sonnet` **high** | **`gpt-5.6-luna` `xhigh`** | **Flash latest `high`** | **fixed** |
-| Worker | `sonnet` high *default* | `gpt-5.6-luna` xhigh *default* | Flash latest `high` *default* | **ANY brand/model/effort the planner declares** |
-| Reviewer (code) | `opus` **low** | `codex-luna` high *(only when codex is planner)* | never reviews | fixed |
+| **Plan-reviewer** (full gear only) | `opus` **low** | `codex-luna` **xhigh** | `agy` **high** | fixed |
+| Executor | `sonnet` **high** | **`gpt-5.6-luna` `high`** | **Flash latest `high`** | **fixed** |
+| Worker | `sonnet` high *default* | `gpt-5.6-luna` high *default* | Flash latest `high` *default* | **ANY brand/model/effort the planner declares** |
+| Reviewer (code) | `opus` **low** | `codex-luna` **xhigh** *(only when codex is planner)* | never reviews | fixed |
 
 **The plan-reviewer's brand is always the planner's brand** — it is not routed by fit. It reads one
 document the planner just wrote; same-brand is an advantage there, not the conflict of interest it
@@ -95,13 +95,22 @@ would be on a diff. Executor and worker brand *is* routed by fit.
 |---|---|---|
 | claude | `sonnet` high | office default |
 | agy | **Flash latest** `high` | office default; resolve with `agy-office/scripts/agy-model.sh` |
-| **codex** | **`gpt-5.6-luna` `xhigh`** | **standing user default, set 2026-08-14** |
+| **codex** | **`gpt-5.6-luna` `high`** | **standing user default, set 2026-08-26** |
 
-The codex row is a **caller override made durable**, not a self-escalation — it is the one legitimate
-way `xhigh` becomes a default, since the ceiling rule below binds the *office*, never the user. Read
-the numbers before assuming it is an upgrade: Luna xhigh scores **50** on the AA Intelligence Index
-against Terra max's **55**, at **$0.17/M vs $0.73/M**. It is a deliberate cost-and-speed trade the
-user owns; do not "correct" it upward mid-run, and do not cite it as licence to raise anything else.
+**Effort goes to the gates, not to the implementation** (standing user decision, 2026-08-26). The
+codex executor sits at `high` while both codex **review** gates sit at `xhigh` — the inverse of where
+this office started. The reasoning is the one already on record below: a bigger executor does not fix
+a wrong brief, it implements it more convincingly, so effort buys more at the gate that catches the
+wrong brief than at the process producing it.
+
+Read the index before treating either number as a ranking. Luna is **52 / 50 / 47** across
+max / xhigh / high, so the executor gives up 3 points and the reviewers gain 3. Both remain far under
+Terra max's **55**, at **$0.17/M vs $0.73/M** — the whole codex row is a deliberate cost-and-speed
+trade the user owns. Do not "correct" any of it mid-run, and do not cite it as licence to raise
+anything else.
+
+Both are **caller overrides made durable**, not self-escalations. That is the one legitimate way a
+non-`high` effort becomes a default, since the ceiling rule below binds the *office*, never the user.
 
 No self-escalation beyond these, no exception without a caller override. Evidence: on the run that produced this rule both green-but-useless tests the
 reviewer caught were written by the *bigger* model, and the largest line item was three rounds fixing
@@ -111,7 +120,7 @@ convincingly.
 **Workers are routed, not pinned, and the planner may assign ANY mix — brand, model, and effort,
 independently, per task.** This is the one place in the office where the full catalog is open. A
 worker may be *below* the executor's tier (`haiku` for a mechanical sweep), *above* it (`opus` for an
-arbitration), or a different brand entirely (`gpt-5.6-luna` xhigh for a long backend chain while a
+arbitration), or a different brand entirely (`gpt-5.6-luna` high for a long backend chain while a
 `sonnet` executor drives). A plan whose every worker is the executor's tier has usually not thought
 about it.
 
@@ -124,7 +133,7 @@ figures are in [model-benchmarks.md](../../references/model-benchmarks.md), and 
 | Bulk mechanical edit, rename sweep, file-by-file application | `haiku`, Flash latest `low` | Index barely moves the outcome; speed and price do |
 | Read-only recon, breadth-first search across many files | Flash latest `high` | Highest index available at flash speed — N in parallel beat one deep read |
 | Ordinary implementation inside a clear brief | executor's own tier | The default; a bigger model implements a wrong brief more convincingly |
-| Long backend/data chain, terminal-heavy | `gpt-5.6-luna` xhigh (50) or `gpt-5.6-terra` (55) | Agentic-coding strength and per-token price, not raw index |
+| Long backend/data chain, terminal-heavy | `gpt-5.6-luna` high (47) or `gpt-5.6-terra` (55) | Agentic-coding strength and per-token price, not raw index |
 | Arbitration, conflicting invariants, unconfirmed diagnosis | `opus` high (59) | A different *kind* of question — the only case that reliably repays the tier |
 
 **Effort is a real axis, not a synonym for "try harder", and the index is where you read it.** Within
@@ -156,9 +165,9 @@ binds the gate it was declared for. Reviewer strength comes from independence, f
 pointed brief — not from effort tier.
 
 **High is the ceiling *for the office*. `xhigh`, `ultra`, and `max` are user-invoked only** — which
-is exactly what the codex executor's standing `xhigh` default is: user-invoked once, durably, and
-recorded in the table above with its date. A standing default set by the user is not a counter-example
-to this rule; a planner reaching for `xhigh` on its own initiative still is. Never escalate an effort
+is exactly what the codex reviewers' standing `xhigh` default is: user-invoked once, durably, and
+recorded above with its date. A standing default set by the user is not a counter-example to this
+rule; a planner reaching for `xhigh` on its own initiative still is. Never escalate an effort
 tier or substitute a bigger model on your own initiative — not to be safe, not because a task looks
 hard, not because the benchmark table shows a higher-scoring variant. If a task genuinely seems to
 need more than the table gives it, that is a recommendation to surface, not a default to change.
@@ -200,9 +209,9 @@ the process runs medium, and nothing in the output says so.
 --model opus   --effort low       # plan reviewer
 
 # codex — there is NO --effort flag; effort is a config override
--m gpt-5.6-luna -c model_reasoning_effort="xhigh"   # executor
--m gpt-5.6-luna -c model_reasoning_effort="high"    # code reviewer (codex-as-planner)
--m gpt-5.6-luna -c model_reasoning_effort="high"    # plan reviewer
+-m gpt-5.6-luna -c model_reasoning_effort="high"   # executor
+-m gpt-5.6-luna -c model_reasoning_effort="xhigh"    # code reviewer (codex-as-planner)
+-m gpt-5.6-luna -c model_reasoning_effort="xhigh"    # plan reviewer
 ```
 
 **The codex form is the one this rule was written for.** Verified 2026-08-25: no office was passing

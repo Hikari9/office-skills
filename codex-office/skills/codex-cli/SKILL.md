@@ -14,8 +14,8 @@ in-session Codex subagent instead. This spoke's CLI mechanics do not apply to th
 **Pass BOTH `-m <model>` and `-c model_reasoning_effort="<effort>"` on every invocation — never rely
 on a default for either.**
 
-- `gpt-5.6-luna`, `xhigh` effort — ordinary implementation (executor default).
-- `gpt-5.6-luna`, `high` effort — hard diagnosis, or any reviewer dispatch.
+- `gpt-5.6-luna`, `high` effort — ordinary implementation (executor default).
+- `gpt-5.6-luna`, `xhigh` effort — any reviewer dispatch (plan or code), and hard diagnosis.
 
 `gpt-5.6-sol` is no longer a routing option in this office; Luna covers both lanes.
 

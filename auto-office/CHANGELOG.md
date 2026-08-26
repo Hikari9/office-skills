@@ -1,5 +1,29 @@
 # Changelog — auto-office
 
+## 4.1.0 — 2026-08-26
+
+**Codex effort inverts: effort goes to the gates, not the implementation** (standing user
+decision, 2026-08-26).
+
+| Role | Was | Now |
+|---|---|---|
+| codex executor | `gpt-5.6-luna` xhigh | `gpt-5.6-luna` **high** |
+| codex worker (default) | xhigh | **high** |
+| codex **plan**-review gate | low → high (earlier today) | **xhigh** |
+| codex **code**-review gate | high | **xhigh** |
+
+The reasoning was already on record in this spoke and now the defaults match it: *a bigger
+executor does not fix a wrong brief, it implements it more convincingly.* Effort buys more at
+the gate that catches the wrong brief than in the process producing one.
+
+On the index this is −3 for the executor and +3 for each gate — Luna scores **52 / 50 / 47**
+across max / xhigh / high. Both remain well under Terra max's 55 at a fifth of the price; the
+whole codex row stays a deliberate cost trade the user owns.
+
+- The "user-invoked only" ceiling rule now cites the **reviewers'** standing xhigh rather than
+  the executor's, which no longer exists.
+- The code-review row in the delegation map now states its per-brand efforts, matching the
+  plan-review row that already did.
 ## 4.0.1 — 2026-08-26
 
 - **Codex plan-review floor raised to `codex-luna` high** (was low), matching the codex code-review

@@ -128,7 +128,7 @@ not ready.
 
 | Repo | Executor | Model+effort | Worktree | Scope |
 |---|---|---|---|---|
-| `acme-api` | codex | `gpt-5.6-luna` `xhigh` | `../wt-retry-queue` @ `BASE` | **Tasks 1–5, end to end** |
+| `acme-api` | codex | `gpt-5.6-luna` `high` | `../wt-retry-queue` @ `BASE` | **Tasks 1–5, end to end** |
 
 Then the per-task rows — **instructions to that executor**, not launches:
 
@@ -151,7 +151,7 @@ parallel, and where the barriers are. One glance should answer "how wide does th
 ```
 PLANNER (opus, this session)
   │
-  ├─▶ EXECUTOR  gpt-5.6-luna xhigh  ·  wt-retry-queue  ·  tasks 1-5 end to end
+  ├─▶ EXECUTOR  gpt-5.6-luna high   ·  wt-retry-queue  ·  tasks 1-5 end to end
   │     │
   │     ├─ T1 ──┬─▶ worker agy (cli)   scan handlers/     ┐
   │     │       ├─▶ worker agy (cli)   scan jobs/         ├ parallel, barrier before T2

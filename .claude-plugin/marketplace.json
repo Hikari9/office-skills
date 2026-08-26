@@ -12,7 +12,7 @@
       "name": "codex-office",
       "source": "./codex-office",
       "description": "Codex office. The active planner plans and closes out; Codex planners use in-session Codex subagents for Codex workers, while non-Codex planners use CLI workers.",
-      "version": "3.0.0",
+      "version": "3.1.0",
       "author": {
         "name": "office-skills"
       },
@@ -47,7 +47,7 @@
       "name": "auto-office",
       "source": "./auto-office",
       "description": "Auto office. Routes each unit of work to a codex, agy, or claude executor by capability and measured quota, gates the plan before user approval, then runs goal-locked end-to-end to closeout behind an Opus code-review gate.",
-      "version": "4.0.1",
+      "version": "4.1.0",
       "author": {
         "name": "office-skills"
       },

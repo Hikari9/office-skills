@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.1.0 — 2026-08-26
+
+**Effort inverts: executor to `high`, reviewer to `xhigh`** (standing user decision, 2026-08-26).
+
+- `gpt-5.6-luna` **high** is the executor default; **xhigh** is now any reviewer dispatch, plan or
+  code, plus hard diagnosis. Updated in the hub role table, `codex-cli`, `codex-reviewer`, and
+  `reviewer-brief.md` — the brief matters most, since it carries the literal
+  `-c model_reasoning_effort=` a dispatch copies.
 ## 3.0.0 — 2026-08-26
 
 Core `4.0.0`.
