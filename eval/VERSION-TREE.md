@@ -1,6 +1,6 @@
 # Version tree (reverse-chronological)
 
-Generated 2026-08-26T04:16:54.798Z at `01a1e5d` by `eval/build-version-tree.mjs`. Do not hand-edit.
+Generated 2026-08-26T04:21:58.844Z at `2a3fd50` by `eval/build-version-tree.mjs`. Do not hand-edit.
 
 The offices are symlinked live into `~/.claude/skills`, so the version in effect at any
 instant is this repo's working tree at that instant. Each row below opens an interval that

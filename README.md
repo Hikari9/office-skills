@@ -67,7 +67,7 @@ office-skills/
 
 ## Docs
 
-* [Packaging and install](docs/packaging-and-install.md), for building, installing, and releasing.
+* [Packaging and install](docs/packaging-and-install.md), for building, installing, releasing, and **installing the telemetry hooks into Claude Code, Codex, Gemini CLI, and Hermes**.
 * [Telemetry event model](docs/telemetry-event-model.md), for how a run gets measured and why transcript matches do not count.
 * [Canaries and rollback](docs/canaries-and-rollback.md), for what each office has to prove before it ships.
 * [Rule ownership matrix](docs/rule-ownership-matrix.md), for who owns which rule and where it lives.
