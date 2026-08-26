@@ -1,0 +1,31 @@
+name: Skill Eval
+
+on:
+  pull_request:
+    paths:
+      - '*-office/**'
+      - 'office-core/**'
+  workflow_dispatch:
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        office: [auto-office, claude-office, codex-office, agy-office]
+    steps:
+      - uses: actions/checkout@v4
+
+      # Cases live at <office>/evals/, which is where the action looks.
+      - uses: skill-bench/skill-eval-action@v1
+        with:
+          skill-name: ${{ matrix.office }}
+          skill-path: ${{ matrix.office }}
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Read-only. These cases grade planning, routing, and verdict discipline —
+          # none of them should launch a worker CLI or open a PR from CI.
+          allowed-tools: 'Read,Grep,Glob'
+          permission-mode: default
+          pass-threshold: '80'
+          timeout: '300'

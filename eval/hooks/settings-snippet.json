@@ -1,0 +1,15 @@
+{
+  "_comment": "Merge into ~/.claude/settings.json. Emits office-skills run telemetry at session end. Install with: node eval/hooks/install.mjs",
+  "hooks": {
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /Users/rico/Git/office-skills/eval/hooks/session-end.mjs"
+          }
+        ]
+      }
+    ]
+  }
+}
