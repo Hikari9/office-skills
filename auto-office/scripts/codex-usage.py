@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read remaining ChatGPT/Codex weekly quota, non-interactively.
+"""Read remaining ChatGPT/Codex quota (5-hour and weekly windows), non-interactively.
 
 Reads the stored Codex session token from ~/.codex/auth.json and asks the ChatGPT
 backend for the account's rate-limit windows. No browser, no automation, no model
@@ -7,8 +7,8 @@ tokens consumed.
 
 Usage:
     ./codex-usage.py           # human-readable
-    ./codex-usage.py --json    # machine-readable, for routing
-    ./codex-usage.py --percent # just the remaining weekly percent, e.g. "99"
+    ./codex-usage.py --json    # machine-readable, for routing (session + weekly)
+    ./codex-usage.py --percent # bare integer percentage (tightest across windows)
 
 Exit codes:
     0  headroom read successfully
@@ -53,18 +53,87 @@ def fetch_usage(token):
         raise RuntimeError(f"usage API unreachable: {e.reason}") from e
 
 
-def summarize(data):
-    primary = data.get("rate_limit", {}).get("primary_window", {}) or {}
-    used = primary.get("used_percent", 0)
-    reset = primary.get("reset_after_seconds", 0) or 0
+def _format_duration(seconds):
+    if seconds is None:
+        return "N/A"
+    days = seconds // 86400
+    hours = (seconds % 86400) // 3600
+    minutes = (seconds % 3600) // 60
+    parts = []
+    if days > 0:
+        parts.append(f"{days}d")
+    if hours > 0:
+        parts.append(f"{hours}h")
+    parts.append(f"{minutes}m")
+    return " ".join(parts) if parts else "0m"
+
+
+def _parse_window(win):
+    if not win or not isinstance(win, dict):
+        return None
+    used = win.get("used_percent", 0)
+    reset = win.get("reset_after_seconds", 0) or 0
+    reset_at = win.get("reset_at")
+    window_secs = win.get("limit_window_seconds", 0) or 0
     return {
+        "used_percent": used,
+        "remaining_percent": 100 - used,
+        "resets_in_seconds": reset,
+        "resets_in": _format_duration(reset),
+        "reset_at": reset_at,
+        "limit_window_seconds": window_secs,
+    }
+
+
+def summarize(data):
+    rl = data.get("rate_limit", {}) or {}
+    primary = rl.get("primary_window", {}) or {}
+    secondary = rl.get("secondary_window", {}) or {}
+
+    p_parsed = _parse_window(primary)
+    s_parsed = _parse_window(secondary)
+
+    session = None
+    weekly = None
+
+    for w in (p_parsed, s_parsed):
+        if not w:
+            continue
+        limit_secs = w["limit_window_seconds"]
+        if limit_secs <= 86400:  # 5-hour window (18000s)
+            session = w
+        else:  # weekly window (604800s)
+            weekly = w
+
+    if session is None and weekly is None:
+        if p_parsed:
+            weekly = p_parsed
+    elif weekly is None and p_parsed and p_parsed != session:
+        weekly = p_parsed
+
+    windows = [w for w in (session, weekly) if w]
+    tightest_used = max(w["used_percent"] for w in windows) if windows else 0
+    tightest_remaining = 100 - tightest_used
+
+    info = {
         "account": data.get("email"),
         "plan": str(data.get("plan_type") or "").upper(),
-        "weekly_used_percent": used,
-        "weekly_remaining_percent": 100 - used,
-        "resets_in_seconds": reset,
-        "resets_in": f"{reset // 86400}d {(reset % 86400) // 3600}h {(reset % 3600) // 60}m",
+        "session_used_percent": session["used_percent"] if session else None,
+        "session_remaining_percent": session["remaining_percent"] if session else None,
+        "session_resets_in_seconds": session["resets_in_seconds"] if session else None,
+        "session_resets_in": session["resets_in"] if session else None,
+        "session_reset_at": session["reset_at"] if session else None,
+        "weekly_used_percent": weekly["used_percent"] if weekly else None,
+        "weekly_remaining_percent": weekly["remaining_percent"] if weekly else None,
+        "weekly_resets_in_seconds": weekly["resets_in_seconds"] if weekly else None,
+        "weekly_resets_in": weekly["resets_in"] if weekly else None,
+        "weekly_reset_at": weekly["reset_at"] if weekly else None,
+        "tightest_used_percent": tightest_used,
+        "tightest_remaining_percent": tightest_remaining,
+        "resets_in_seconds": weekly["resets_in_seconds"] if weekly else (session["resets_in_seconds"] if session else 0),
+        "resets_in": weekly["resets_in"] if weekly else (session["resets_in"] if session else "N/A"),
     }
+    return info
 
 
 def main(argv):
@@ -75,16 +144,18 @@ def main(argv):
         return 2
 
     if "--percent" in argv:
-        print(info["weekly_remaining_percent"])
+        print(info["tightest_remaining_percent"])
     elif "--json" in argv:
         print(json.dumps(info, indent=2))
     else:
-        print("=== Codex / ChatGPT weekly quota ===")
+        print("=== Codex / ChatGPT quota ===")
         print(f"Account: {info['account']}")
         print(f"Plan:    {info['plan']}")
-        print(f"Used:    {info['weekly_used_percent']}%")
-        print(f"Left:    {info['weekly_remaining_percent']}%")
-        print(f"Resets:  in {info['resets_in']}")
+        if info["session_used_percent"] is not None:
+            print(f"5-Hour:  {info['session_used_percent']}% used, {info['session_remaining_percent']}% left (resets in {info['session_resets_in']})")
+        if info["weekly_used_percent"] is not None:
+            print(f"Weekly:  {info['weekly_used_percent']}% used, {info['weekly_remaining_percent']}% left (resets in {info['weekly_resets_in']})")
+        print(f"Tightest Headroom: {info['tightest_remaining_percent']}% left")
     return 0
 
 

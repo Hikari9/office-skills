@@ -55,9 +55,7 @@ review rounds, and the fix lane sent to repair it introduced two page-blanking b
 
 ## Brand selection
 
-Pick on **fit** first. Probe headroom ([quota-probe.md](../../references/quota-probe.md)) only when
-you have a reason to — a long run, a brand you expect to be thin, a user who asked — and weigh it as
-a cost afterwards, never as a gate:
+Pick on **fit** first. CLI headroom is always probed during fit-test ([quota-probe.md](../../references/quota-probe.md)); weigh it as a cost afterwards, never as a gate:
 
 ```
 caller named a brand?  → use it, echo the override, stop here
@@ -271,16 +269,14 @@ planner tokens on **every** task, and the code reviewer is the safety net either
 3-consecutive-task cap is already spent, or if the task is a long chain. A tiebreak that ignores a
 cap is how a cap gets broken by accident.
 
-## Headroom is a cost, not a gate — and probing it is not a ritual
+## Headroom is a cost, not a gate — probed always during fit-test
 
-**Probe when you have a reason, not because the phase started.** Three consecutive runs logged
-"headroom never probed" as a defect and filed an issue about it, and in none of them did the missing
-probe cost anything — which is the definition of a step that was never load-bearing. Reasons that
-justify a probe: the run is long, a brand looks thin, a previous run drained a window, or the user
-asked. Otherwise route on fit and move.
+**CLI headroom is ALWAYS probed during fit-test** ([quota-probe.md](../../references/quota-probe.md))
+before planning or routing begins. It gives the planner live measurements across codex, claude, and
+agy before committing to a route.
 
-**There is no hardcoded threshold, and there will not be one.** When you *do* probe, this is a
-case-by-case trade-off the planner discerns and states; it is not delegated to a number. The
+**There is no hardcoded threshold, and there will not be one.** Even though headroom is always probed,
+this is a case-by-case trade-off the planner discerns and states; it is not delegated to a number. The
 question to answer out loud:
 
 > **Is it worth running this in a low-threshold agent if quality will be massively lost otherwise?**

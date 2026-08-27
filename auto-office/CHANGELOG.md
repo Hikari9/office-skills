@@ -1,5 +1,18 @@
 # Changelog — auto-office
 
+## 4.2.0 — 2026-08-27
+
+- **CLI headroom is ALWAYS probed during fit-test.** The quota probes (`codex-usage.py`,
+  `claude-usage.py`, `agy-usage.py`) run as part of the fit test before interviewing or planning,
+  ensuring live headroom figures per window are known upfront across gears. Headroom is reported
+  in the kickoff line with reset times.
+- **`agy-usage.py` produces Gemini numbers by default and never Claude numbers.** Any Claude
+  buckets in the CloudCode API response are filtered out, and default reporting / tightest headroom
+  tracks Gemini models.
+- **`codex-usage.py` adds 5-hour window support.** Reads `primary_window` (5h) alongside
+  `secondary_window` (weekly), reporting both windows with reset times and reporting tightest
+  headroom across the two.
+
 ## 4.1.0 — 2026-08-26
 
 **Codex effort inverts: effort goes to the gates, not the implementation** (standing user

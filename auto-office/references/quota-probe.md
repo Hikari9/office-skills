@@ -1,5 +1,6 @@
 # Usage headroom — how to measure it
 
+auto-office ALWAYS probes CLI headroom during the fit-test, before interviewing or planning.
 Routing must never guess whether a tool has quota left. Measure all three, then reason about the
 numbers ([auto-routing](../skills/auto-routing/SKILL.md) — headroom is a cost, not a gate).
 
@@ -28,7 +29,7 @@ local transcripts carry no usage windows — don't go looking there.
 **agy-usage probe is live and programmatic.** The script reads the stored refresh token from
 `~/.gemini/antigravity-cli/antigravity-oauth-token`, refreshes an OAuth access token using Google OAuth2,
 and posts to `https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuota`. It returns model-by-model
-`remainingFraction` values and reset timestamps for Gemini 3.6, Gemini 3, Claude, and internal models.
+`remainingFraction` values and reset timestamps for Gemini models by default, and never produces Claude numbers.
 
 ## `--percent` is a routing convenience. It is not valid for deltas
 
@@ -39,12 +40,12 @@ number so a route can be decided in one glance.
 | Probe | `--json` windows | Reset fields | `--percent` returns |
 |---|---|---|---|
 | `claude-usage.py` | `session_*` (5-hour) **and** `weekly_*` (7-day) | `session_resets_at`, `weekly_resets_at` | `tightest_remaining_percent` — the **tighter of the two** |
-| `codex-usage.py` | `weekly_*` only (`rate_limit.primary_window`) | `resets_in_seconds` / `resets_in` | `weekly_remaining_percent` |
-| `agy-usage.py` | one entry **per model**, each with its own quota | `models.<id>.reset_time` (may be `null`) | `tightest_remaining_percent` across models |
+| `codex-usage.py` | `session_*` (5-hour) **and** `weekly_*` (7-day) | `session_resets_in`, `weekly_resets_in` | `tightest_remaining_percent` — the **tighter of the two** |
+| `agy-usage.py` | one entry **per model** (Gemini by default; never Claude) | `models.<id>.reset_time` (may be `null`) | `tightest_remaining_percent` across Gemini models |
 
-Claude is the probe where the collapse bites, because it is the one with two windows on different
-clocks. agy's per-model breakdown is the analogous trap: a single tightest number hides which model's
-quota is actually thin.
+Claude and Codex both have two windows on different clocks (5-hour and 7-day). agy's per-model
+breakdown produces Gemini numbers by default and never Claude numbers; a single tightest number hides
+which model's quota is actually thin.
 
 That collapse makes `--percent` useless for measuring change:
 
@@ -71,11 +72,9 @@ The script reads the stored session token from `~/.codex/auth.json`
 (`tokens.access_token`) and GETs `https://chatgpt.com/backend-api/wham/usage` with it. Purely
 programmatic — no browser, no Chrome automation, no model tokens consumed, standard library only.
 
-`rate_limit.primary_window` is the **weekly** window. `used_percent` and `reset_after_seconds`
-come straight from that object; remaining is `100 - used_percent`.
-
-Verified 2026-08-01 on this machine: plan `TEAM`, 1% used /
-99% left, resets in 6d 22h.
+`rate_limit.primary_window` is the **5-hour** window and `secondary_window` is the **weekly** window.
+`used_percent` and `reset_after_seconds` come straight from those objects; remaining is
+`100 - used_percent`.
 
 ## Exit codes and what routing does with them
 
