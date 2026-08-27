@@ -29,18 +29,17 @@ Announce before doing anything else:
 auto-office · gear: <express|full> (<the fit-test reason, one clause>)
 executors: <n> (<brand(s)>, <fit reason>) · milestones: <n>
 reviewer: opus low · plan-reviewer: <brand> <model> low   [full only]
-headroom: <only if probed — per window, with reset times, UNKNOWN where a probe failed>
+headroom: <per window, with reset times, UNKNOWN where a probe failed>
 loop: on · overrides: <none|…>
 ```
 
 **The gear line is the important one.** It tells the user what they are about to pay for and is the
-cheapest place to overrule it. The headroom line appears only when a probe actually ran; when it
-does, report **every window with its reset time** — a single-number delta across a window boundary
+cheapest place to overrule it. Headroom was probed during fit-test; report **every window with its reset time** — a single-number delta across a window boundary
 is meaningless (one run read `82% → 52% → 85%` and none of it described anything).
 
 ## Order of operations
 
-1. **Run the fit test and state the gear** (hub). Express skips steps 2, 6-review, and most of what
+1. **Run the fit test, probe CLI headroom, and state the gear** (hub). Express skips steps 2, 6-review, and most of what
    follows; the checklist below is the **full** gear unless a step says otherwise.
 2. **File the tracking issue** by default, before exploring.
 3. **Interview to clarity.** Ask in batches, not one at a time. The floor below is not optional in
@@ -60,7 +59,7 @@ is meaningless (one run read `82% → 52% → 85%` and none of it described anyt
 5. **Route, fully** ([auto-routing](../auto-routing/SKILL.md)) — **every task's brand**, and how many
    executors the run needs. Model and effort are fixed by role, so they are filled in, not decided.
    Do not leave routing "to be decided during execution"; an unassigned task is an unreviewable cost.
-   Probe headroom **only if you have a reason to**; it is no longer a mandatory step.
+   Headroom was probed during the fit-test; weigh it as a cost, never a gate.
 6. **Write the plan** to `docs/plans/<slug>.md` **in the target repo** — see *Where a run's files
    live* below. The five required sections are core's
    ([`plan-contract.md`](../../office-core/protocol/plan-contract.md)) and none may be dropped:

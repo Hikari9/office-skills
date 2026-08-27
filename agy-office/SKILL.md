@@ -12,7 +12,7 @@ Same discipline as `claude-office`, with the `agy` CLI (Antigravity/Gemini) as E
 |---|---|---|---|
 | **Planner** | The current agent (you) | session's own | Plan → approval; **independently verify**; fix/close out |
 | **Executor** | `agy --print`, unsandboxed | **Flash latest**, resolved at dispatch | Implement ≤3 tasks; commit; write handoff |
-| **Reviewer** | One fresh Claude subagent | `opus`, low | Adversarial review each round; holds the gate |
+| **Reviewer** | Fresh reviewer (agy CLI or subagent) | `gemini-3.7-flash-high` | Adversarial review each round; holds the gate |
 
 **Core principle:** the planner never implements the plan; the executor never approves its own
 work. Each gate is held by whoever did not do the work.
@@ -43,14 +43,13 @@ Anything after `/agy-office` overrides one default; honor it, echo it, keep the 
 | Tweak | Example | Effect |
 |---|---|---|
 | Executor model | `use gemini-3.1-pro-high` | Override the resolved Flash-latest slug |
-| Reviewer model | `reviewer: sonnet` | Change reviewer model |
+| Reviewer model | `reviewer: opus` | Change reviewer model (default: `gemini-3.7-flash-high`) |
 | Skip a phase | `plan already approved: <path>` | Start at Phase 2 |
 | No closeout | `skip cleanup` | Stop after approval |
 | Extra gates | `reviewer must check a11y` | Add to rubric |
 
 **Only a caller tweak may change a default. Phase 2b is structural, not a default.** No caller may
-skip it, downgrade/bypass the reviewer, route review through `agy`, remove a phase, or widen the
-blast-radius ceiling implicitly.
+skip it, downgrade/bypass the reviewer, remove a phase, or widen the blast-radius ceiling implicitly.
 
 ## Fit test — first, before anything, and it picks a gear
 
@@ -61,7 +60,7 @@ adversarial reader plausibly catch something?
 | Answers | Gear | What runs |
 |---|---|---|
 | Any yes to **(1)** | **full** | All five phases. One-way door — never downgraded. |
-| No to (1), **2+** yeses across (2)–(4) | **express** | Short plan → execute → **Phase 2b** → **one** Claude review → land it. **Cap 2 review rounds**; a second `CHANGES REQUIRED` promotes the run to full. |
+| No to (1), **2+** yeses across (2)–(4) | **express** | Short plan → execute → **Phase 2b** → **one** review → land it. **Cap 2 review rounds**; a second `CHANGES REQUIRED` promotes the run to full. |
 | No to (1), **≤1** yes | **direct** | No office. Do the work under the normal safety rules, then stop. |
 
 **Phase 2b survives express.** It is not a review phase, it is the reason an agy executor's report is
@@ -85,7 +84,7 @@ rule: `office-core/protocol/roles-and-authority.md` → *Fit test*.
 - Land each milestone as its criteria go green — commit in worktree, open PR, merge to main — not one giant untracked patch at the end.
 - Dispatch live-system work **with** its access: MCP/API tools named in the launch, production
   **reads** included, data shape pinned in the brief, read-back required.
-- Reviewer always a Claude subagent, never `agy`; escalate out of the tool, not to it.
+- Reviewer defaults to `gemini-3.7-flash-high` (fresh reviewer separate from executor); escalate out of the tool, not to it.
 - Irreversible work is `PLANNER-HELD`; explicit approval before dispatch, silence isn't approval.
 - Verdicts are `APPROVED`, `CHANGES REQUIRED`, `PLAN DEFECT`; 5-round cap; never self-approve.
 - A task needing Claude-level reasoning is recommended to `claude-office` out loud, never forced
@@ -141,7 +140,7 @@ get approval. → [`agy-planning`](skills/agy-planning/SKILL.md).
 defect before dispatching the reviewer. **Not review** — no spec judgement, no approving. →
 [`agy-verification`](skills/agy-verification/SKILL.md).
 
-**Phase 3 — Review (Reviewer).** Dispatch a fresh Claude subagent with the plan, Global
+**Phase 3 — Review (Reviewer).** Dispatch a fresh reviewer (`gemini-3.7-flash-high` by default, or caller override) with the plan, Global
 Constraints, handoff, diff, your Phase 2b evidence; triage/fix; re-run Phase 2b + the gate each
 round; cap 5. → [`agy-reviewer`](skills/agy-reviewer/SKILL.md).
 

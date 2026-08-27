@@ -11,7 +11,7 @@ Read the rows for the phase you are in; the whole table is not a startup cost.
 | "The brief isn't writable until task 1 answers X" | The plan names both branches; that is what a branch point *is*. The executor picks by evidence. If the plan doesn't name them, fix the plan. |
 | "The memory cap means I must split the tasks myself" | The executor re-briefs *itself* from `EXECUTOR-STATE.md`. Reclaiming tasks is the cap disciplining the wrong role. |
 | "The preview apply is a live write, so it's mine" | **Preview/staging writes are delegated**, with the read-back. Only production and irreversible actions are planner-held. |
-| "Codex is at 14%, so it's out" / "better probe quota first" | No threshold exists — weigh it and spend it if it's worth it. And probe only with a reason; the ritual probe is gone. |
+| "Codex is at 14%, so it's out" | No threshold exists — weigh it and spend it if it's worth it. Headroom is always probed during fit-test, but it is a cost, not a gate. |
 | "This task is hard, I'll use Opus" | The executor is pinned; a bigger *worker* is legal only if the plan declared it. |
 | "I fixed it inline, so it's mine to approve" | Planner-implements did not lift planner-never-approves. Fresh reviewer, every time. |
 | "Agy is on task 5 and doing fine" | It forgets past 3. Re-brief or re-route. |

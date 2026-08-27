@@ -47,19 +47,20 @@ review, let an executor review itself, drop a floor, remove a phase, or widen bl
 
 ## Fit test — first, and it picks a gear
 
-Before interviewing or planning, price the run. Ask: (1) irreversible, production-facing, or
+Before interviewing or planning, price the run. **Always probe CLI headroom during fit-test**
+([quota-probe.md](references/quota-probe.md)). Ask: (1) irreversible, production-facing, or
 externally visible? (2) real volume or parallel breadth? (3) needs an interview? (4) would an
 adversarial reader plausibly catch something?
 
 | Answers | Gear | What runs |
 |---|---|---|
 | Any yes to **(1)** | **full** | Everything below. One-way door — never downgraded. |
-| No to (1), **2+** across (2)–(4) | **express** | Short plan → implement → **one** Opus review → land it. No plan-review, quota probe, benchmark read, run report, or ledger row. **Cap 2 rounds**; a 2nd `CHANGES REQUIRED` **promotes to full**. |
+| No to (1), **2+** across (2)–(4) | **express** | Short plan → implement → **one** Opus review → land it. No plan-review, benchmark read, run report, or ledger row. **Cap 2 rounds**; a 2nd `CHANGES REQUIRED` **promotes to full**. |
 | No to (1), **≤1** yes | **direct** | No office. Work under the normal safety rules, then stop. |
 
 **Express promotes to full before dispatch** if the run needs >1 executor, >1 repo, or more than ~3
-tasks — size is what makes one review round defensible. It drops **phases, never floors**: every rule
-under *Non-bypassable safety rules* below still binds.
+tasks — size makes one review round defensible. Drops **phases, never floors**: rules under
+*Non-bypassable safety rules* still bind.
 
 **State the gear and why in two or three sentences, then proceed** — discernment, not a new gate.
 Never downgrade for quota; that is a routing problem. Full rule:
@@ -82,8 +83,8 @@ writes, live reads, fixes, commits, its branch, the PR, non-deploying merges. **
 never amend** — `goal`, `done_criteria`, `blast_radius`, `named_actions`, `non_goals`; it amends the
 *how* freely, reporting hash + rationale. [auto-loop](skills/auto-loop/SKILL.md) → *Ownership*.
 
-**Headroom is probed on demand, not by ritual** — a long run, a thin brand, or the user asking. Then
-weigh it; never gate on a number. UNKNOWN means unavailable. Agy: **3 consecutive tasks**, hard cap.
+**Headroom is ALWAYS probed during fit-test**; then weigh it, never gate on a number. UNKNOWN means
+unavailable. Agy: **3 consecutive tasks**, hard cap.
 
 **Live-system work is delegated WITH its access** — MCP/API tools enumerated in the launch,
 production reads included, shape pinned in the brief, read-back required.
@@ -142,7 +143,6 @@ merges the plan named included — it executes.
 acting.** This binds whoever holds the phase — the same agent across a boundary as much as a fresh
 one. Protocol amnesia past Phase 2 is the observed failure; a re-read is the cheapest fix for it.
 
-
 | Phase / need | Load |
 |---|---|
 | Phase 1 — interview, plan + GOAL + milestones + named actions, self-review, approval (**full** adds plan-review) | [auto-planning](skills/auto-planning/SKILL.md) |
@@ -151,7 +151,7 @@ one. Protocol amnesia past Phase 2 is the observed failure; a re-read is the che
 | Phase 2+ — goal loop, milestone landing, caps, stops, drift checks | [auto-loop](skills/auto-loop/SKILL.md) |
 | Every dispatch — sibling spoke to load, forced-invocation path | [delegation-map.md](references/delegation-map.md) |
 | Milestone landing and final closeout (unless `skip cleanup`) | [auto-closeout](skills/auto-closeout/SKILL.md) |
-| Headroom, **only when you have a reason to probe** | [quota-probe.md](references/quota-probe.md) |
+| Headroom, probed during fit-test | [quota-probe.md](references/quota-probe.md) |
 | Doubt about core — the plan/evidence/verdict floor | `office-core/protocol/*` |
 
 auto-office owns **routing, the loop, and the claude route**; codex and agy mechanics load from the

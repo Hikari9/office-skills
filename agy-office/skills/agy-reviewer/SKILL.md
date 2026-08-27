@@ -1,6 +1,6 @@
 ---
 name: agy-reviewer
-description: The adversarial Phase 3 gate — code review is always a Claude subagent, plan review may be agy, three verdicts, 5-round cap. Loaded by the agy-office hub; not invoked directly.
+description: The adversarial Phase 3 gate — default reviewer is gemini-3.7-flash-high (or caller override), three verdicts, 5-round cap. Loaded by the agy-office hub; not invoked directly.
 ---
 
 # Agy Reviewer
@@ -12,12 +12,11 @@ Points at [`../../references/review-gate.md`](../../references/review-gate.md) (
 loop) and [`../../references/reviewer-brief.md`](../../references/reviewer-brief.md) (the prompt
 template) for full detail. This spoke restates what cannot be compressed away.
 
-## Code review is always a Claude subagent
+## Code review defaults to gemini-3.7-flash-high
 
-**The code-review gate is always a Claude subagent.** No caller tweak routes code review through
-`agy` — a same-family reviewer cannot see this executor's characteristic failure: self-consistent
-wrong work that passes its own tests. If the user wants a second opinion from a different model, run
-a second *Claude* reviewer at a different tier, or recommend `claude-office`.
+**The code-review gate defaults to `gemini-3.7-flash-high` (fresh reviewer separate from the executor).**
+A caller tweak may override the reviewer model (e.g. `reviewer: opus` or `reviewer: sonnet`).
+The reviewer never reviews its own work; the executor never approves its own work.
 
 ### Plan review is a different gate, and `agy` may hold it
 

@@ -6,13 +6,17 @@ refreshes the access token via Google OAuth2, and queries the CloudCode API endp
 https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuota
 
 Usage:
-    ./agy-usage.py           # human-readable
+    ./agy-usage.py           # human-readable (Gemini models by default)
+    ./agy-usage.py --all     # include other non-Claude models
     ./agy-usage.py --json    # machine-readable, for routing
-    ./agy-usage.py --percent # bare integer percentage (lowest remaining among active models)
+    ./agy-usage.py --percent # bare integer percentage (lowest remaining among Gemini models)
 
 Exit codes:
     0  successfully retrieved quota
     2  headroom unknown / error reading credentials
+
+Note:
+    Produces Gemini numbers by default, and never Claude numbers.
 """
 
 import json
@@ -99,13 +103,25 @@ def fetch_agy_quota():
         return None, f"Failed to query quota API: {e}"
 
 
-def process_quota(data):
+def process_quota(data, all_models=False):
     buckets = data.get("buckets", [])
     models = {}
-    min_pct = 100
+    filtered_buckets = []
+    min_pct = 100.0
+    found_target = False
     
     for b in buckets:
-        model_id = b.get("modelId")
+        model_id = b.get("modelId") or ""
+        model_lower = model_id.lower()
+        
+        # NEVER produce claude numbers
+        if "claude" in model_lower:
+            continue
+            
+        is_gemini = model_lower.startswith("gemini")
+        if not all_models and not is_gemini:
+            continue
+
         frac = b.get("remainingFraction", 1.0)
         pct = round(frac * 100, 1)
         reset_time = b.get("resetTime")
@@ -114,15 +130,20 @@ def process_quota(data):
             "remaining_percent": pct,
             "reset_time": reset_time
         }
+        filtered_buckets.append(b)
         
         # Track minimum remaining percentage for active model buckets
-        if pct < min_pct:
+        if is_gemini:
+            if not found_target or pct < min_pct:
+                min_pct = pct
+                found_target = True
+        elif not found_target and pct < min_pct:
             min_pct = pct
             
     return {
-        "tightest_remaining_percent": int(min_pct),
+        "tightest_remaining_percent": int(min_pct) if (found_target or models) else 100,
         "models": models,
-        "raw_buckets": buckets
+        "raw_buckets": filtered_buckets
     }
 
 
@@ -135,7 +156,8 @@ def main(argv):
             print(f"AGY quota probe UNKNOWN: {err}", file=sys.stderr)
         return 2
     
-    processed = process_quota(raw_data)
+    all_models = "--all" in argv
+    processed = process_quota(raw_data, all_models=all_models)
     tightest_pct = processed["tightest_remaining_percent"]
     
     if "--percent" in argv:
