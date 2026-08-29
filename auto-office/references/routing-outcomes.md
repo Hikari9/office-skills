@@ -77,6 +77,7 @@ nothing; a rule in an owning file binds the next run. If a lesson has no owner, 
 
 40. **Quota headroom went unprobed at both ends of four separate runs.** Filed once (#232) rather than absorbed into "done". Still the most-repeated omission in this ledger.
 41. **A CLI quota wall can be account-level, not per-session/per-task.** Two consecutive codex dispatches (executor fix-wave, then the very next reviewer resume) both failed with an identical "workspace is out of credits" — the second failed before any work began, which is what distinguished it from the ordinary 10-min-ceiling kill this office already resumes through silently. Surfaced to the user rather than silently rerouted, because it also meant abandoning the run's standing reviewer brand (an `AskUserQuestion`-worthy decision, not an in-loop one) → `auto-routing` (headroom is a cost, not a gate) should add: distinguish "killed" (resume same brand) from "errored with a credits/billing message" (stop and ask) before choosing a recovery path.
+42. **A uniform top-tier review gate outspends the work it gates.** One `xhigh` code review cost **293k** against a 226k-269k executor leg. Price codex code-review effort per leg by blast radius; the gate still always runs. → `auto-routing` (*Review effort is priced per leg*)
 
 ## Ledger
 

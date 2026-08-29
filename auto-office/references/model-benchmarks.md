@@ -51,8 +51,8 @@ leaderboard.
 | Gemini 3.7 Flash (low) | 51 | — | — | bulk mechanical work |
 | Gemini 3.6 Flash (high) | 50 | 217–304 | 0.56 | superseded by 3.7 |
 | Gemini 3.5 Flash | 50 | 171 | 0.69 | — |
-| **GPT-5.6 Luna (xhigh)** | **50** | 140 | **0.17** | **codex plan- and code-review gates** |
-| GPT-5.6 Luna (high) | 47 | — | — | **code reviewer when Codex plans; hard diagnosis** |
+| **GPT-5.6 Luna (xhigh)** | **50** | 140 | **0.17** | **codex plan review; codex code review of a high-blast-radius leg; hard diagnosis** |
+| GPT-5.6 Luna (high) | 47 | — | — | **codex executor; codex code review of a low-blast-radius leg** |
 
 **Two orderings in this table are counter-intuitive and are the reason it exists.** Luna **max (52)
 outscores Luna xhigh (50)** — effort labels do not rank monotonically, so read the row rather than

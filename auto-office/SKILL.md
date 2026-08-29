@@ -20,7 +20,7 @@ Planner ─▶ Plan-reviewer ─▶ retires │ Planner ─▶ ONE Executor per 
 | **Plan-reviewer** | Fresh, planner's brand, Opus **low**. **Full gear only** | One adversarial pass before approval, then **retires** | Distribute work; return; hold a later gate |
 | **Executor** | **One per repo**, brand per plan, **sonnet-tier high always** | **Execute the WHOLE plan end to end** — every task in dependency order, fanning out its own workers per the plan's dispatch column; **self-review every task and the whole diff**; commit, push, open the PR; write `EXECUTOR-STATE.md` | Approve its own work; exceed the ceiling; amend a user-approved field |
 | **Worker** | Per task; **any** brand/model/effort the plan declares | One task, never a second writer | Widen scope; be promoted mid-run |
-| **Reviewer (code)** | Fresh `opus` **low** (`codex-luna` **xhigh** when Codex *plans*) | Adversarial gate every round | Fix what it gates |
+| **Reviewer (code)** | Fresh `opus` **low** (`codex-luna` xhigh/high when Codex *plans*) | Adversarial gate every round | Fix what it gates |
 
 **Core principle: no one gates their own work, and inline work is still reviewed.** Self-review is
 mandatory for **every** role and is a *pass*, never an approval
@@ -89,8 +89,7 @@ unavailable. Agy: **3 consecutive tasks**, hard cap.
 **Live-system work is delegated WITH its access** — MCP/API tools enumerated in the launch,
 production reads included, shape pinned in the brief, read-back required.
 
-**Model and effort are fixed by role**; `xhigh`/`ultra`/`max` and model substitutions are
-**user-invoked only**.
+**Model and effort are fixed by role**; `xhigh`/`ultra`/`max` and model substitutions are **user-invoked only**.
 
 ## Non-bypassable safety rules
 

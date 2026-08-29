@@ -15,7 +15,12 @@ in-session Codex subagent instead. This spoke's CLI mechanics do not apply to th
 on a default for either.**
 
 - `gpt-5.6-luna`, `high` effort — ordinary implementation (executor default).
-- `gpt-5.6-luna`, `xhigh` effort — any reviewer dispatch (plan or code), and hard diagnosis.
+- `gpt-5.6-luna`, `xhigh` effort — **plan** review, hard diagnosis, and **code** review of a
+  high-blast-radius leg (the code-review default).
+- `gpt-5.6-luna`, `high` effort — **code** review of a low-blast-radius leg: docs,
+  evidence-checking, applied-state claims the planner can verify with a `git grep` plus a
+  `--dry-run`. The dispatcher prices this per leg; see `auto-office/skills/auto-routing`
+  → *Review effort is priced per leg*. Never below `high`, and never for plan review.
 
 `gpt-5.6-sol` is no longer a routing option in this office; Luna covers both lanes.
 

@@ -34,7 +34,7 @@ Keep emitting `executor` as the role id in schema fields (`office-kernel`, `run-
 | Executor packet / brief contract | `codex-office/skills/codex-executor` | `auto-office/skills/claude-executor` | `agy-office/skills/agy-executor` |
 | Independent verification pass | — | — | `agy-office/skills/agy-verification` (**mandatory**) |
 | **Plan-review** gate | `codex-office/skills/codex-reviewer` at `codex-luna` **xhigh** | `auto-office/skills/claude-reviewer` at `opus` **low** | `agy-office/skills/agy-reviewer` at `agy` **high** |
-| **Code-review** gate | `codex-office/skills/codex-reviewer` at `codex-luna` **xhigh** | `auto-office/skills/claude-reviewer` at `opus` **low** | **never** — agy does not hold this gate |
+| **Code-review** gate | `codex-office/skills/codex-reviewer` at `codex-luna` **`high` floor / `xhigh` standing default**, priced by blast radius | `auto-office/skills/claude-reviewer` at `opus` **low** | **never** — agy does not hold this gate |
 | Answering a blocked background agent | — | `auto-office/skills/claude-cli-send-message` | — |
 | Closeout mechanics | `codex-office/skills/codex-closeout` | `auto-office/skills/claude-closeout` | `agy-office/skills/agy-closeout` |
 
@@ -51,13 +51,19 @@ so it needs no diff package and no gate output — and it runs exactly once.
   Opus, which is the default regardless of who executed. The `codex-reviewer` / `agy-reviewer` spokes
   are loaded only when a caller override, the Codex-as-planner case, or a **plan** review puts that
   brand in the chair.
-- **Two floors, declared separately, per brand.** On the claude route both are `opus` low; on the
-  codex route both are `codex-luna` **xhigh**. They are stated separately because they are separate
-  declarations — the "stricter rule wins" clause below is about conflicting rules for the *same*
-  gate, and never promotes one gate to the other's tier, or one brand's floor to another's.
-  Reviewer strength comes mostly from independence and a pointed brief rather than effort tier, so
-  the codex floors sit above the codex **executor** (`high`) deliberately: effort buys more at the
-  gate that catches a wrong brief than in the process implementing one.
+- **Two floors, declared separately, per brand.** On the claude route both are `opus` low. On the
+  codex route the **plan**-review floor is `codex-luna` **xhigh**, and the **code**-review floor is
+  `codex-luna` **`high`** with `xhigh` as its standing default (re-declared 2026-08-29; see
+  *Review effort is priced per leg* in `auto-office/skills/auto-routing`). They are stated
+  separately because they are separate declarations — the "stricter rule wins" clause below is about
+  conflicting rules for the *same* gate, and never promotes one gate to the other's tier, or one
+  brand's floor to another's.
+  Reviewer strength comes mostly from independence and a pointed brief rather than effort tier. The
+  codex **plan**-review floor still sits above the codex **executor** (`high`) deliberately: effort
+  buys more at the gate that catches a wrong brief than in the process implementing one. Code review
+  keeps `xhigh` as its default for that same reason, but its floor is `high` because a docs or
+  evidence-checking leg does not carry a wrong brief's blast radius — and a gate that outspends the
+  work it gates was the measured failure that prompted the re-declaration.
 - **Dispatch form follows brand match.** Planner → executor is **CLI**. Executor → worker of the
   **same** brand is **in-session**; a worker of a **different** brand is **CLI**, necessarily.
   Work a delegation buys nothing for is **inline**. The brief says the executor *may* fan out; it
@@ -73,7 +79,12 @@ so it needs no diff package and no gate output — and it runs exactly once.
   sibling spoke and the auto-office hub disagree about *how* something is done, take the stricter
   one, and record which you took. It does **not** import a sibling office's *role* rules into this
   one. Two named consequences, because both have misfired:
-  - It does not promote plan review to the code-review floor (see the two-floor rule above).
+  - It does not import either review gate's floor into the other, in either direction (see the
+    two-floor rule above). On the codex route those floors now differ.
+  - It does not restore `xhigh` to a codex **code** review the dispatcher priced at `high`.
+    Blast-radius pricing is a rule about *which* effort the leg gets, not a default to be
+    strictered upward; a sibling spoke's unconditional `xhigh` is the stale side of that
+    disagreement, not the stricter one.
   - It does not restore "the planner never implements." The sibling hubs declare that as a local
     narrowing of core; auto-office runs core unnarrowed, so the planner may implement
     inline here — and, exactly as everywhere else, still never gates its own work.

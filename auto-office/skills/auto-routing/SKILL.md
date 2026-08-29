@@ -81,7 +81,7 @@ Not derived from the benchmark table, and a leaderboard movement does not change
 | **Plan-reviewer** (full gear only) | `opus` **low** | `codex-luna` **xhigh** | `agy` **high** | fixed |
 | Executor | `sonnet` **high** | **`gpt-5.6-luna` `high`** | **Flash latest `high`** | **fixed** |
 | Worker | `sonnet` high *default* | `gpt-5.6-luna` high *default* | Flash latest `high` *default* | **ANY brand/model/effort the planner declares** |
-| Reviewer (code) | `opus` **low** | `codex-luna` **xhigh** *(only when codex is planner)* | never reviews | fixed |
+| Reviewer (code) | `opus` **low** | `codex-luna` **xhigh** default, **`high`** floor *(only when codex is planner)* | never reviews | claude fixed; **codex priced by blast radius** — see *Reviewer selection* |
 
 **The plan-reviewer's brand is always the planner's brand** — it is not routed by fit. It reads one
 document the planner just wrote; same-brand is an advantage there, not the conflict of interest it
@@ -96,13 +96,16 @@ would be on a diff. Executor and worker brand *is* routed by fit.
 | **codex** | **`gpt-5.6-luna` `high`** | **standing user default, set 2026-08-26** |
 
 **Effort goes to the gates, not to the implementation** (standing user decision, 2026-08-26). The
-codex executor sits at `high` while both codex **review** gates sit at `xhigh` — the inverse of where
-this office started. The reasoning is the one already on record below: a bigger executor does not fix
-a wrong brief, it implements it more convincingly, so effort buys more at the gate that catches the
-wrong brief than at the process producing it.
+codex executor sits at `high` while the codex **plan**-review gate sits at `xhigh` — the inverse of
+where this office started. The reasoning is the one already on record below: a bigger executor does
+not fix a wrong brief, it implements it more convincingly, so effort buys more at the gate that
+catches the wrong brief than at the process producing it. Codex **code** review keeps `xhigh` as its
+default for the same reason, but since 2026-08-29 its floor is `high` and the leg's blast radius
+picks between them (*Reviewer selection*).
 
 Read the index before treating either number as a ranking. Luna is **52 / 50 / 47** across
-max / xhigh / high, so the executor gives up 3 points and the reviewers gain 3. Both remain far under
+max / xhigh / high, so the executor gives up 3 points and the plan reviewer gains 3. A code review
+priced at `high` sits level with the executor, which is the point of pricing it. Both remain far under
 Terra max's **55**, at **$0.17/M vs $0.73/M** — the whole codex row is a deliberate cost-and-speed
 trade the user owns. Do not "correct" any of it mid-run, and do not cite it as licence to raise
 anything else.
@@ -169,7 +172,11 @@ rule; a planner reaching for `xhigh` on its own initiative still is. Never escal
 tier or substitute a bigger model on your own initiative — not to be safe, not because a task looks
 hard, not because the benchmark table shows a higher-scoring variant. If a task genuinely seems to
 need more than the table gives it, that is a recommendation to surface, not a default to change.
-Same for dropping below the table to save quota: recommend it, don't do it silently.
+Same for dropping below the table to save quota: recommend it, don't do it silently. Blast-radius
+pricing of the **codex code-review gate** (*Reviewer selection* below) is not a counter-example: the
+user re-declared that gate's floor at `high` on 2026-08-29, so `high` is *on* the table for a
+low-blast-radius leg rather than below it, and the choice is made by what a miss would cost, never by
+remaining quota.
 
 ## Dispatch form (replaces the tier ladder)
 
@@ -208,7 +215,7 @@ the process runs medium, and nothing in the output says so.
 
 # codex — there is NO --effort flag; effort is a config override
 -m gpt-5.6-luna -c model_reasoning_effort="high"   # executor
--m gpt-5.6-luna -c model_reasoning_effort="xhigh"    # code reviewer (codex-as-planner)
+-m gpt-5.6-luna -c model_reasoning_effort="xhigh"    # code reviewer (codex-as-planner); "high" for a low-blast-radius leg
 -m gpt-5.6-luna -c model_reasoning_effort="xhigh"    # plan reviewer
 ```
 
@@ -374,6 +381,28 @@ when **Codex is the planner** (i.e. a Codex session invoked this workflow), not 
 executed. A caller may add a second opinion; a caller may not drop below the floor. **agy never holds
 the code-review gate** — long, adversarial, multi-round work against a diff is its documented
 weakness, and the miss-list is why.
+
+### Review effort is priced per leg, by blast radius
+
+**Standing user decision, 2026-08-29.** Applies to the **code**-review gate on the **codex** route
+only. Measured on the campus-fence run: an executor leg cost ~226k-269k tokens and one `xhigh` code
+review of it cost **293k** — the gate outspent the work it gated.
+
+| Blast radius of the leg | Code-review effort |
+|---|---|
+| A shared library imported estate-wide; a reconciler writing Order-0 denies or Auth rows; anything production-facing, irreversible, or externally visible | `codex-luna` **`xhigh`** — the standing default |
+| Docs, evidence-checking, applied-state claims the planner can mechanically verify with a `git grep` plus a `--dry-run` | `codex-luna` **`high`** — the re-declared floor |
+
+**Row 1 wins on any match**, and a leg you cannot confidently price is row 1. Both clauses fail
+upward on purpose: this plugin ships publicly, so a docs change here satisfies row 2 *and* row 1's
+"externally visible", and the saving is only ever meant to reach a leg that is unambiguously cheap
+to get wrong.
+
+Scope, precisely: the codex **code**-review floor was re-declared from `xhigh` to `high` for this
+([delegation-map.md](../../references/delegation-map.md)). The codex **plan**-review floor is
+untouched at `xhigh` — standing lesson 3 records plan review as the best-value item in every run that
+has one. `claude` is untouched at `opus` low, already its floor, so no claude gate is repriced and
+`xhigh` on one remains user-invoked only.
 
 **Plan review is a different gate**, held by the planner's own brand at that brand's plan-review row
 above — including `agy` high when agy is the planner, which `agy-office/skills/agy-reviewer` permits
