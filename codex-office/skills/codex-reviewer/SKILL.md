@@ -9,7 +9,9 @@ Assumes: the Office Kernel is already in the packet.
 
 ## Who reviews
 
-A fresh, separate `gpt-5.6-luna` reviewer identity at xhigh effort — in-session when both planner
+A fresh, separate `gpt-5.6-luna` reviewer identity at xhigh effort (a **code** review of a
+low-blast-radius leg runs at `high` instead — `auto-office/skills/auto-routing` → *Review effort is
+priced per leg*) — in-session when both planner
 and reviewer are Codex, otherwise launched through CLI — never the executor, never a session that
 did any of the work being gated. Mechanics live in
 [../../references/review-gate.md](../../references/review-gate.md); the exact prompt contract is

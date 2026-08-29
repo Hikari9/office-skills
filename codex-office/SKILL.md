@@ -16,7 +16,7 @@ in the spokes it routes to.
 |---|---|---|---|
 | Planner | Active Codex session | current session | scope, plan, escalation, closeout |
 | Executor | Fresh Codex in-session subagent when planner and assignee are Codex; otherwise the assignee's CLI | `gpt-5.6-luna`, high | implements the approved plan |
-| Reviewer | Separate fresh Codex in-session subagent when planner and assignee are Codex; otherwise the assignee's CLI | `gpt-5.6-luna`, xhigh | adversarial gate and re-review |
+| Reviewer | Separate fresh Codex in-session subagent when planner and assignee are Codex; otherwise the assignee's CLI | `gpt-5.6-luna`, xhigh (code review of a low-blast-radius leg: high) | adversarial gate and re-review |
 
 ## Invocation gate and caller overrides
 

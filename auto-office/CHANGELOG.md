@@ -1,5 +1,30 @@
 # Changelog — auto-office
 
+## 4.3.0 — 2026-08-29
+
+**Codex code-review effort is priced per leg, by blast radius** (standing user decision, 2026-08-29).
+
+- A uniform top-tier code-review gate outspends the work it gates: measured at **293k** tokens for
+  one `xhigh` review against a 226k-269k executor leg. `auto-routing`'s *Reviewer selection* now
+  prices codex code-review effort per leg — `xhigh` for shared libraries, Auth/Order-0 writers, and
+  anything production-facing, irreversible, or externally visible; `high` for docs,
+  evidence-checking, and applied-state claims the planner can verify with a `git grep` plus a
+  `--dry-run`. Row 1 wins on any match, and an unpriceable leg is row 1.
+- **The codex code-review floor is re-declared from `xhigh` to `high`** to make that legal
+  (`references/delegation-map.md`). The codex **plan**-review floor stays at `xhigh`, and `claude`
+  stays at `opus` low on both gates. No gate is skipped and no leg is raised above its brand's
+  standing default, so the `xhigh`/`ultra`/`max` ceiling is unchanged.
+- Normative surfaces updated together with the rule: the `auto-routing` role table, the
+  effort-goes-to-the-gates paragraph, the copy-paste launch line, the hub's reviewer row, and
+  `codex-office/skills/codex-reviewer`. The hub's fixed-by-role line is left alone: the hub has a
+  12000-byte budget and the reviewer row it summarises now carries the range.
+- `codex-office` 3.2.0 moves with it: `codex-cli`'s effort list, `references/reviewer-brief.md`'s
+  CLI invocation (now `<xhigh|high>`, not a literal), and the hub role table. Without that sweep
+  `delegation-map.md`'s stricter-rule clause would have arbitrated `xhigh` back on every codex code
+  review; that clause now carves out blast-radius pricing and its two-floor consequence is worded
+  direction-neutrally, since the codex floors no longer coincide.
+- Recorded in the ledger as standing lesson 42, citing `auto-routing` as the owning file.
+
 ## 4.2.0 — 2026-08-27
 
 - **CLI headroom is ALWAYS probed during fit-test.** The quota probes (`codex-usage.py`,

@@ -1,5 +1,18 @@
 # Changelog
 
+## 3.2.0 — 2026-08-29
+
+**Code-review effort is priced per leg by blast radius** (standing user decision, 2026-08-29;
+the rule and its floor re-declaration live in `auto-office`).
+
+- `xhigh` remains the default for **plan** review, hard diagnosis, and **code** review of a
+  high-blast-radius leg. A **code** review of a low-blast-radius leg — docs, evidence-checking,
+  applied-state claims the planner can verify with a `git grep` plus a `--dry-run` — runs at
+  `high`. Never below `high`, and never for plan review. This narrows 3.1.0's "any reviewer
+  dispatch, plan or code" for the code case only.
+- Updated in the hub role table, `codex-cli`, and `references/reviewer-brief.md` (whose CLI
+  invocation now takes `<xhigh|high>` rather than a literal `xhigh`).
+
 ## 3.1.0 — 2026-08-26
 
 **Effort inverts: executor to `high`, reviewer to `xhigh`** (standing user decision, 2026-08-26).

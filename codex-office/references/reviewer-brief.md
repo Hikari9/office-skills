@@ -1,9 +1,11 @@
 # Reviewer prompt contract
 
-Use a fresh, separate Codex reviewer identity at `gpt-5.6-luna` xhigh effort. When the planner is
+Use a fresh, separate Codex reviewer identity at `gpt-5.6-luna`. Effort is `xhigh` for plan review
+and for code review of a high-blast-radius leg; a **code** review of a low-blast-radius leg runs at
+`high` (`auto-office/skills/auto-routing` → *Review effort is priced per leg*). When the planner is
 Codex, this is a fresh in-session subagent; when the planner is another brand, use
-`codex exec -m gpt-5.6-luna -c model_reasoning_effort="xhigh"`. Both CLI flags are required:
-`-m` alone runs at the operator's configured default, not at high.
+`codex exec -m gpt-5.6-luna -c model_reasoning_effort="<xhigh|high>"`. Both CLI flags are required:
+`-m` alone runs at the operator's configured default, not at the effort you meant.
 Give it the absolute repo path, branch, plan path, BASE..HEAD range, diff
 package, executor handoff, copied global constraints and blast-radius ceiling,
 the Upline `[decided]` entries, protected paths, and the complete validation
