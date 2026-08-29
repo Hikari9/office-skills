@@ -11,6 +11,14 @@ green milestone, inside the loop — gate → commit → PR → merge the chain,
 closure, and the run report). Never batch milestones — a green milestone that doesn't land is a
 re-entry point the run threw away.
 
+## Handoff-first waiting
+
+Once executor liveness is established, wait for `handoff exists OR state=done` before closeout
+inspection. Read the final handoff/state once and use it as the primary task/commit ledger. Do not
+repeatedly recheck intermediate commits, branch logs, or worktree status while the executor is
+still running; inspect Git only for a missing handoff, an approved-scope conflict, or contradictory
+final evidence.
+
 1. **Gate before landing.** Re-run every criterion's `verify` command and paste real output — not the
    executor's or reviewer's record of having run it. Any red criterion sends the loop back, never
    forward into a commit.

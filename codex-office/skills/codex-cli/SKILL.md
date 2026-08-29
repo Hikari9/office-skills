@@ -65,6 +65,13 @@ Never run two Codex processes against one working tree. Parallel work requires *
 worktrees and disjoint `Touches:` paths** — not just separate prompts. Before dispatch, confirm no
 other writer is already live in that tree.
 
+**`codex exec resume` is the sharpest way to break this rule, because it does not look like a
+dispatch.** It takes no `--cd` and silently lands in the *caller's* cwd, not the session's — so a
+resume issued from a planner sitting in another repo puts a full-authority writer in whatever tree
+the planner happens to be in. Verified 2026-08-29; see the `resume` bullet under *Known sharp edges*
+for the banner read-back that catches it. **`--cd` on a fresh `exec` is the only way to aim a Codex
+process; every other path inherits.**
+
 **Preserve pre-existing dirty changes.** Diff the tree before dispatch; anything already
 uncommitted is a protected path, named as such in the prompt, never touched by the dispatched
 process.
@@ -129,15 +136,50 @@ Pass the same string to any label flag the brand exposes. The prefix is a displa
   session's context, **not** its effort. Verified 2026-08-25 — resuming an `xhigh` session without
   the flag launched at `reasoning effort: medium`, the config default. A long run split across
   resumes silently degrades from the second dispatch onward if you drop it.
-  Passing `--cd` fails instantly with `error: unexpected argument '--cd' found`. The resumed session
-  keeps its original working directory, so `--cd` is unnecessary — but tell the agent which directory
-  it should be in and have it confirm, rather than assuming.
+  Passing `--cd` fails instantly with `error: unexpected argument '--cd' found`.
+
+- **`resume` does NOT keep the session's working directory — it inherits the CALLER's cwd, and
+  there is no flag to correct it.** This file previously claimed the opposite; that was wrong and
+  it is the more dangerous half of the `--cd` rejection, because the two combine into a session
+  you cannot aim. Verified 2026-08-29, Codex v0.150.1: a session originally launched with
+  `--cd /Users/rico/Git/rock-favor/.worktrees/si-t14`, resumed from a planner whose cwd was
+  `/Users/rico/Git/rock-dashboards`, came back with
+
+  ```
+  workdir: /Users/rico/Git/rock-dashboards
+  session id: 01a04ccc-fa85-7963-8b06-6caaea4839e7   # same session, different tree
+  ```
+
+  That tree had a **live executor writing in it**. A resume is a full-authority `--yolo` writer, so
+  this is the duplicate-writer failure the one-writer-per-tree rule exists to prevent — arriving
+  through the one command in this file that looks like it cannot cause it.
+
+  **The rule: read the resume banner's `workdir:` line before letting it run, every time.** Treat it
+  exactly like the `model:` and `reasoning effort:` read-back two bullets up — same banner, same
+  discipline, and for the same reason: the flags you passed are not the state you got.
+
+  If the `workdir` is wrong, **you cannot fix it in place** — `resume` rejects `--cd`. Kill it and
+  relaunch a fresh `codex exec --yolo --cd <worktree>` instead:
+
+  ```bash
+  pkill -f "<session-id>"          # then confirm: pgrep -f "<session-id>" | wc -l  => 0
+  ```
+
+  Losing the session history costs little **when the findings live in a file in the worktree**
+  rather than only in the transcript — which is another reason briefs and review findings belong on
+  disk. Write them there and a misrouted resume becomes a 10-second recovery instead of a re-run.
+
+  Telling the agent which directory it should be in and having it confirm is still worth doing, but
+  it is a second line of defence, not the control. The banner is the control: the agent's own
+  confirmation arrives after it has already been placed in the wrong tree.
 
   ```bash
   codex exec resume --dangerously-bypass-approvals-and-sandbox --model <model> \
     -c model_reasoning_effort="<effort>" <session-id> \
     "<continuation prompt>" < /dev/null 2>&1
   # run_in_background: true, timeout: 600000
+  # Then read the banner: `model:`, `reasoning effort:`, AND `workdir:` must all be what you meant.
+  # cd to the target worktree before resuming, since the resume inherits your cwd.
   ```
 
   Find the session id in the launch banner (`session id:` line) or from the newest rollout under
