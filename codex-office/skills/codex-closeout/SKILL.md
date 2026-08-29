@@ -17,6 +17,15 @@ After reviewer `APPROVED`: verify the full gate, inspect the final diff and stat
 the intended files. **Create or push a PR only when the caller explicitly authorized it** — never
 by default. Merges and deploys are always planner-held.
 
+## Handoff-first closeout
+
+At Phase 4, the executor's final handoff and state file are the primary read-back. Once liveness
+has already been established, wait for `handoff exists OR state=done`; do not repeatedly poll
+intermediate commits, branch logs, or worktree diffs while the executor is still running. Read the
+final handoff once, then inspect Git only when the handoff is missing, its scope conflicts with the
+approved plan, or its evidence is contradictory. Intermediate commit tracking belongs in the
+executor handoff and the closeout report, not in a polling loop.
+
 ## Deployments and migrations
 
 Never verified by the writer's exit status. A deployment or migration is closed out only after a

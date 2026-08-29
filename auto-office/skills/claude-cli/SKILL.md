@@ -155,6 +155,21 @@ come back as the entire prompt text) and on the **worktree's actual path**, neve
 
 **What this does not do:** enabling Remote Control is not the same as answering a raised `AskUserQuestion`-style menu. For blocked menus, use the digit/`\r` recipes in `claude-cli-send-message`. `/remote-control` is a session-state change, not an answer to a prompt.
 
+## Interactive sessions: `claude agents --json` and log access
+
+`claude agents --json` returns **both** interactive and background sessions, but the shape differs:
+
+- **Background sessions**: have both `id` and `sessionId`.
+- **Interactive sessions**: often have `id: null` / missing `id`, with only `sessionId` present. `status` is `idle` or similar; `waitingFor` may be null.
+
+`claude logs <id>` works **only for background sessions**. Passing a background-session `id` that no longer matches a live job yields:
+
+```
+No job matching '<id>'. Run 'claude agents' to list running sessions.
+```
+
+For an **interactive** session, there is no verified non-forking external readback path. If the user is at the terminal REPL, the safest move is to ask them to paste the prompt/menu directly. Do not attempt `--resume <sessionId> --bg` against an interactive session to inspect it; that path forks and creates a second writer.
+
 ## What to record per launch
 
 For the run-telemetry event this office emits at each explicit dispatch (see the hub's Run

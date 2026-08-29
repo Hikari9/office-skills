@@ -130,8 +130,10 @@ below it selects, and nothing else.
 3. **Review.** Assign a fresh reviewer using Dispatch routing; triage findings and reassign fixes
    via a fresh scoped executor; cap at 5 rounds. Load `skills/codex-reviewer/SKILL.md` and
    `skills/codex-cli/SKILL.md` only when the route is CLI.
-4. **Closeout.** Verify the gate, commit, and PR only when authorized; report plan, commit range,
-   review rounds, gate result, and anything unresolved. Load `skills/codex-closeout/SKILL.md`.
+4. **Closeout.** Wait for the executor's final handoff/state, then verify the gate, commit, and PR
+   only when authorized; report plan, commit range, review rounds, gate result, and anything
+   unresolved. Do not repeatedly poll intermediate Git state after liveness is established. Load
+   `skills/codex-closeout/SKILL.md`.
 
 **At the close of every phase**, end the status post with `compact: yes | no — <reason>` per
 `office-core/protocol/evidence-and-handoff.md` § Run-state durability. It informs; it never asks,
