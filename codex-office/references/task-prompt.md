@@ -1,6 +1,7 @@
 # Executor prompt contract
 
-Every executor packet includes: absolute repo/worktree path; branch; plan path;
+Every executor packet includes: absolute repo/worktree path; branch; tracked plan path;
+tracking issue;
 git-ignored workspace path; BASE SHA; exact in-scope work; protected and
 out-of-scope paths; the blast-radius ceiling copied verbatim; allowed side
 effects; full validation commands; and a handoff path. For a CLI executor, its
@@ -38,6 +39,9 @@ $ <full command>
 <or none>
 ```
 
-Unless explicitly authorized, the executor may only edit and commit in the
-named worktree. It must not push, open a PR, deploy, alter remotes, message
-anyone, or touch credentials.
+The packet explicitly authorizes the core executor bootstrap: commit the tracked plan file alone as
+the branch's first commit, push the named branch, create one draft PR whose body references the plan
+and tracking issue, and post the initial and milestone resumability comments. The executor must
+stop before implementation if any bootstrap action cannot be verified. It may not mark the PR ready,
+remove the plan, merge, deploy, alter remotes, message anyone outside PR bookkeeping, or touch
+credentials. See `office-core/protocol/executor-bootstrap.md`.

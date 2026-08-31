@@ -6,23 +6,31 @@ adds only what is specific to this office.
 
 ## Closeout Sequence (Step-by-Step)
 
-1. **Commit & Gate:** Commit any outstanding changes with why-focused messages in the worktree. Run validation commands (`pnpm test`, `pnpm lint`, etc.) from inside the worktree. Stop on red.
-2. **Push & PR:** Push the feature branch to remote (`git push origin <branch>`). Create the PR with tracking issue reference:
+1. **Commit & Gate:** Commit any outstanding implementation changes with why-focused messages in the
+   worktree. Run validation commands (`pnpm test`, `pnpm lint`, etc.) from inside the worktree. Stop
+   on red and leave the existing draft PR untouched.
+2. **Draft PR read-back:** The executor created the draft PR during bootstrap. Read it once, confirm
+   its plan and tracking issue references, and confirm every completed milestone has a resumability
+   comment. Do not create a duplicate.
+3. **Final plan removal and ready:** After reviewer approval and a green final gate, remove the tracked
+   plan in a dedicated pre-merge commit, push the named branch, verify the deletion, then mark the PR
+   ready:
    ```bash
-   gh pr create --title "<title>" --body "Closes #N\n\n<summary>"
+   git push origin <branch>
+   gh pr ready <number>
    ```
-3. **Merge to Main:** Merge the PR into `main`:
+4. **Merge to Main:** Merge the PR into `main`:
    ```bash
    gh pr merge --auto --squash # or gh pr merge --squash
    ```
-4. **Sync Main & Remove Worktree:** In the primary repo checkout, sync local `main` with remote:
+5. **Sync Main & Remove Worktree:** In the primary repo checkout, sync local `main` with remote:
    ```bash
    git -C <repo> checkout main
    git -C <repo> pull origin main
    git -C <repo> worktree remove .worktrees/<branch>
    git -C <repo> branch -d <branch>
    ```
-5. **Close Loops:** Close any open tracking issues and write the ≤6 line run report.
+6. **Close Loops:** Close any open tracking issues and write the ≤6 line run report.
 
 ## Gate
 

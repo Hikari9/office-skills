@@ -18,7 +18,7 @@ Read the rows for the phase you are in; the whole table is not a startup cost.
 | "The plan's done, I'll ask before executing" | You have approval. The run is end-to-end. |
 | "It's a prod apply, so the loop stops" | Only if the plan didn't name it. A named action with preconditions met runs — and *you* perform it. |
 | "'Deploy when done' — that's named" | It names nothing. Exact command, target, dry run, revert, read-back. Vague = unauthorized = stop. |
-| "I'll PR everything at the end" | Land each milestone. A run with no landed checkpoint has no re-entry point. |
+| "I'll merge everything at the end" | Bootstrap one draft PR, then commit and comment each milestone so the run remains resumable. |
 | "This needs MCP, so I'll keep it" | Delegate it *with* the tools enumerated, production reads included. Withholding access is a dispatch bug. |
 | "CLI was blocked last time" | A past denial is not evidence about now; the dispatch form is an assignment. Attempt it. |
 | "My worker said it'll report back" | That is a *return*. An in-session subagent unwinds once it has no live children. Blocking waits go `--bg`, or you hold them. |

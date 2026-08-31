@@ -15,25 +15,30 @@ flag ordering, workspace semantics, model names, quota, live monitoring. This fi
    the prompt must say *"Your workspace root is `<abs path>`. Work ONLY inside it; do not use your
    scratch directory. cd there first."*
 2. **Branch** — already checked out by you, named explicitly.
-3. **Plan file path** — its contract, an absolute path, to be read once, fully.
+3. **Tracked plan file path** — `docs/plans/<slug>.md`, its contract, an absolute path, to be read
+   once, fully; the executor must commit this file alone as its first branch commit.
 4. **Workspace scratch dir** — an absolute, git-ignored path where every artifact it writes lives.
-5. **BASE commit** — the tip before its work, so the diff range is unambiguous.
-6. **In-scope work** — the precise, numbered set of behaviors/files to implement, in imperative voice.
+5. **Tracking issue and PR bootstrap** — the issue reference, remote, branch, base branch, and
+   exact authority to push the named branch, create one draft PR referencing the plan and issue, and
+   post resumability comments.
+6. **BASE commit** — the tip before its work, so the diff range is unambiguous.
+7. **In-scope work** — the precise, numbered set of behaviors/files to implement, in imperative voice.
    Not "could you look at…"; agy has answered questions *about* a task instead of doing it.
-7. **Protected / out-of-scope paths** — credentials, generated files, other dispatches' files,
+8. **Protected / out-of-scope paths** — credentials, generated files, other dispatches' files,
    infrastructure.
-8. **A no-front-running clause** — verbatim: *"Implement only the numbered work items. Do not create
+9. **A no-front-running clause** — verbatim: *"Implement only the numbered work items. Do not create
    files, stubs, or scaffolding for later tasks, and do not leave untracked placeholder files behind."*
    agy has been observed leaving untracked stubs for work nobody asked for yet.
-9. **The real-signature clause** — see below. This is the single highest-value field in the contract.
-10. **Blast-radius ceiling**, restated verbatim from the plan's Global Constraints.
-11. **Allowed side effects** — normally local edits and commits only, unless broader actions are
-    explicitly named.
-12. **Required validation** — the exact command(s) that must pass, plus the requirement that its report
-    contain the command *and its actual pasted output*. Treat that output as a claim, not evidence
-    (see [verification.md](verification.md)).
-13. **Handoff report path and contract** — `<scratch dir>/handoff.md`, in the shape given below.
-14. **No-clarifying-question instruction** — verbatim: *"Do not stop to ask questions; make reasonable
+10. **The real-signature clause** — see below. This is the single highest-value field in the contract.
+11. **Blast-radius ceiling**, restated verbatim from the plan's Global Constraints.
+12. **Allowed side effects** — local edits/commits plus the explicitly named bootstrap push, draft PR,
+   and milestone comments; no ready-for-review, plan removal, merge, deployment, or unrelated
+   messaging.
+13. **Required validation** — the exact command(s) that must pass, plus the requirement that its report
+   contain the command *and its actual pasted output*. Treat that output as a claim, not evidence
+   (see [verification.md](verification.md)).
+14. **Handoff report path and contract** — `<scratch dir>/handoff.md`, in the shape given below.
+15. **No-clarifying-question instruction** — verbatim: *"Do not stop to ask questions; make reasonable
     decisions yourself and implement the entire brief."*
 
 ## The real-signature clause (non-negotiable)
@@ -58,19 +63,23 @@ invention, so the suite went green over code that could never fire in production
 this executor prove the tests agree with the implementation, nothing more. The clause forces a
 citation you can check in seconds, and Phase 3 checks it.
 
-## Commit boundary (non-negotiable)
+## Bootstrap authority (non-negotiable)
 
-agy may commit **only** to the designated branch/worktree named in the prompt. It must **not**:
+The prompt authorizes exactly this startup sequence before implementation: plan-only first commit,
+named-branch push, one draft PR whose body links the plan and references the tracking issue, and the
+initial/milestone resumability comments. If any action cannot be verified, stop and report a blocked
+handoff. The prompt must say that the plan remains tracked until planner closeout removes it.
 
-- push
-- open a pull request
-- deploy
+After bootstrap, agy may commit **only** to the designated branch/worktree named in the prompt. It must not:
+
+- mark the PR ready, remove the plan, merge, or deploy
 - change remote configuration
-- send messages (Slack, email, chat, etc.)
+- send messages outside PR bookkeeping
 - touch credentials
 
 ...unless the prompt explicitly authorizes that specific action. Silence on any of these means "not
-authorized" — do not infer permission from the task's broader goal. Closeout owns push and PR.
+authorized" — do not infer permission from the task's broader goal. Closeout owns plan removal,
+ready-for-review, merge, and cleanup.
 
 `--dangerously-skip-permissions` is required for unattended work, and it removes every approval stop.
 Like `codex --yolo`, that makes the prompt the only guardrail there is.
@@ -129,11 +138,12 @@ BASE commit (the tip before your work): <sha>
 - Blast-radius ceiling (do not cross, and do not decide that crossing is fine
   this once — stop and report instead):
   <paste the plan's ceiling block verbatim>
-- Allowed side effects: <local edits and commits only, unless broader actions are
-  explicitly named>.
-- You may commit only to the designated branch/worktree; do not push, open a PR,
-  deploy, alter remote configuration, send messages, or touch credentials unless
-  explicitly authorized above.
+- Allowed side effects: <local edits and commits plus the explicitly named bootstrap
+  push, draft PR, and milestone comments>.
+- You may commit only to the designated branch/worktree. You may perform the named
+  bootstrap push, draft PR, and comments; do not mark ready, remove the plan, merge,
+  deploy, alter remote configuration, send messages outside PR bookkeeping, or touch
+  credentials.
 - Keep a ledger at <scratch dir>/progress.md, appending
   `Task <N>: complete (commits <a7>..<b7>)` as you finish each task.
 - Validate with <commands>; they must pass before you finish, and your handoff

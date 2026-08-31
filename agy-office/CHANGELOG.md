@@ -1,5 +1,15 @@
 # Changelog — agy-office
 
+## 4.0.0 — 2026-08-31
+
+Core `5.0.0`.
+
+- Executors now bootstrap every run with a plan-only first commit, named-branch push, one draft PR
+  referencing the tracked plan and issue, and resumability comments for each milestone.
+- Closeout keeps the PR draft through reviewer approval, removes the plan in the final pre-merge
+  commit, then marks the PR ready and merges it.
+- Re-vendored the breaking core authority and milestone lifecycle contract.
+
 ## 3.0.0 — 2026-08-26
 
 Core `4.0.0`.

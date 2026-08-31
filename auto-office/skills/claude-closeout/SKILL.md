@@ -1,6 +1,6 @@
 ---
 name: claude-closeout
-description: Commit, gate, PR + automerge, sync main, close every open Upline entry. Loaded by the auto-office hub when the claude route is selected; not invoked directly.
+description: Final plan removal, PR readiness + merge, sync main, close every open Upline entry. Loaded by the auto-office hub when the claude route is selected; not invoked directly.
 ---
 
 # Claude Closeout
@@ -15,29 +15,28 @@ The step-by-step procedure is core: `office-core/protocol/closeout.md`. This off
 [`../../references/escalation.md`](../../references/escalation.md). This spoke states what must
 happen regardless of wording.
 
-## Runs once per milestone
+## Runs once at final closeout
 
-A plan declares milestones (`office-core/protocol/plan-contract.md`). **Every milestone whose
-done-criteria go green runs this file** — and then the run continues into the next one. Sync,
-worktree removal, and Upline closure are terminal: they run after the **last** milestone only.
-Removing a worktree at milestone 1 of 3 destroys the run.
+A plan declares milestones (`office-core/protocol/plan-contract.md`). Each green milestone is
+committed and commented on the single draft PR during the loop. This file runs after the final
+reviewer approval: remove the tracked plan, mark the PR ready, merge it, then sync, remove the
+worktree, and close Upline entries. Removing a worktree at milestone 1 of 3 destroys the run.
 
-Never batch milestones. An unlanded green milestone is a re-entry point thrown away.
+Never batch milestones. An uncommented green milestone is a re-entry point thrown away.
 
 ## Sequence
 
-Commit anything outstanding (why-focused message) → verify the project's real gate (not an
-invented one; don't skip one the project defines — for Next.js work that means a real build, not
-just lint) → if red, stop, commit and document only, no PR, and do not walk into the next milestone
-→ `gh pr list --head <branch>` before creating one, then `gh pr create` + `gh pr merge --auto` with
-`Closes #N` in the body → document only what the repo already maintains (no invented doc files) →
-**at the last milestone only:** sync local main, verify `main`==`origin/main` before removing a
-worktree your tooling created, close every open loop.
+Verify the project's real gate (not an invented one; don't skip one the project defines — for Next.js
+work that means a real build, not just lint) → if red, leave the existing draft PR draft and report
+→ confirm every milestone comment → remove `docs/plans/<slug>.md` in a dedicated pre-merge commit
+→ push and verify the deletion → `gh pr ready <number>` → `gh pr merge --auto` with `Closes #N` in
+the body → document only what the repo already maintains (no invented doc files) → sync local main,
+verify `main`==`origin/main` before removing a worktree your tooling created, close every open loop.
 
-**Read the promotion chain from the repo once** (`gh pr list --state merged --json
-number,headRefName,baseRefName`) and reuse it across milestones. A base picked from the default
-branch is a guess, and correcting it later means merging the target back in — which invalidates the
-gate output the milestone just produced.
+**Read the existing PR and promotion chain from the repo once** (`gh pr list --head <branch>` and
+`gh pr list --state merged --json number,headRefName,baseRefName`) and reuse it. A base picked from
+the default branch is a guess, and correcting it later means merging the target back in — which
+invalidates the gate output the run just produced.
 
 **Merging a branch that deploys does not stop the run** when the plan's `named_actions:` names that
 merge, with its dry run, revert target, and read-back. What the plan did not name is unauthorized,
@@ -59,7 +58,8 @@ step, since deleting it is what makes an unresolved item irreversible.
 
 ## The ≤8-line run report
 
-At the **final** milestone only. Plan file, what landed (per milestone: PR, base, commit range),
+At the **final** milestone only. Plan file, what landed (single PR, base, plan-removal commit, and
+each milestone commit range),
 review rounds used, gate command + result, **what was not verified**, anything left open. Express
 runs emit no report — the PR bodies are the record.
 

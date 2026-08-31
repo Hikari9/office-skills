@@ -60,7 +60,8 @@ is meaningless (one run read `82% → 52% → 85%` and none of it described anyt
    executors the run needs. Model and effort are fixed by role, so they are filled in, not decided.
    Do not leave routing "to be decided during execution"; an unassigned task is an unreviewable cost.
    Headroom was probed during the fit-test; weigh it as a cost, never a gate.
-6. **Write the plan** to `docs/plans/<slug>.md` **in the target repo** — see *Where a run's files
+6. **Write the plan** to `docs/plans/<slug>.md` **in the target repo** and include the tracking issue
+   reference — see *Where a run's files
    live* below. The five required sections are core's
    ([`plan-contract.md`](../../office-core/protocol/plan-contract.md)) and none may be dropped:
    - **Context** — why this work exists.
@@ -77,8 +78,9 @@ is meaningless (one run read `82% → 52% → 85%` and none of it described anyt
 7.4 **Self-review the plan** (below). Mandatory in **both** gears, before any hand-off.
 7.5 **One adversarial plan-review** (below). Mandatory in **full**; **not run in express**.
 8. **Get explicit approval.** Silence is not approval. Say plainly that approval starts an
-   end-to-end run which lands each milestone as it goes, executes the `named_actions:` list without
-   asking again, and stops only for an external send or a decision the plan did not anticipate.
+   end-to-end run which bootstraps a plan-only first commit and draft PR, comments each milestone,
+   executes the `named_actions:` list without asking again, and stops only for an external send or a
+   decision the plan did not anticipate.
 
 ## Interview floor — 95% clear
 
@@ -97,7 +99,8 @@ do not write a plan until every item is answered or explicitly deferred by the u
   perform it without stopping. An irreversible step you cannot yet write out exactly is one the
   interview is not finished on. External sends are the exception: they never go in the list.
 - **Milestones** — which done-criteria group into a shippable landing, and in what order. Ask the
-  user if the natural grouping is not obvious; this is what they will see arrive as PRs.
+  user if the natural grouping is not obvious; each becomes a commit and resumability comment on the
+  single draft PR.
 - **Interfaces** — the signatures, schemas, routes, or file boundaries that tasks must agree on.
   Pin these now; a routed executor cannot invent them consistently.
 - **Constraints** — stack, conventions, domain skills that must load, things not to touch.

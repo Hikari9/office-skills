@@ -1,15 +1,14 @@
 ---
 name: auto-closeout
-description: Landing a milestone and closing the run — verify the criteria are green, commit, PR, merge the promotion chain, and at the end emit a short run report. Loaded by the auto-office hub; not invoked directly.
+description: Final closeout — verify the criteria are green, remove the plan, mark the draft PR ready, merge the promotion chain, and at the end emit a short run report. Loaded by the auto-office hub; not invoked directly.
 ---
 
 # Auto Closeout
 
-Planner-only. Runs unless the caller said `skip cleanup`. Runs twice: **milestone landing** (every
-green milestone, inside the loop — gate → commit → PR → merge the chain, then back into the loop) and
-**final closeout** (once, after the last milestone — the same, plus sync, worktree removal, loop
-closure, and the run report). Never batch milestones — a green milestone that doesn't land is a
-re-entry point the run threw away.
+Planner-only. Runs unless the caller said `skip cleanup`. The executor bootstraps one draft PR before
+implementation. Each green milestone is committed and commented on that PR inside the loop. Final
+closeout runs once after the last milestone: gate → remove the plan → push → mark the PR ready → merge,
+then sync, worktree removal, loop closure, and the run report.
 
 ## Handoff-first waiting
 
@@ -25,11 +24,12 @@ final evidence.
 2. **Confirm scope.** `git status`/diff against the declared `blast_radius`; every action about to run
    is in `named_actions:` with its preconditions met (dry run read, revert target present, read-back
    ready). Off-list is a stop, not a silent absorb into "done."
-3. **Roles.** The executor commits, pushes its named branch, and opens the PR — it wrote the code and
-   holds the evidence for a real description. The planner holds the gate and performs any merge into a
-   **deploying** branch; the executor may merge one that doesn't deploy. Never author a commit for
-   code you didn't write.
-4. **Read the promotion chain from the repo** before opening a PR (`gh pr list --state merged --json
+3. **Roles.** The executor bootstraps the plan-only first commit, pushes its named branch, opens one
+   draft PR referencing the plan and issue, and comments each milestone. The planner holds the gate,
+   removes the plan, marks the PR ready, and performs the merge. Never author a commit for code you
+   didn't write.
+4. **Read the existing PR and promotion chain from the repo** before closeout (`gh pr list --head
+   <branch>` and `gh pr list --state merged --json
    number,headRefName,baseRefName`) — never assume the default branch. Read once per run, reuse across
    milestones.
 5. **Version bumps: prove the value is unclaimed on EVERY ref**, reading the file per-ref — never
@@ -43,15 +43,17 @@ final evidence.
    done
    ```
    Re-run immediately before the merge, not only when choosing the number.
-6. **Commit and land.** Reuse an existing PR for the branch, or open one with an accurate body and
-   issue links. Automerge if that's the repo's convention; merge directly if checks are green and
-   automerge isn't available. Don't poll.
+6. **Remove the plan and land once.** After final reviewer `APPROVED` and a green final gate, delete
+   `docs/plans/<slug>.md` in a dedicated pre-merge commit, push the named branch, verify the deletion
+   and all milestone comments, mark the existing draft PR ready, then merge it. Automerge if that's
+   the repo's convention; merge directly if checks are green and automerge isn't available. Don't
+   poll.
 7. **Promote along the real chain to its final branch, regardless of outcome**, unless the caller said
-   `no loop`/`skip cleanup`/"open a PR and stop." An open, mergeable PR is an incomplete milestone, not
-   a courtesy. Verify each hop actually landed (`state: MERGED`, head contains the commit) before the
-   next — a timed-out `gh` call is ambiguous, re-read state, don't assume failure. A deploying hop
-   still needs the gate green and a read-back of the deployed result; name anything you couldn't
-   verify rather than letting it read as passed.
+   `no loop`/`skip cleanup`/"open a PR and stop." An open, mergeable PR is incomplete final closeout.
+   Verify each hop actually landed (`state: MERGED`, head contains the commit) before the next — a
+   timed-out `gh` call is ambiguous, re-read state, don't assume failure. A deploying hop still needs
+   the gate green and a read-back of the deployed result; name anything you couldn't verify rather
+   than letting it read as passed.
 8. **A branch behind its target must be re-merged and re-gated, not fast-forwarded.** Merge the target
    in, resolve to the union of intents (take the other side's structure, your content; never fix their
    bug inside the merge — file it instead), then re-run the full gate on the merged tree. A clean
