@@ -156,6 +156,11 @@ stopped being a routing input and become a diary — and a diary that every futu
 Compile it. The test is not "is this true?" but **"would the next reader act on this, and can they
 find it in ten seconds?"** Prefer a table to a paragraph, a rule to a story, and a `§` cite to a
 retelling. An essay that adds tokens without changing a decision is a defect in the document.
+| 08-30 | repo-i | Leader flag: DataView recovery + live prod apply | claude | `sonnet` | 5 | n/a | ~8h | CR×4→APPROVED | Gate authorized a prod apply while covering 3 of 8 views, Leader (the subject) never evaluated. Absence of coverage read as GREEN → §6 |
+| 08-30 | repo-i | same run, review economics | mixed | `codex-luna` xhigh / `opus` low | 5 | n/a | — | APPROVED | Every real defect came from an adversarial round; `/code-review` low re-filed a finding it was told was out of scope. Reviewer continuity is what catches regressions |
+| 08-30 | repo-j | campus-scoped settings + T5–T15 admin actions | claude | `sonnet` high, 4 rounds | 4 | ~1.3M | ~5h | CR×4 → shipped on operator call | Per-finding fixes reproduced the same defect class in the adjacent arm twice; converged only when round 3 audited the parameter space instead of the clause → §1 |
+| 08-31 | repo-h | signups links + type scale + ?date= parity | claude | `sonnet` | 4 | 1.2M | ~3h | APPROVED | Two URL-guard predicates the planner proposed both leaked; only a differential fuzz settled it → §24 |
+| 08-31 | repo-h | plan-review of a 2-line security amendment | claude | `opus` low | 1 | 49k | 3m | 3 blockers | Rejected the planner's predicate AND its layer; cheapest item in the run → §3 |
 
 **Compaction log**
 
