@@ -177,6 +177,37 @@ Telemetry section): launch id, the returned session id, the worktree id/path, wh
 launch is (executor/reviewer), the model and effort used, and — if this launch is a fork — the
 id it forked from and why (`question` / `recovery` / `steering` / `quota` / `stall`).
 
+## A background agent's liveness: `claude agents --json` is the ONLY read
+
+**`pgrep -f "<worktree path>"` cannot see a Claude background agent.** Its command line is
+`claude bg-spare --bg-spare /tmp/cc-daemon-501/<id>/spare/<x>.claim.sock` — the worktree it is
+working in never appears there. Zero hits is not evidence of death; it is evidence you searched a
+string that was never going to be present.
+
+**`ls /tmp/cc-daemon-501` from the Bash tool cannot see the daemon directory either.** The tool
+runs with a private `/tmp`, so "No such file or directory" is the sandbox talking, not the daemon
+being gone.
+
+Verified 2026-08-30, `claude-code 2.1.251`: a planner ran exactly those two checks against a live
+executor, read both misses as confirmation of death, and wrote into the agent's worktree — two
+writers in one tree, overwriting a script the executor had amended minutes earlier and was still
+using. The user caught it from a status line. Note the trap's shape: **two independent-looking
+checks that share one root cause are one check.** Both failed because neither can observe a bg
+agent, so agreeing with each other meant nothing.
+
+**The liveness read is the `claude agents --json` row for the id** — its `status`/`state` — and it
+is authoritative on its own. Corroborate only with signals that can actually see the agent:
+`ps -eo pid,command | grep claude` matching that row's `pid`, and artifact mtimes moving inside its
+tree. A row reading `blocked` / `input needed` can go back to `working` at any time; a stale-looking
+row is not a dead one.
+
+**`claude logs <id>` failing with `connect ENOENT .../control.sock` is also not death.** It means
+the log channel is unreachable from here, nothing more.
+
+This is the sibling of the `codex-cli` rule that `pgrep -f` matches the harness's wrapper shell.
+Same lesson, opposite direction — there, a match meant nothing; here, a miss means nothing. **Never
+conclude an agent is dead from a negative `pgrep`, on either brand.**
+
 ## New mechanism gotchas go here
 
 When a run discovers a durable CLI behavior — a flag that didn't behave as documented, a
