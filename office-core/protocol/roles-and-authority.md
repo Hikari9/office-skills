@@ -105,9 +105,10 @@ authorized.
 
 Every executor launch follows [`executor-bootstrap.md`](executor-bootstrap.md). The approved plan
 and brief grant the executor exactly these startup actions: commit the tracked plan file as the
-branch's first commit, push the named branch, create one draft PR whose body references the plan and
-tracking issue, and post the initial and milestone resumability comments. The executor must verify
-each action and stop before implementation if any bootstrap precondition fails.
+branch's first commit, push the named branch, create one draft PR whose body contains a clickable
+plan blob deeplink anchored to that first commit and references the tracking issue, and post the
+initial and milestone resumability comments. The executor must verify each action and stop before
+implementation if any bootstrap precondition fails.
 
 This exception transfers neither the review gate nor closeout. The PR remains draft until reviewer
 approval; the planner removes the plan in the final pre-merge commit, marks the PR ready, and merges.

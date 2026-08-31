@@ -2,7 +2,7 @@
 
 | Line | Value |
 |---|---|
-| Plugin version | `4.1.0` (see `.claude-plugin/plugin.json`) |
+| Plugin version | `4.2.0` (see `.claude-plugin/plugin.json`) |
 | Core protocol supported | `>=5.0.0 <6.0.0` |
 | Vendored snapshot | `office-core/` in this plugin, with `office-core/SNAPSHOT.json`, written by `scripts/vendor-core.sh` |
 

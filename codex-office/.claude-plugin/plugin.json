@@ -1,6 +1,6 @@
 {
   "name": "codex-office",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "description": "Use only when explicitly named for production-facing or irreversible repository work. The active planner plans and closes out; Codex planners use in-session Codex subagents for Codex workers, while non-Codex planners use CLI workers.",
   "author": {
     "name": "office-skills"

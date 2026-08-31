@@ -79,7 +79,8 @@ rule: `office-core/protocol/roles-and-authority.md` → *Fit test*.
 - Every touched interface pinned verbatim, `file:line`; executor cites real signatures.
 - One tree, one agy process; run in an isolated git worktree (`.worktrees/<branch>` or `worktrees/<branch>`), never directly in the primary repo checkout.
 - Executor bootstrap is authorized by the approved plan: commit the plan alone first, push the named
-  branch, open one draft PR referencing the plan and issue, and post initial/milestone comments.
+  branch, open one draft PR whose body contains an immutable plan blob deeplink and references the
+  plan and issue, and post initial/milestone comments.
   Planner-held closeout removes the plan, marks the PR ready, and merges it.
 - Commit and comment each milestone as its criteria go green on the single draft PR. Keep it draft
   until final reviewer approval; do not merge milestones independently.
@@ -93,12 +94,12 @@ rule: `office-core/protocol/roles-and-authority.md` → *Fit test*.
 
 ## Protocol version
 
-Implements office-core **`5.1.0`**, vendored at `office-core/` here. Mandatory read:
+Implements office-core **`5.2.0`**, vendored at `office-core/` here. Mandatory read:
 [`roles-and-authority.md`](office-core/protocol/roles-and-authority.md) — vendored copy
 authoritative once installed; repo-root `office-core/` is the dev source. Exception:
 `agy-phase-2b` (`COMPATIBILITY.md`).
 
-**Declared narrowing of core.** Core `5.1.0` lets the planner implement inline; this office
+**Declared narrowing of core.** Core `5.2.0` lets the planner implement inline; this office
 does **not** — the planner never implements the plan here. Narrowing is legal, and it is stated so a
 reader of both files need not guess which governs.
 

@@ -73,7 +73,8 @@ or three sentences and proceed. Full rule: `office-core/protocol/roles-and-autho
   There is no `--effort` flag; `-m` alone inherits the operator's config default (often `medium`),
   and an unrecognised effort is accepted silently — read the launch banner back.
 - Executor authority includes the core bootstrap: plan-only first commit, named-branch push, one
-  draft PR referencing the plan and issue, and initial/milestone comments. The planner retains plan
+  draft PR whose body contains an immutable plan blob deeplink and references the plan and issue,
+  and initial/milestone comments. The planner retains plan
   removal, ready-for-review, merge, deploy, remote config, messages, and credentials.
 - **Commit and comment each milestone as its criteria go green** on the single draft PR. Keep the PR
   draft until final reviewer approval; closeout removes the plan, marks the PR ready, and merges it.
@@ -90,11 +91,11 @@ or three sentences and proceed. Full rule: `office-core/protocol/roles-and-autho
 
 ## Protocol version
 
-This plugin implements office-core protocol `5.1.0`, vendored at `office-core/` in this plugin.
+This plugin implements office-core protocol `5.2.0`, vendored at `office-core/` in this plugin.
 The vendored copy is authoritative for an installed plugin; the repo-root `office-core/` is the
 development source. Mandatory read: `office-core/protocol/roles-and-authority.md`.
 
-**Declared narrowing of core.** Core `5.1.0` lets the planner implement inline; this office
+**Declared narrowing of core.** Core `5.2.0` lets the planner implement inline; this office
 does **not** — the planner never implements the plan here. Narrowing is legal, and it is stated so a
 reader of both files need not guess which governs.
 

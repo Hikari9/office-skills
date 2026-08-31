@@ -31,9 +31,10 @@ Build the prompt from **[`../../references/executor-brief.md`](../../references/
 
 Before implementing any numbered task, follow the core [draft-PR bootstrap](../../office-core/protocol/executor-bootstrap.md).
 The prompt must name the tracked `docs/plans/<slug>.md`, tracking issue, `BASE`, remote, branch, base
-branch, and PR body fields. Verify the worktree and branch, commit the plan file alone as the
-branch's first commit, push the named branch, create one draft PR referencing the plan and issue,
-and post the initial resume comment. A failed bootstrap precondition stops implementation and
+branch, and PR body fields, including an immutable blob deeplink to the plan anchored to the
+plan-only commit. Verify the worktree and branch, commit the plan file alone as the branch's first
+commit, push the named branch, create one draft PR whose body contains that plan deeplink and
+references the issue, and post the initial resume comment. A failed bootstrap precondition stops implementation and
 returns a blocked handoff.
 
 After bootstrap, agy commits **only** to the designated branch or worktree named in the prompt. Its

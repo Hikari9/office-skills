@@ -25,7 +25,8 @@ final evidence.
    is in `named_actions:` with its preconditions met (dry run read, revert target present, read-back
    ready). Off-list is a stop, not a silent absorb into "done."
 3. **Roles.** The executor bootstraps the plan-only first commit, pushes its named branch, opens one
-   draft PR referencing the plan and issue, and comments each milestone. The planner holds the gate,
+   draft PR whose body contains the immutable plan blob deeplink and references the plan and issue,
+   and comments each milestone. The planner holds the gate,
    removes the plan, marks the PR ready, and performs the merge. Never author a commit for code you
    didn't write.
 4. **Read the existing PR and promotion chain from the repo** before closeout (`gh pr list --head

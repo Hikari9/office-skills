@@ -17,9 +17,11 @@ full before building or receiving a dispatch; it is not duplicated here.
 
 The executor follows the core [draft-PR bootstrap](../../office-core/protocol/executor-bootstrap.md)
 before implementing any numbered task. The packet must name the tracked `docs/plans/<slug>.md`,
-tracking issue, `BASE`, remote, branch, base branch, and PR body fields. The executor then verifies
-the worktree and branch, commits the plan file alone as the branch's first commit, pushes the named
-branch, creates one draft PR referencing the plan and issue, and posts the initial resume comment.
+tracking issue, `BASE`, remote, branch, and PR body fields, including the immutable plan blob
+deeplink anchored to the plan-only commit. The executor then verifies the worktree and branch,
+commits the plan file alone as the branch's first commit, pushes the named branch, creates one draft
+PR whose body contains the plan blob deeplink and references the plan and issue, and posts the
+initial resume comment.
 Any failed precondition stops implementation and returns a blocked handoff.
 
 After bootstrap, the executor may make local edits and commits in the named worktree, plus the

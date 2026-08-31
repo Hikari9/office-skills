@@ -111,7 +111,7 @@ production reads included, shape pinned in the brief, read-back required.
   the plan did not **name them verbatim** with preconditions (dry run, revert target, read-back). The
   loop never widens blast radius or adds a repo/environment.
 
-Implements office-core `5.1.0`, vendored at `office-core/`. Mandatory read:
+Implements office-core `5.2.0`, vendored at `office-core/`. Mandatory read:
 `office-core/protocol/roles-and-authority.md`.
 
 ## The autonomous run

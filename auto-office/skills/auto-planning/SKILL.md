@@ -61,7 +61,7 @@ is meaningless (one run read `82% → 52% → 85%` and none of it described anyt
    Do not leave routing "to be decided during execution"; an unassigned task is an unreviewable cost.
    Headroom was probed during the fit-test; weigh it as a cost, never a gate.
 6. **Write the plan** to `docs/plans/<slug>.md` **in the target repo** and include the tracking issue
-   reference — see *Where a run's files
+   reference plus the immutable GitHub blob deeplink requirement for the draft PR body — see *Where a run's files
    live* below. The five required sections are core's
    ([`plan-contract.md`](../../office-core/protocol/plan-contract.md)) and none may be dropped:
    - **Context** — why this work exists.

@@ -24,6 +24,8 @@ PR comment before triage or fixes continue.
   reviewer, or advances closeout.
 - Every `CHANGES REQUIRED` comment must preserve all numbered findings verbatim, including severity,
   failure, expected behavior, fix recommendation, location, and rejected alternative when present.
+- The draft PR body must include a clickable plan blob deeplink anchored to the full SHA of the
+  plan-only first commit, so it remains valid after the plan is removed at closeout.
 - A `PENDING` or incomplete review file is not a verdict and must not be posted as one.
 - Validation: `scripts/check-plugins.sh`, `node eval/validate-cases.mjs`, and `git diff --check`.
 
@@ -68,7 +70,9 @@ all required validation commands.
 - `git push origin feat/office-core-review-pr-comments`: push the named branch after the plan-only
   first commit and after implementation commits; verify the remote branch SHA.
 - `gh pr create --draft --base main --head feat/office-core-review-pr-comments`: create exactly one
-  draft PR referencing this plan and tracking issue `#1`; verify its URL, head, base, and draft state.
+  draft PR whose body contains `[docs/plans/review-feedback-pr-comments.md](https://github.com/<owner>/<repo>/blob/<plan-commit-sha>/docs/plans/review-feedback-pr-comments.md)`,
+  references this plan and tracking issue `#1`, and records the plan SHA; verify its URL, head,
+  base, body link, and draft state.
 - `gh pr comment <number> --body-file <file>`: post the bootstrap, milestone, finalized-verdict,
   and fix-resolution comments to the existing PR; verify each comment is present and attributed to
   the current run before continuing.

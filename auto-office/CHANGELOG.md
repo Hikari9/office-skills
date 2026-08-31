@@ -1,5 +1,12 @@
 # Changelog — auto-office
 
+## 5.2.0 — 2026-08-31
+
+Core `5.2.0`.
+
+- Draft PR bodies now contain an immutable GitHub blob deeplink to the tracked plan, anchored to
+  the plan-only first commit.
+
 ## 5.1.0 — 2026-08-31
 
 Core `5.1.0`.
