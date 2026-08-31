@@ -73,7 +73,10 @@ it as unnamed.
 
 External outreach may never appear here: email, chat, public posts, and bulk messages are approved
 in session, at the time, always. The required GitHub PR body and milestone bookkeeping comments are
-executor-bootstrap actions and must appear here with their exact commands and read-backs.
+executor-bootstrap actions and must appear here with their exact commands and read-backs. The
+review-verdict and fix-resolution comments required by
+[`review-states.md`](review-states.md#the-pr-review-record) are also GitHub bookkeeping actions;
+name their exact `gh pr comment` command and read-back in the plan before dispatch.
 
 ## Claims discipline
 

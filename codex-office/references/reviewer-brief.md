@@ -39,6 +39,11 @@ fix for a lag. The reviewer still **never writes the fix** — `Fix:` is a recom
 implementer may reject with evidence — and on follow-up rounds it judges the result on correctness,
 never on whether its own suggestion was followed.
 
+Make the finalized verdict complete enough to copy verbatim into the run's existing PR comment.
+Do not omit a numbered finding, self-review, gate evidence, deferral, or Upline decision because
+the planner will preserve the full response there. The planner must post that response before
+triage or follow-up work, then post a finding-by-finding resolution comment after each fix wave.
+
 ## `VERDICT: PENDING` while the review file is incomplete
 
 Reviewers are told to write their verdict file **early** and update it as they go, because a killed

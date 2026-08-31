@@ -93,12 +93,12 @@ rule: `office-core/protocol/roles-and-authority.md` → *Fit test*.
 
 ## Protocol version
 
-Implements office-core **`5.0.0`**, vendored at `office-core/` here. Mandatory read:
+Implements office-core **`5.1.0`**, vendored at `office-core/` here. Mandatory read:
 [`roles-and-authority.md`](office-core/protocol/roles-and-authority.md) — vendored copy
 authoritative once installed; repo-root `office-core/` is the dev source. Exception:
 `agy-phase-2b` (`COMPATIBILITY.md`).
 
-**Declared narrowing of core.** Core `5.0.0` lets the planner implement inline; this office
+**Declared narrowing of core.** Core `5.1.0` lets the planner implement inline; this office
 does **not** — the planner never implements the plan here. Narrowing is legal, and it is stated so a
 reader of both files need not guess which governs.
 

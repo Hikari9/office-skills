@@ -12,6 +12,13 @@ the planner is Codex or a CLI session otherwise. It reviews every changed
 line and surrounding code, the plan, all constraints, handoff deviations,
 deferred items, Upline decisions, scope containment, and validation output.
 
+After every complete verdict, the planner must post the reviewer's finalized verdict to the
+existing draft PR before triage, fixes, another review round, or closeout. The comment must carry
+the round, reviewer id, `HEAD`/range, complete verdict and self-review; for `CHANGES REQUIRED`,
+copy every numbered finding verbatim. After each fix wave, post a finding-by-finding
+`ADDRESSED`/`NOT ADDRESSED` resolution comment with evidence, fix range, and next resume point,
+then read both comments back. A `PENDING` or incomplete review is not posted or counted.
+
 For `CHANGES REQUIRED`, send a fresh executor a full task prompt limited to the
 findings. Then resume the *reviewer* session with the fix diff, per-finding
 notes, and fresh whole-gate output. On every follow-up it must mark all prior

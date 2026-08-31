@@ -10,6 +10,8 @@ criteria:
   - "Pushes the explicitly named branch and creates one draft PR before implementation"
   - "Requires PR references to both the plan and issue"
   - "Requires each milestone's commit range, verification, and next resume point in a PR comment"
+  - "Posts every complete reviewer verdict to the same PR before triage or follow-up"
+  - "Copies every CHANGES REQUIRED finding verbatim and posts finding-by-finding resolution comments"
   - "Stops before implementation if any bootstrap precondition cannot be verified"
   - "Reserves plan removal, marking ready, and merging for planner closeout"
 allowed_tools: []

@@ -83,6 +83,10 @@ have created the one draft PR.
   run `gh pr ready <number>`, then `gh pr merge --auto` (or the repository's approved merge form).
 - **PR exists but not merged:** reuse it; do not create a second PR.
 
+Before marking the PR ready, read its comments and confirm that every completed reviewer verdict
+and every `CHANGES REQUIRED` fix-resolution comment is present, complete, and attributable to this
+run. An unrecorded review is an unfinished gate: keep the PR draft and stop.
+
 Merge, ready-for-review, plan removal, and cleanup remain planner-held actions under
 [`roles-and-authority.md`](roles-and-authority.md). Push and draft-PR creation happen at executor
 bootstrap under the explicit exception there. An approved plan carrying these actions is the

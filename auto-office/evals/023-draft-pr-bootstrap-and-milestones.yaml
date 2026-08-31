@@ -8,6 +8,8 @@ criteria:
   - "Executor pushes the named branch and opens one draft PR referencing the plan and issue"
   - "Executor posts an initial bootstrap comment and a comment for every green milestone"
   - "Each milestone comment includes commits, validation output, and a next resume point"
+  - "Posts every complete reviewer verdict to the same PR before triage or follow-up"
+  - "Copies every CHANGES REQUIRED finding verbatim and posts finding-by-finding resolution comments"
   - "The PR remains draft through review"
   - "Planner removes the plan, marks the PR ready, and merges only after final reviewer approval"
   - "A failed bootstrap action stops the executor before implementation"

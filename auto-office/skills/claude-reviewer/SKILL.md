@@ -38,6 +38,11 @@ prompt** — never write "don't flag X" or "at most minor" into it.
 
 **Hand the diff over as a file**, never as prompt text.
 
+The planner records the finalized verdict in the existing draft PR before triage or follow-up.
+Make the response complete enough to copy verbatim; every `CHANGES REQUIRED` finding, including
+its evidence and recommendation fields, must survive in the PR comment. After a fix wave, the
+planner posts each finding's resolution and the new commit range before resuming review.
+
 **Reuse existing gate-hook output only when you can point at the real output and confirm it ran
 against `HEAD`.** A hook that discards passing output, or is conditional on uncommitted changes,
 goes silent exactly when the work is done — its silence means "skipped" and "passed"

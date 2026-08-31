@@ -69,8 +69,9 @@ all required validation commands.
   first commit and after implementation commits; verify the remote branch SHA.
 - `gh pr create --draft --base main --head feat/office-core-review-pr-comments`: create exactly one
   draft PR referencing this plan and tracking issue `#1`; verify its URL, head, base, and draft state.
-- `gh pr comment <number> --body-file <file>`: post the bootstrap, milestone, and review-record
-  comments to the existing PR; verify each comment is present and attributed to the current run.
+- `gh pr comment <number> --body-file <file>`: post the bootstrap, milestone, finalized-verdict,
+  and fix-resolution comments to the existing PR; verify each comment is present and attributed to
+  the current run before continuing.
 
 ## Out of scope
 

@@ -17,6 +17,32 @@ raised.
 
 **Hand over the diff as a file**, never as prompt text.
 
+## The PR review record
+
+The existing draft PR is the run's durable review log. The planner posts **every complete
+reviewer verdict** to that same PR before triaging it, applying a fix, dispatching a follow-up
+round, or advancing closeout. Review feedback that exists only in a handoff or chat is not a
+resumeable run record.
+
+For each verdict, create one comment with:
+
+- the review round, reviewer agent id, `HEAD` SHA, and commit range;
+- the reviewer's complete finalized verdict, including its `## Self-review`, gate evidence,
+  deferrals, and Upline decisions; and
+- for `CHANGES REQUIRED`, **every numbered finding verbatim**, including severity, failure,
+  expected behavior, fix recommendation, location, and rejected alternative when present.
+
+Post it with `gh pr comment <number> --body-file <verdict-file>` and read the comment back. A
+`VERDICT: PENDING` file, a killed/incomplete review, or a comment that omits any finding is not a
+review record and does not consume a round.
+
+After triage and each fix wave, post a second comment before re-dispatching the reviewer. It maps
+every prior finding to `ADDRESSED` or `NOT ADDRESSED`, gives the planner's evidence and any
+counter-reasoning, names the fix commit/range, and states the next resume point. The next verdict
+comment then carries the reviewer's complete follow-up response and all prior-finding statuses.
+If either comment or its read-back fails, stop with the draft PR intact; do not continue the loop
+on an unrecorded review.
+
 ## The three verdicts
 
 | Verdict | Meaning | Effect |
