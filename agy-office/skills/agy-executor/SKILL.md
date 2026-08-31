@@ -27,19 +27,31 @@ Build the prompt from **[`../../references/executor-brief.md`](../../references/
 - The **handoff-report contract** — commits, tasks, interfaces verified table, deviations, Upline,
   files created that aren't in the work items, gate evidence, known risks.
 
-## Commit boundary (absolute)
+## Bootstrap and commit boundary (absolute)
 
-agy commits **only** to the designated branch or worktree named in the prompt. It must **never**:
+Before implementing any numbered task, follow the core [draft-PR bootstrap](../../office-core/protocol/executor-bootstrap.md).
+The prompt must name the tracked `docs/plans/<slug>.md`, tracking issue, `BASE`, remote, branch, base
+branch, and PR body fields. Verify the worktree and branch, commit the plan file alone as the
+branch's first commit, push the named branch, create one draft PR referencing the plan and issue,
+and post the initial resume comment. A failed bootstrap precondition stops implementation and
+returns a blocked handoff.
 
-- push
-- open a pull request
-- deploy
+After bootstrap, agy commits **only** to the designated branch or worktree named in the prompt. Its
+explicit outward authority is limited to the named-branch push, one draft-PR creation, and initial
+or milestone comments. It must not:
+
+- mark the PR ready or remove the plan
+- merge or deploy
 - change remote configuration
-- send messages (Slack, email, chat, etc.)
+- send messages outside PR bookkeeping
 - touch credentials
 
 ...unless the prompt explicitly authorized that exact action. **Silence means not authorized** —
-do not infer permission from the task's broader goal. Closeout owns push and PR.
+do not infer permission from the task's broader goal. Closeout owns plan removal, ready-for-review,
+merge, and cleanup.
+
+At every green milestone, post its name, commit range, validation output, and next resume point to
+the same draft PR before continuing.
 
 ## One executor per repository
 

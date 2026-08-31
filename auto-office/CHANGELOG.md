@@ -1,5 +1,15 @@
 # Changelog — auto-office
 
+## 5.0.0 — 2026-08-31
+
+Core `5.0.0`.
+
+- All executor routes now bootstrap a tracked plan-only first commit, push their named branch, open
+  one draft PR referencing the plan and issue, and post resumability comments for every milestone.
+- The draft PR stays draft through review. Final closeout removes the plan before marking the PR ready
+  and merging it; milestones are no longer merged independently.
+- Re-vendored the breaking core authority and milestone lifecycle contract across every route.
+
 ## 4.3.0 — 2026-08-29
 
 **Codex code-review effort is priced per leg, by blast radius** (standing user decision, 2026-08-29).

@@ -1,24 +1,25 @@
 ---
 name: auto-office
-description: Use ONLY when explicitly invoked via /auto-office; never self-triggered by task shape. Router office — a fit test picks the gear, then ONE codex / agy / claude executor per repo runs the whole approved plan end to end, goal-locked, landing a PR at every milestone. Opus gates the code.
+description: Use ONLY when explicitly invoked via /auto-office; never self-triggered by task shape. Router office — a fit test picks the gear, then ONE codex / agy / claude executor per repo runs the approved plan end to end, bootstrapping one draft PR and recording each milestone before final closeout. Opus gates code.
 ---
 
 # Auto Office
 
-The office that chooses the office. The executor's **brand** is selected; its **tier is fixed**. One
-plan approval, then the run goes to the end — landing each milestone as it goes — without asking again.
+The office chooser. The executor's **brand** is selected; its **tier is fixed**. One
+plan approval, then the run goes to the end — bootstrapping a draft PR, recording each milestone,
+and landing once at final closeout — without asking again.
 
 ```
 Planner ─▶ Plan-reviewer ─▶ retires │ Planner ─▶ ONE Executor per repo ─▶ Workers
 (plans, self-reviews,  full gear only│ (whole plan, end to end; it fans out,
- gates, lands the deploy)            │  it commits, it pushes, it opens the PR)
+  gates, lands the deploy)            │ it bootstraps draft PR, commits, comments)
 ```
 
 | Role | Who | Job | Never does |
 |---|---|---|---|
 | **Planner** | The current agent (you) | Interview → plan + GOAL → approval; **dispatch ONE executor per repo**; hold the review gate; answer consults; perform user-facing and irreversible actions | **Dispatch a per-task worker**; approve work, its own included |
 | **Plan-reviewer** | Fresh, planner's brand, Opus **low**. **Full gear only** | One adversarial pass before approval, then **retires** | Distribute work; return; hold a later gate |
-| **Executor** | **One per repo**, brand per plan, **sonnet-tier high always** | **Execute the WHOLE plan end to end** — every task in dependency order, fanning out its own workers per the plan's dispatch column; **self-review every task and the whole diff**; commit, push, open the PR; write `EXECUTOR-STATE.md` | Approve its own work; exceed the ceiling; amend a user-approved field |
+| **Executor** | **One per repo**, brand per plan, **sonnet-tier high always** | **Execute the WHOLE plan end to end** — bootstrap plan-only first commit, named-branch push, one draft PR and resume comments; then every task in dependency order; **self-review every task and the whole diff**; write `EXECUTOR-STATE.md` | Approve its own work; mark ready, remove the plan, merge, exceed the ceiling; amend a user-approved field |
 | **Worker** | Per task; **any** brand/model/effort the plan declares | One task, never a second writer | Widen scope; be promoted mid-run |
 | **Reviewer (code)** | Fresh `opus` **low** (`codex-luna` xhigh/high when Codex *plans*) | Adversarial gate every round | Fix what it gates |
 
@@ -26,12 +27,9 @@ Planner ─▶ Plan-reviewer ─▶ retires │ Planner ─▶ ONE Executor per 
 mandatory for **every** role and is a *pass*, never an approval
 ([evidence-and-handoff.md](office-core/protocol/evidence-and-handoff.md)).
 
-**Second principle: the planner designs the dispatch; ONE executor performs it.** The assignment
-table stays the planner's; the whole plan then goes to one executor per repo. Nine dispatches for
-nine tasks makes this office an expensive scheduler — it pays opus rates to re-derive a plan opus
-already wrote, while a sonnet executor is near-parity at ~⅙ the price and already holds it. **No
-PM**; ≥2 repos means ≥2 executors, coordinated between, never inside one. Planner-implements stays
-legal for **a fix whose brief would exceed the edit** — never volume, never "the chain is linear."
+**Second principle: the planner designs the dispatch; ONE executor performs the whole plan per
+repo.** No PM; ≥2 repos means ≥2 executors. Planner-implements stays legal for **a fix whose brief
+would exceed the edit** — never volume, never "the chain is linear."
 
 ## Invocation gate and caller overrides
 
@@ -55,7 +53,7 @@ adversarial reader plausibly catch something?
 | Answers | Gear | What runs |
 |---|---|---|
 | Any yes to **(1)** | **full** | Everything below. One-way door — never downgraded. |
-| No to (1), **2+** across (2)–(4) | **express** | Short plan → implement → **one** Opus review → land it. No plan-review, benchmark read, run report, or ledger row. **Cap 2 rounds**; a 2nd `CHANGES REQUIRED` **promotes to full**. |
+| No to (1), **2+** across (2)–(4) | **express** | Short plan → bootstrap draft PR → implement → **one** Opus review → final closeout lands it. No plan-review, benchmark read, run report, or ledger row. **Cap 2 rounds**; a 2nd `CHANGES REQUIRED` **promotes to full**. |
 | No to (1), **≤1** yes | **direct** | No office. Work under the normal safety rules, then stop. |
 
 **Express promotes to full before dispatch** if the run needs >1 executor, >1 repo, or more than ~3
@@ -79,7 +77,7 @@ executor performs it.** Near-ties: same tier, both fit, pick one.
 
 **Ownership once approved — the planner keeps only what the *user* must see, the gate, and
 *irreversible outward* actions.** Everything else is the executor's: every task, preview/staging
-writes, live reads, fixes, commits, its branch, the PR, non-deploying merges. **Five fields it may
+writes, live reads, fixes, commits, its branch, the draft PR, and milestone comments. **Five fields it may
 never amend** — `goal`, `done_criteria`, `blast_radius`, `named_actions`, `non_goals`; it amends the
 *how* freely, reporting hash + rationale. [auto-loop](skills/auto-loop/SKILL.md) → *Ownership*.
 
@@ -113,7 +111,7 @@ production reads included, shape pinned in the brief, read-back required.
   the plan did not **name them verbatim** with preconditions (dry run, revert target, read-back). The
   loop never widens blast radius or adds a repo/environment.
 
-Implements office-core `4.0.0`, vendored at `office-core/`. Mandatory read:
+Implements office-core `5.0.0`, vendored at `office-core/`. Mandatory read:
 `office-core/protocol/roles-and-authority.md`.
 
 ## The autonomous run
@@ -124,13 +122,15 @@ stops: [auto-loop](skills/auto-loop/SKILL.md).
 ```
 self-review → plan-review (full) → approve → GOAL locked
   per task:      dispatch → verify → Opus review → fix → APPROVED
-  per milestone: gate → commit → PR → land it → keep going
-  at the end:    sync, close loops, short run report
+  before tasks:  plan-only commit → push → draft PR → bootstrap comment
+  per milestone: gate → commit → milestone comment → keep going
+  at the end:    remove plan → ready PR → merge → sync, close loops, report
 ```
 
-**The run lands work as it goes.** A milestone is a group of done-criteria declared at approval; when
-they go green the loop commits, PRs, and merges the chain, then continues. **The merged branch is the
-resume record** — an interruption costs one milestone, not the run.
+**The run records work as it goes.** A milestone is a group of done-criteria declared at approval;
+when they go green the loop commits and comments on the single draft PR, then continues. **The branch,
+plan, and PR comments are the resume record until final closeout**, when the planner removes the plan,
+marks the PR ready, and merges it.
 
 It stops for two things: an **external send**, and a **user-owned decision the plan did not
 anticipate** (`AskUserQuestion`, recommendation first). Everything else — production applies and

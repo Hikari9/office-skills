@@ -31,18 +31,19 @@ file exists, there is nothing to close; don't invent one to satisfy the step.
 ## Closeout runs per milestone, not once per run
 
 A plan declares milestones ([`plan-contract.md`](plan-contract.md)). **Every milestone whose
-done-criteria are green runs this file** — commit, gate, PR, land — and then the run continues
-into the next one. The last milestone additionally runs steps 5 and 6.
+done-criteria are green is committed and commented on the existing draft PR** — then the run
+continues into the next one. The final approved milestone runs the closeout landing steps. The last
+milestone additionally runs steps 5 and 6.
 
-- **Steps 0–4 run at every milestone.** Commit, gate, PR, document.
+- **Steps 0–4 run at every milestone.** Commit, gate, update the draft PR, document.
 - **Steps 5 and 6 run once, at the end** — syncing main, removing the worktree, and closing loops
   are terminal acts. Removing a worktree at milestone 1 of 3 destroys the run.
   (Standalone invocation has no milestone list to split against — see *Standalone invocation*
   above; run every step in one pass.)
-- **A red gate stops that milestone, not silently the next one.** Commit and document, do not
-  open the PR, and report — the run does not walk past a red milestone into the following one.
-- **The landed milestone is the resume record.** A run interrupted after milestone 2 resumes by
-  reading what is merged, not by re-deriving state from a plan file's task notes.
+- **A red gate stops that milestone, not silently the next one.** Keep the draft PR, add no success
+  comment, and report — the run does not walk past a red milestone into the following one.
+- **The committed branch and PR comments are the resume record.** A run interrupted after milestone
+  2 resumes by reading the branch, draft PR, plan, and comments.
 
 ## 0. Confirm target
 
@@ -52,8 +53,11 @@ path argument as a substitute for actually running from inside the worktree.
 
 ## 1. Commit
 
-`git status`. Stage and commit anything outstanding, with a message describing **why**, not
-what. If the tree is clean, skip.
+`git status`. At a milestone, stage and commit only the approved implementation changes, with a
+message describing **why**, not what. Keep the plan tracked while the run is active. At final
+closeout, after the reviewer returns `APPROVED` and the final gate is green, delete
+`docs/plans/<slug>.md` in a dedicated why-focused commit and verify that deletion before pushing.
+If the tree is clean at a milestone, skip the implementation commit.
 
 ## 2. Verify the gate
 
@@ -63,22 +67,27 @@ a real build surfaces and a linter never will.
 
 Don't invent a gate the project doesn't define; don't skip one it does.
 
-**If the gate is red: stop here.** Step 1 (commit) and step 4 (document) still run so nothing is
-lost, but do not open or arm a PR on red. Report the failure and end the run.
+**If the gate is red: stop here.** Keep the existing draft PR, do not mark it ready or merge it,
+and report the failure. The branch and any already-posted milestone comments remain the resume
+record.
 
 ## 3. PR
 
-`gh pr list --head <branch>` first. Never open a duplicate.
+`gh pr list --head <branch>` first. Never open a duplicate; the executor bootstrap should already
+have created the one draft PR.
 
-- **No PR:** `gh pr create` with a body that actually describes the change, followed by
-  `gh pr merge --auto`.
-- **PR exists but not armed:** arm it now with `gh pr merge --auto`.
+- **No PR:** this is a bootstrap defect in a normal executor run. Stop and report unless this is
+  standalone closeout and the caller explicitly authorized creating one.
+- **Draft PR before reviewer approval:** keep it draft and add the milestone comment.
+- **Draft PR after final reviewer approval:** after the plan-removal commit is pushed and read back,
+  run `gh pr ready <number>`, then `gh pr merge --auto` (or the repository's approved merge form).
+- **PR exists but not merged:** reuse it; do not create a second PR.
 
-Push, PR, and merge remain planner-held actions under
-[`roles-and-authority.md`](roles-and-authority.md) — the **planner** performs them, never a
-delegate. An approved plan carrying this milestone is the authority to land it, so landing does
-not stop for a fresh go-ahead; see *Planner-held names the actor, not a pause*. What is still
-forbidden is landing something the plan does not cover, or landing on red.
+Merge, ready-for-review, plan removal, and cleanup remain planner-held actions under
+[`roles-and-authority.md`](roles-and-authority.md). Push and draft-PR creation happen at executor
+bootstrap under the explicit exception there. An approved plan carrying these actions is the
+authority to perform them; what remains forbidden is landing something the plan does not cover or
+landing on red.
 
 **Read the promotion chain out of the repo, do not assume it.** `gh pr list --state merged --json
 number,headRefName,baseRefName` shows where feature branches actually land. A base picked from the
@@ -140,8 +149,9 @@ Check merge state once with `gh pr view <n> --json state,mergedAt`. Do not poll.
 | Not inside a git worktree | Stop, say so — don't guess (step 0) |
 | Uncommitted changes | Commit, why-focused message |
 | Gate red | Commit + document only; no PR |
-| No PR for this branch | Create + `--auto` |
-| PR exists, unarmed | `gh pr merge --auto` |
+| No PR after executor dispatch | Stop and report bootstrap failure |
+| Draft PR during run | Keep draft; post milestone comments |
+| Final reviewer approved | Remove plan, `gh pr ready`, then merge |
 | PR merged | Sync local main, verify `main` == `origin/main`, then worktree + branch |
 | PR pending | Leave worktree, don't poll, report status |
 | Worktree not under `.worktrees/`/`worktrees/` | Not yours — don't remove it |
@@ -154,8 +164,8 @@ Check merge state once with `gh pr view <n> --json state,mergedAt`. Do not poll.
 - **Polling `gh pr checks --watch`** — `--auto` doesn't need a babysitter.
 - **Cleaning up a worktree you didn't create** — check provenance first.
 - **Writing a docs update nobody asked for.**
-- **Deleting the plan workspace before the PR is open** — the handoff report may still be needed
-  for the PR body.
+- **Deleting the tracked plan before the PR is merged** — it is the first-commit record until final
+  closeout, and the planner must remove it in the pre-merge commit.
 
 ## Final report
 
@@ -165,7 +175,7 @@ minimum:
 | Field | Content |
 |---|---|
 | Goal | The outcome, and each done-criterion with its final verify output |
-| Landed | Per milestone: the PR, where it merged to, and the commit range |
+| Landed | The single PR, where it merged to, the plan-removal commit, and all milestone commit ranges |
 | Rounds | Review rounds used per task, and any cap approached |
 | Stops | Every stop the run hit, what was asked, what was answered |
 | Not verified | Every check that did not happen, named. **Never let an unrun check read as a passed one.** |

@@ -7,8 +7,8 @@ obligations; it may never widen authority, remove a gate, or reassign a role.
 
 | Role | Held by | Owns | Never does |
 |---|---|---|---|
-| **Planner** | the invoking session | interview, plan, approval, escalation, fix triage, closeout, all planner-held actions | **take the executor's task away from independent review**; approve the work |
-| **Executor** | a fresh worker process/subagent | implementing the approved plan inside its stated scope; the handoff report | approve its own work; act outside the blast-radius ceiling |
+| **Planner** | the invoking session | interview, plan, approval, escalation, fix triage, review gate, closeout, ready-for-review, merge, plan removal, all planner-held actions | **take the executor's task away from independent review**; approve the work |
+| **Executor** | a fresh worker process/subagent | draft-PR bootstrap, implementing the approved plan inside its stated scope, milestone comments, the handoff report | approve its own work; act outside the blast-radius ceiling |
 | **Reviewer** | a fresh agent that did not do the work | the approval gate, numbered findings, the review verdict | write the fix it is gating; approve without evidence |
 
 A finding **recommends** a fix; it never writes one. A `Fix:` line is a hypothesis the implementer
@@ -52,7 +52,8 @@ independent review of its own.
   so it is legal; and because user approval is the scarcest thing in a run, it is usually cheap.
 - An office **may add a coordinator** role that distributes briefs and collects results on the
   planner's behalf. A coordinator **holds no planner-held action and no gate of any kind.**
-  Commit, PR, merge, deploy, escalation, and closeout stay with the planner.
+  Merge, ready-for-review, deploy, escalation, and closeout stay with the planner; the executor's
+  draft-PR bootstrap is the explicit core exception below.
 - The two must be **separate roles.** A gate-holder that then distributes the work it approved,
   and later adjudicates whether that work's brief was defective, is gating itself.
 
@@ -94,10 +95,22 @@ irreversible operations the run may and may not touch.
 - Back it with mechanism where mechanism exists — a scoped tool allowlist, a deny hook, a
   dedicated worktree, credentials absent from the environment — not prose alone.
 
-**Planner-held by default**, regardless of office: pushes, PRs, merges, deploys, migrations,
-remote/DNS/config changes, credential access or creation, production data writes, and any
-outbound message. An executor gains one of these only when the brief names that exact action;
-silence means not authorized.
+**Planner-held by default**, regardless of office: merges, ready-for-review, deploys, migrations,
+remote/DNS/config changes, credential access or creation, production data writes, and any outbound
+message. Pushes and PR creation are planner-held outside the required executor bootstrap. An
+executor gains an outward action only when the brief names that exact action; silence means not
+authorized.
+
+### Executor-owned draft-PR bootstrap
+
+Every executor launch follows [`executor-bootstrap.md`](executor-bootstrap.md). The approved plan
+and brief grant the executor exactly these startup actions: commit the tracked plan file as the
+branch's first commit, push the named branch, create one draft PR whose body references the plan and
+tracking issue, and post the initial and milestone resumability comments. The executor must verify
+each action and stop before implementation if any bootstrap precondition fails.
+
+This exception transfers neither the review gate nor closeout. The PR remains draft until reviewer
+approval; the planner removes the plan in the final pre-merge commit, marks the PR ready, and merges.
 
 ### Planner-held names the actor, not a pause
 
@@ -121,7 +134,9 @@ the user read, instead of mid-run on a decision they have already made once.
 **Two things stop the run regardless of what the plan says:**
 
 - **Outbound messages** — email, chat, public post, bulk outreach. Audience and draft surfaced,
-  approval taken in the current session, every time. A plan cannot pre-authorize these.
+  approval taken in the current session, every time. A plan cannot pre-authorize these. The required
+  GitHub PR body and milestone bookkeeping comments are the executor-bootstrap exception and must be
+  named in the approved plan.
 - **A genuinely user-owned decision** the plan did not anticipate — a fork where different
   choices produce materially different work. Recommend first, then ask; never infer.
 
@@ -140,9 +155,9 @@ Pre-existing dirty changes are preserved and named as **protected paths** in the
 **The planner works in the run's worktree too, and its scratch lives there.** Plans, briefs, review
 rounds, and state files go in the run's worktree — never the target repo's primary checkout. A
 shared checkout is not durable: a concurrent agent advanced `main` and deleted a live run's brief
-directory out from under it mid-run. Create the worktree before the first artifact; if a plan must
-exist first, hold it in session scratch and copy it in. Working directly in the primary checkout
-requires the **user** naming that checkout — a planner never defaults to it.
+directory out from under it mid-run. Create the worktree before the first artifact; the approved plan
+must be copied into tracked `docs/plans/<slug>.md` before dispatch. Working directly in the primary
+checkout requires the **user** naming that checkout — a planner never defaults to it.
 
 ## Fit test — before the office runs at all
 

@@ -15,7 +15,7 @@ in the spokes it routes to.
 | Role | Owner | Default model | Responsibility |
 |---|---|---|---|
 | Planner | Active Codex session | current session | scope, plan, escalation, closeout |
-| Executor | Fresh Codex in-session subagent when planner and assignee are Codex; otherwise the assignee's CLI | `gpt-5.6-luna`, high | implements the approved plan |
+| Executor | Fresh Codex in-session subagent when planner and assignee are Codex; otherwise the assignee's CLI | `gpt-5.6-luna`, high | bootstraps the draft PR, implements the approved plan, and comments milestones |
 | Reviewer | Separate fresh Codex in-session subagent when planner and assignee are Codex; otherwise the assignee's CLI | `gpt-5.6-luna`, xhigh (code review of a low-blast-radius leg: high) | adversarial gate and re-review |
 
 ## Invocation gate and caller overrides
@@ -72,12 +72,11 @@ or three sentences and proceed. Full rule: `office-core/protocol/roles-and-autho
   `-c model_reasoning_effort="<effort>"` to every `codex exec`.
   There is no `--effort` flag; `-m` alone inherits the operator's config default (often `medium`),
   and an unrecognised effort is accepted silently — read the launch banner back.
-- Executor authority is local edits and commits only; pushes, PRs, deploys, remote config,
-  messages, and credentials are forbidden unless the prompt names that exact action. Those stay the
-  **planner's** to perform — and the planner performs them without a fresh go-ahead only when the
-  plan's `named_actions:` names them verbatim with a dry run, a revert target, and a read-back.
-- **Land each milestone as its criteria go green** — commit, PR, merge the chain — rather than
-  batching the run into one closeout. The merged branch is the re-entry point.
+- Executor authority includes the core bootstrap: plan-only first commit, named-branch push, one
+  draft PR referencing the plan and issue, and initial/milestone comments. The planner retains plan
+  removal, ready-for-review, merge, deploy, remote config, messages, and credentials.
+- **Commit and comment each milestone as its criteria go green** on the single draft PR. Keep the PR
+  draft until final reviewer approval; closeout removes the plan, marks the PR ready, and merges it.
 - **Dispatch live-system work with its access**: enumerate the MCP/API tools in the launch,
   production **reads** included, and pin the data shape in the prompt with a read-back required.
 - A successful process exit is not evidence; the gate is the repository's full validation
@@ -91,11 +90,11 @@ or three sentences and proceed. Full rule: `office-core/protocol/roles-and-autho
 
 ## Protocol version
 
-This plugin implements office-core protocol `2.0.0`, vendored at `office-core/` in this plugin.
+This plugin implements office-core protocol `5.0.0`, vendored at `office-core/` in this plugin.
 The vendored copy is authoritative for an installed plugin; the repo-root `office-core/` is the
 development source. Mandatory read: `office-core/protocol/roles-and-authority.md`.
 
-**Declared narrowing of core.** Core `2.0.0` lets the planner implement inline; this office
+**Declared narrowing of core.** Core `5.0.0` lets the planner implement inline; this office
 does **not** — the planner never implements the plan here. Narrowing is legal, and it is stated so a
 reader of both files need not guess which governs.
 
@@ -120,19 +119,23 @@ below it selects, and nothing else.
 
 ## The four phases
 
-1. **Plan.** Explore read-only, write an approval-ready plan (context, global constraints,
+1. **Plan.** Identify or create the tracking issue, explore read-only, write an approval-ready plan
+   at tracked `docs/plans/<slug>.md` (context, global constraints,
    verbatim blast-radius ceiling, numbered tasks with dependencies and model strategy,
    verification, out-of-scope). Obtain explicit approval before dispatch. Load
    `office-core/protocol/plan-contract.md`.
 2. **Execute.** Record `BASE=$(git rev-parse HEAD)`, assign one executor per repository using
-   Dispatch routing, read its handoff, and resolve every Upline item before review. Load
+   Dispatch routing, copy the approved plan into tracked `docs/plans/<slug>.md`, and require the
+   executor's plan-only first commit, named-branch push, draft PR, and bootstrap comment before it
+   implements. Read its handoff and resolve every Upline item before review. Load
    `skills/codex-executor/SKILL.md` and `skills/codex-cli/SKILL.md` only when the route is CLI.
 3. **Review.** Assign a fresh reviewer using Dispatch routing; triage findings and reassign fixes
    via a fresh scoped executor; cap at 5 rounds. Load `skills/codex-reviewer/SKILL.md` and
    `skills/codex-cli/SKILL.md` only when the route is CLI.
-4. **Closeout.** Wait for the executor's final handoff/state, then verify the gate, commit, and PR
-   only when authorized; report plan, commit range, review rounds, gate result, and anything
-   unresolved. Do not repeatedly poll intermediate Git state after liveness is established. Load
+4. **Closeout.** Wait for the executor's final handoff/state, then verify the gate, remove the plan
+   in the final pre-merge commit, mark the existing PR ready, and merge only when authorized;
+   report plan, commit range, review rounds, gate result, and anything unresolved. Do not repeatedly
+   poll intermediate Git state after liveness is established. Load
    `skills/codex-closeout/SKILL.md`.
 
 **At the close of every phase**, end the status post with `compact: yes | no — <reason>` per

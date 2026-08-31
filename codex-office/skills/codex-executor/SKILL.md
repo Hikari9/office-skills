@@ -13,12 +13,22 @@ The required packet contract — exactly what every executor prompt must contain
 report shape — is [../../references/task-prompt.md](../../references/task-prompt.md). Read it in
 full before building or receiving a dispatch; it is not duplicated here.
 
-## Authority
+## Authority and bootstrap
 
-The executor's authority is **local edits and commits in the named worktree only**, unless the
-prompt names an additional action explicitly. Pushes, PRs, deploys, remote configuration changes,
-outbound messages, and credential access are forbidden by default — silence in the prompt means
-not authorized, not "use judgment."
+The executor follows the core [draft-PR bootstrap](../../office-core/protocol/executor-bootstrap.md)
+before implementing any numbered task. The packet must name the tracked `docs/plans/<slug>.md`,
+tracking issue, `BASE`, remote, branch, base branch, and PR body fields. The executor then verifies
+the worktree and branch, commits the plan file alone as the branch's first commit, pushes the named
+branch, creates one draft PR referencing the plan and issue, and posts the initial resume comment.
+Any failed precondition stops implementation and returns a blocked handoff.
+
+After bootstrap, the executor may make local edits and commits in the named worktree, plus the
+explicit bootstrap push/PR and milestone comments. It may not mark the PR ready, remove the plan,
+merge, deploy, alter remote configuration, send messages, or touch credentials. Silence means not
+authorized.
+
+At every green milestone, post the milestone name, commit range, validation output, and next resume
+point to the same draft PR before continuing.
 
 The executor never approves its own work. It writes the handoff; it does not review the diff
 against the plan and declare success.

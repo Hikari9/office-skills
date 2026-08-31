@@ -64,7 +64,11 @@ correctly in its prompt — which is why the brief also demands a citation (see
 
 ## The plan's required sections
 
-**Write the plan to a file** (`docs/plans/<slug>.md`, or scratchpad) — the executor's contract:
+**Write the plan to the tracked repository path** `docs/plans/<slug>.md` — the executor's contract.
+The plan must include the tracking issue, branch, `BASE`, and the draft-PR bootstrap actions:
+plan-only first commit, named-branch push, one draft PR referencing the plan and issue, and
+milestone resumability comments. The plan may be drafted in scratch, but it must be copied into this
+tracked path before dispatch:
 
 1. **Context** — why this work exists.
 2. **Global Constraints** — verbatim binding requirements: exact values, formats, **pinned

@@ -1,6 +1,6 @@
 ---
 name: agy-closeout
-description: Commit, PR, sync, close loops, and the run report after reviewer APPROVED. Loaded by the agy-office hub; not invoked directly.
+description: Remove the plan, ready and merge the draft PR, sync, close loops, and report after reviewer APPROVED. Loaded by the agy-office hub; not invoked directly.
 ---
 
 # Agy Closeout
@@ -9,12 +9,12 @@ Loaded by: planner, at Phase 4.
 Assumes: the Office Kernel is already in the packet, and the reviewer has returned `APPROVED`.
 
 The procedure is core: `office-core/protocol/closeout.md`. This office's additions are in
-[`../../references/closeout.md`](../../references/closeout.md). In
-order: commit outstanding changes with a why-focused message, verify the project's real gate (stop
-here on red — commit and document still run, but no PR gets opened or armed), open or arm the PR
-with `Closes #N`, `gh pr merge --auto`, document only what the repo already maintains, sync local
-`main` after a confirmed merge, remove the worktree only if this run's tooling created it, and
-close every open loop.
+[`../../references/closeout.md`](../../references/closeout.md). In order: verify the project's real
+gate (leave the existing draft PR draft on red), confirm the executor bootstrap and milestone
+comments, remove the tracked plan in a dedicated pre-merge commit, push and verify the deletion, mark
+the PR ready, merge with `Closes #N`, document only what the repo already maintains, sync local
+`main` after a confirmed merge, remove the worktree only if this run's tooling created it, and close
+every open loop.
 
 **Skipped only on an explicit `skip cleanup` caller tweak.**
 

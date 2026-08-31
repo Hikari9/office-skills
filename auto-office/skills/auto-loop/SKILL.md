@@ -1,6 +1,6 @@
 ---
 name: auto-loop
-description: Phase 2–3 — the goal-locked autonomous loop that runs dispatch → liveness → verify → review → fix per task, lands each milestone as its criteria go green, and stops for only two things. Hard caps, the 2-round plan-defect presumption, named-action preconditions, and the compaction recommendation. Loaded by the auto-office hub; not invoked directly.
+description: Phase 2–3 — the goal-locked autonomous loop that runs draft-PR bootstrap → dispatch → liveness → verify → review → fix per task, comments each green milestone, and stops for only two things. Hard caps, the 2-round plan-defect presumption, named-action preconditions, and the compaction recommendation. Loaded by the auto-office hub; not invoked directly.
 ---
 
 # Auto Loop
@@ -17,7 +17,7 @@ before the loop:
     ≥2 executors?  → the planner distributes and monitors. There is no PM.
 load GOAL block
 dispatch ONE EXECUTOR per repo, with the WHOLE plan   ← the only work launch the planner makes
-                          (CLI, own worktree; sibling office spoke per delegation-map)
+                          (CLI, own worktree; executor bootstraps draft PR; sibling office spoke)
 for each task the executor completes and hands back:
     liveness check            (see below — no output means confirm dead before re-dispatch)
     verify independently      (mandatory extra pass if agy executed)
@@ -31,8 +31,8 @@ for each task the executor completes and hands back:
     verdict == APPROVED       → milestone check, then next task
 
     milestone check: every done-criterion in this task's milestone green?
-        → LAND IT (auto-closeout, milestone pass): gate → commit → PR → merge the chain
-        → then continue the loop. Do not batch milestones.
+        → RECORD IT: gate → commit → comment on the draft PR
+        → then continue the loop. Do not batch milestones or merge early.
 re-read GOAL:
     all done_criteria green?  → final closeout
     a criterion still red?    → new task, back into the loop (counts an iteration)
@@ -50,10 +50,10 @@ each task boundary, write `EXECUTOR-STATE.md`, and wait — so review happens pe
 has. What changed is who launches the next one: the executor resumes itself, or the planner resumes
 it with `--continue`. The planner never launches a *different* process for the next task.
 
-**Landing a milestone is part of the loop, not a phase after it.** The loop that reaches the end
-with nothing merged has produced one large unreviewable PR and no re-entry point — which is the
-failure this shape exists to prevent. If the milestone's gate is red, that milestone does not land
-and the loop does not walk past it into the next one.
+**Recording a milestone is part of the loop, not a phase after it.** The loop commits and comments
+each green milestone on the single draft PR, so an interruption has a branch, plan, commit range,
+and verification record to resume from. If the milestone's gate is red, do not post a success
+comment and do not walk past it into the next one.
 
 ## Liveness check after every CLI dispatch
 
@@ -174,8 +174,8 @@ they are what keeps an autonomous run honest:
 4. **Is this `planner_held`?** Then *you* perform it, never a delegate — and check `named_actions`:
    named with its preconditions met, you execute it and keep going; not named, or a precondition
    failed, you stop for the user.
-5. **Which milestone does this task belong to, and did the previous one land?** An unlanded milestone
-   behind you is a lost re-entry point.
+5. **Which milestone does this task belong to, and did the previous one get commented?** An
+   uncommented milestone behind you is a lost re-entry point.
 6. **Agy consecutive-task count** — at 3, re-brief with full context restated or re-route.
 7. **`git rev-parse --abbrev-ref HEAD` before every commit and every push.** Read it; do not assume
    the branch you created is still checked out.
@@ -208,15 +208,14 @@ The cheap check — "what else consumes this file?" — was one grep.
   concurrent *edits*, not an agent running `git checkout` en route to its own worktree. A brief saying
   "make your own branch" is a request, not a control.
 - **Re-read the branch after any dispatch returns**, not only before committing.
-- **The executor owns commits, pushes its own branch, and opens the PR.** The planner never authors a
-  commit for code it did not write. **Name the branch:** `git push <remote> <branch-name>`, **never**
+- **The executor owns the core bootstrap: plan-only first commit, named-branch push, one draft PR,
+  and initial/milestone comments.** The planner never authors a commit for code it did not write.
+  **Name the branch:** `git push <remote> <branch-name>`, **never**
   `HEAD` — `HEAD` inherits whatever you are on, so "I only push feature branches" is not true by
   construction, and this is exactly how a deploy has already happened by accident once. This rule
   binds the executor now, so it goes in the brief **verbatim**, not as a paraphrase.
-- **Merging splits on whether the branch deploys.** The executor may merge a branch that does **not**
-  deploy. **A merge into a deploying branch is planner-held** — irreversible and outward-facing — and
-  the plan must state which branches deploy, or the executor must treat every branch as deploying and
-  hand the merge back.
+- **All merges are planner-held.** The executor bootstraps and updates the draft PR, but the planner
+  removes the plan, marks the PR ready, and merges it at final closeout after the independent gate.
 
 Evidence (2026-08-02, reached production): a dispatched agent left the shared checkout on `main`; two
 planner commits and a `git push … HEAD` landed there and deployed in 59 seconds.
@@ -249,8 +248,8 @@ The planner keeps only what is structurally not the executor's: things the **use
 | **Dispatching the code reviewer**; triaging findings | Resolving branch points the plan already anticipated |
 | **Contesting** a review finding on the executor's behalf | **Implementing** every finding the reviewer raises |
 | **Production and irreversible applies**; deploys | **All preview/staging writes and all live reads** |
-| External sends — never delegable, ever | Commits, pushing its own branch, opening the PR |
-| **Merging into a branch that deploys** | Merging a branch that does **not** deploy |
+| External sends — never delegable, ever | Bootstrap commit, pushing its named branch, opening the draft PR, milestone comments |
+| **Plan removal, ready-for-review, and merging into any base branch** | Implementation commits and milestone comments |
 | Accepting or re-revising a plan amendment | Proposing a plan amendment, committed, with its hash |
 | Posting the run report | Drafting the run report from its own evidence |
 
@@ -342,7 +341,7 @@ Any of 1–4 failing turns the action into a stop with a named reason. This is t
 ## Progress reporting without blocking
 
 Post a one-line status per task completion — task, brand, review rounds, **wall clock**, verdict,
-criteria now green, milestone state (`landed → PR #n` or `n/m criteria`), **`compact:`**. It informs;
+criteria now green, milestone state (`commented → draft PR #n` or `n/m criteria`), **`compact:`**. It informs;
 it does not ask. Never end a status line with a question the run's continuation depends on. Wall
 clock goes on the line because it is the cost invisible in a token count and the one a silent
 dispatch spends.
@@ -356,8 +355,9 @@ followed, because it asked the planner to remember it at exactly the moment its 
 
 Two things still need you:
 
-- **A landed milestone is the strongest boundary there is** — the state that must survive is a branch
-  name and a PR number. The hook cannot see that a milestone just landed; say so when it does.
+  - **A commented milestone is the strongest boundary before closeout** — the state that must survive
+    is a branch name, plan path, PR number, commit range, and verification output. The hook cannot see
+    that a milestone just got recorded; say so when it does.
 - **A `no` reading "nothing points at a file" is a defect report, not a wait instruction.** Something
   real exists only in this window. Write it down, and the answer becomes `yes`. A `PreCompact` hook
   snapshots what it can, but it cannot write down what was never stated.
@@ -405,10 +405,10 @@ surface, and split on surface boundaries, never on file count.
 
 ## Resuming an interrupted run
 
-**The landed milestones are the resume record.** Read what is merged first — `gh pr list --state
-merged`, then the branch — because that is durable in a way a plan file's task notes are not. Then
-re-read the GOAL, re-check which done-criteria are green **by running their verify commands** rather
-than trusting the prior session's notes, and re-enter the loop at the first red one.
+**The draft PR milestones are the resume record before closeout.** Read the branch, tracked plan,
+draft PR, comments, and commit range first. Then re-read the GOAL, re-check which done-criteria are
+green **by running their verify commands** rather than trusting prior notes, and re-enter the loop at
+the first red one. After merge, Git history is the durable record.
 
 Probe headroom on resume only if the run is long enough for it to matter. Do not re-derive state a
 merged PR already proves.
