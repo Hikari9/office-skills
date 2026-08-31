@@ -1,11 +1,11 @@
 # office-core
 
-The shared source contract for `codex-office`, `claude-office`, and `agy-office`.
+The shared source contract for `codex-office`, `agy-office`, and the Claude route in `auto-office`.
 
 **`office-core` is not a fourth office and is never invoked directly.** It holds only the
-rules that must genuinely agree across all three offices: role separation, plan approval,
+rules that must genuinely agree across all three executor routes: role separation, plan approval,
 blast-radius ceilings, the Office Kernel, handoff/evidence requirements, reviewer states,
-and rollback language. Runtime mechanics — `codex exec` flags, `--cli` vs `--in-session`,
+executor draft-PR bootstrap, and rollback language. Runtime mechanics — `codex exec` flags, `--cli` vs `--in-session`,
 `agy` flag ordering — belong to the owning plugin and must not migrate here.
 
 ## Layout
@@ -16,9 +16,10 @@ office-core/
 ├── protocol/
 │   ├── roles-and-authority.md       # who may do what; the gates that cannot be bypassed
 │   ├── plan-contract.md             # what an approvable plan must contain
+│   ├── executor-bootstrap.md        # plan-only first commit and draft PR startup
 │   ├── evidence-and-handoff.md      # what counts as proof; the handoff report contract
 │   ├── review-states.md             # APPROVED / CHANGES REQUIRED / PLAN DEFECT and the fix loop
-│   ├── closeout.md                  # planner-run final gate, PR, worktree, loop closure
+│   ├── closeout.md                  # final gate, plan removal, PR readiness, merge, cleanup
 │   └── compatibility.md             # versioning, adapters, exceptions, release rules
 └── schemas/
     ├── office-kernel.schema.json    # the immutable per-run packet header

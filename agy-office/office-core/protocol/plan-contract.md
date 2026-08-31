@@ -17,6 +17,15 @@ named unknowns. Stop asking once a remaining unknown would not change the implem
 Sweep work — files, directories, conventions — goes to cheap read-only explorers rather than to
 the user's turns. Never spend a top-tier model on retrieval.
 
+## Run metadata and tracking issue
+
+Every plan that dispatches an executor is a tracked repository file at
+`docs/plans/<slug>.md`. The plan includes its exact `Plan path`, the approved `BASE`, the named
+branch/worktree, and a `Tracking issue` reference. The planner creates or identifies the tracking
+issue before approval and puts the same reference in the draft PR body. A repository without an
+issue tracker may state that exception explicitly; otherwise an absent issue reference is a plan
+defect.
+
 ## Required sections
 
 1. **Context** — why this work exists.
@@ -34,8 +43,8 @@ the user's turns. Never spend a top-tier model on retrieval.
 ## Milestones — the run's landing points
 
 A plan declares **milestones**: named groups of done-criteria that, once green, put the tree in a
-shippable state. Each milestone is a commit, a PR, and a landing — during the run, not at the end
-of it.
+shippable state. Each milestone is a commit or commit range and a resumability comment on the
+single draft PR. The PR remains draft until final reviewer approval; the final closeout lands it.
 
 - **Declared at plan time, reviewed at approval.** The loop does not improvise a milestone
   boundary mid-run; if the grouping is wrong, that is a plan amendment.
@@ -45,14 +54,15 @@ of it.
   nothing will ever ship.
 - **One milestone is a legitimate plan.** Small runs are not required to invent checkpoints.
 
-Why this is a contract requirement and not a closeout detail: a run whose work lands only at the
-end has no re-entry point, so an interruption anywhere costs the whole run. Milestones make the
-merged branch the resume record, which is durable in a way a plan file's task states are not.
+Why this is a contract requirement and not a closeout detail: a run whose milestones have no
+committed and commented re-entry points loses its state on interruption. The branch plus draft-PR
+comments are the resume record during the run; after merge, Git history is the durable record.
 
-## Named actions — pre-authorized planner-held steps
+## Named actions — pre-authorized outward steps
 
-A plan carries a `named_actions:` block listing every planner-held action the run will perform,
-verbatim, with its preconditions. See
+A plan carries a `named_actions:` block listing every outward or planner-held action the run will
+perform, verbatim, with its preconditions. The executor bootstrap must be listed when an executor is
+dispatched. See
 [`roles-and-authority.md`](roles-and-authority.md) → *Planner-held names the actor, not a pause*
 for what naming buys and what it does not.
 
@@ -61,7 +71,9 @@ run that precedes it, the backup or revert target, and the read-back that proves
 **A vague entry is not an entry** — "deploy to prod" authorizes nothing, and the run will stop on
 it as unnamed.
 
-Outbound messages may never appear here. They are approved in session, at the time, always.
+External outreach may never appear here: email, chat, public posts, and bulk messages are approved
+in session, at the time, always. The required GitHub PR body and milestone bookkeeping comments are
+executor-bootstrap actions and must appear here with their exact commands and read-backs.
 
 ## Claims discipline
 
