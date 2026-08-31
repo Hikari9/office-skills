@@ -1,8 +1,8 @@
 # Changelog — agy-office
 
-## 4.2.0 — 2026-08-31
+## 5.0.0 — 2026-08-31
 
-Core `5.2.0`.
+Core `6.0.0`.
 
 - Draft PR bodies now contain an immutable GitHub blob deeplink to the tracked plan, anchored to
   the plan-only first commit.
