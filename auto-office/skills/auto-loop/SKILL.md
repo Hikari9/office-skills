@@ -109,8 +109,9 @@ Beyond the plan path, GOAL block, blast-radius ceiling, and file scope:
 
 1. **Verify the stated cause reproduces at `BASE` before implementing.** If it does not, return
    `BRIEF DEFECT` with the evidence — do not implement anyway.
-2. **Any task shipping a test pastes that test failing at `BASE`, and mutation-tests it.** Failing at
-   `BASE` is necessary and not sufficient — a new test file "fails" merely by importing a module that
+2. **Any task shipping a test records that test failing against `BASE`, the pre-regression checkpoint,
+   or a deliberately reverted fix, and mutation-tests it.** Tester may run BASE in the read-only
+   Planner worktree while Executor continues coding. Failing at BASE is necessary and not sufficient — a new test file "fails" merely by importing a module that
    does not exist yet. Break each mechanism the test claims to cover, confirm red for each, restore,
    report what was tried. Four rules that make the mutation real:
    - **Restore by file copy (`cp`), never `git checkout`**, when the change under test is uncommitted:
@@ -149,8 +150,11 @@ Beyond the plan path, GOAL block, blast-radius ceiling, and file scope:
    [`evidence-and-handoff.md`](../../office-core/protocol/evidence-and-handoff.md) → *Briefs that
    touch a live system*.
 5. **You may fan out in-session** using your own harness's built-in sub-agent mechanism, within your
-   file scope and under one-writer-per-tree. The brief never prescribes *how* — that is your office's
-   mechanism, not this one's.
+   file scope. The default remains one independent implementation writer per tree. The coordinated
+   Tester exception allows one Tester to author tests/config in the same tree when `Touches:` paths
+   are disjoint; follow `office-core/protocol/tester-worker.md` for Git locking, live-test results,
+   checkpoints, and reports. The brief never prescribes *how* — that is your office's mechanism, not
+   this one's.
 6. **Self-review your own work — mandatory, and it covers what you implemented inline.** Per task,
    before marking it complete: a spec-compliance verdict and a quality verdict, graded
    Critical / Important / Minor. Then once at Finish, with the gate green, over the cumulative
@@ -378,8 +382,9 @@ surface, and split on surface boundaries, never on file count.
 
 ## Safety rules the loop cannot relax
 
-- One writer per working tree, ever. Sub-delegation is a tool call under the executor's supervision,
-  not a second writer. **≥2 executors means ≥2 worktrees, always.**
+- One independent implementation writer per working tree. The only in-tree exception is one
+  Executor-owned Tester with disjoint test/config paths under the core contract; **≥2 executors
+  means ≥2 worktrees, always.**
 - **The planner may implement and fix inline** — and it **still never approves its own work**. An
   inline fix goes back through the same fresh reviewer as everything else.
 - **Precondition on a planner inline write: no executor may be live in that tree.** Core already

@@ -19,11 +19,13 @@ office-core/
 │   ├── executor-bootstrap.md        # plan-only first commit and draft PR startup
 │   ├── evidence-and-handoff.md      # what counts as proof; the handoff report contract
 │   ├── review-states.md             # APPROVED / CHANGES REQUIRED / PLAN DEFECT and the fix loop
+│   ├── tester-worker.md             # Executor-owned test authoring and execution worker
 │   ├── closeout.md                  # final gate, plan removal, PR readiness, merge, cleanup
 │   └── compatibility.md             # versioning, adapters, exceptions, release rules
 └── schemas/
     ├── office-kernel.schema.json    # the immutable per-run packet header
     ├── handoff.schema.json          # executor → planner report
+    ├── tester-report.schema.json     # Executor-owned Tester result report
     ├── capability-manifest.schema.json  # selected skills, instead of a catalog dump
     └── run-event.schema.json        # telemetry shape; the SessionEnd hook fills it from the transcript
 ```

@@ -75,6 +75,7 @@ Each plugin rolls back on its own: reinstall the previous plugin version, which 
 pinned core snapshot. Rolling one office back never changes the other two and never touches a
 production repository.
 
-**Rollback triggers:** a missing mandatory safety rule; two writers in one worktree; an
+**Rollback triggers:** a missing mandatory safety rule; two uncoordinated writers in one worktree or
+an unsafe Tester exception; an
 unverified external mutation; a standalone install failure; a >10% quality regression on recent
 canaries; or p95 latency worsening by >15% after normalizing for packet size and task class.

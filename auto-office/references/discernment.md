@@ -122,7 +122,9 @@ Two tasks can run at once only when both hold:
    ```
    Watch for a *shared config file* one task edits that changes how the other's tests run.
 
-Rules of thumb: same tree → **serialize**; different repo → always parallel-safe; independent + disjoint files + deps landed → **parallelize in a worktree**.
+Rules of thumb: same tree → **serialize**, except the coordinated Executor/Tester contract;
+different repo → always parallel-safe; independent + disjoint files + deps landed → **parallelize in
+a worktree**.
 
 ```bash
 BASE=$(git -C /path/to/repo rev-parse HEAD)     # shared tip, before either commits

@@ -130,7 +130,7 @@ PY
   done <<RULES
 explicit invocation|explicitl?y? (invoke|named|typed)|only when the caller
 no self-approval|never approves? (its|their) own|self-approv
-one writer per tree|one writer|one .*process|separate worktrees
+independent writer per tree|one (independent )?(implementation )?writer|one .*process|separate worktrees|Tester.*disjoint
 evidence over exit code|exit (code )?0|not evidence|real (validation|gate) output
 planner-held irreversible work|PLANNER-HELD|planner-held
 review verdicts|CHANGES REQUIRED

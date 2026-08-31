@@ -70,15 +70,16 @@ it's core by default. Core is the narrow, deliberately short list in
 | Planner-held by default: ready-for-review, plan removal, merges, deploys, migrations, remote/DNS/config, credentials, outbound messages; executor bootstrap is the named exception for push, draft PR, and milestone comments | core | `office-core/protocol/roles-and-authority.md` (Blast-radius ceiling and Executor-owned draft-PR bootstrap); `office-core/protocol/executor-bootstrap.md` | All three executor spokes and briefs; all three closeout spokes; all three hubs | User-directed core 5.0.0 lifecycle change |
 | Executor bootstrap: plan-only first commit, named-branch push, one draft PR, initial comment, fail-closed verification | core | `office-core/protocol/executor-bootstrap.md` | `codex-office/skills/codex-executor/SKILL.md`, `agy-office/skills/agy-executor/SKILL.md`, `agy-office/references/executor-brief.md`, `auto-office/skills/auto-loop/SKILL.md` | User-directed core 5.0.0 lifecycle change |
 | Milestones are committed and commented on one draft PR; final closeout removes the plan, marks ready, and merges | core | `office-core/protocol/plan-contract.md`, `office-core/protocol/closeout.md` | All three hubs and closeout spokes; `auto-office/skills/auto-loop/SKILL.md` | User-directed core 5.0.0 lifecycle change |
-| One writer per working tree, always; parallel work needs separate worktrees and disjoint `Touches:` | core | `office-core/protocol/roles-and-authority.md` (One writer per working tree) | `auto-office/skills/claude-cli/SKILL.md` (session/worktree identity), `codex-office/skills/codex-cli/SKILL.md`, `agy-office/skills/agy-executor/SKILL.md`, `agy-office/references/routing.md` | Each pre-restructure hub |
+| One independent implementation writer per working tree; one coordinated Executor-owned Tester may write disjoint test/config paths under the lock/pathspec contract; other parallel work needs separate worktrees | core | `office-core/protocol/roles-and-authority.md`, `office-core/protocol/tester-worker.md` | `auto-office/skills/claude-cli/SKILL.md` (session/worktree identity), `codex-office/skills/codex-cli/SKILL.md`, `agy-office/skills/agy-executor/SKILL.md`, `agy-office/references/routing.md` | Each pre-restructure hub |
 | Delegation test: a delegation must buy tier, isolation, or parallelism, or it's `INLINE` | core | `office-core/protocol/roles-and-authority.md` (Delegation test) | `auto-office/references/fan-out.md`, `agy-office/references/routing.md` (both restate in full); no equivalent routing reference exists in `codex-office` (see note below) | Pre-restructure `claude-office/SKILL.md` and `agy-office/SKILL.md` Phase 1 |
 | Never collapse the task carrying the run's main correctness/security risk | core | `office-core/protocol/roles-and-authority.md` (Delegation test, counterweight) | `auto-office/references/fan-out.md`, `agy-office/references/routing.md` | Pre-restructure `claude-office/SKILL.md` and `agy-office/SKILL.md` Phase 1 |
 | Escalation ownership: `[needs-planner]` / `[needs-user]` / `[decided]`, batched with a recommendation, never inferred | core | `office-core/protocol/roles-and-authority.md` (Escalation ownership) | `auto-office/references/escalation.md`, `agy-office/references/escalation.md`, `codex-office/skills/codex-executor/SKILL.md` (Upline resolution, condensed) | Each pre-restructure hub's escalation material |
-| Pre-existing dirty changes are protected paths, never touched or reverted | core | `office-core/protocol/roles-and-authority.md` (One writer per working tree) | `codex-office/skills/codex-cli/SKILL.md`, `auto-office/references/discernment.md` | Pre-restructure `codex-office/SKILL.md` "Essential operating rules" |
+| Pre-existing dirty changes are protected paths, never touched or reverted | core | `office-core/protocol/roles-and-authority.md` (One independent writer per working tree) | `codex-office/skills/codex-cli/SKILL.md`, `auto-office/references/discernment.md` | Pre-restructure `codex-office/SKILL.md` "Essential operating rules" |
 
 *Note on the routing shape:* `codex-office` keeps its brand-routing rule in the hub rather than a
 separate `references/routing.md`. Same-brand Codex workers use in-session subagents; cross-brand
-assignments use the assignee's CLI adapter. The executor still remains one writer per repository.
+assignments use the assignee's CLI adapter. The executor remains the sole independent implementation
+writer per repository; its one coordinated Tester exception is defined by core.
 
 ### Dispatch and runtime
 
@@ -230,7 +231,7 @@ lives now.
 | Codex: invocation and caller-override rules | `codex-office/SKILL.md` (Invocation gate and caller overrides) |
 | Codex: four phases (plan/execute/review/closeout), one line each | `codex-office/SKILL.md` (The four phases); detail in `codex-office/skills/codex-executor/SKILL.md`, `codex-reviewer/SKILL.md`, `codex-closeout/SKILL.md` |
 | Codex: `-m` explicit, model choice by task | `codex-office/skills/codex-cli/SKILL.md` |
-| Codex: one writer per tree | `codex-office/skills/codex-cli/SKILL.md`; core: `roles-and-authority.md` |
+| Codex: one independent implementation writer per tree; coordinated Tester exception uses disjoint paths and Git locking | `codex-office/skills/codex-cli/SKILL.md`; core: `roles-and-authority.md`, `tester-worker.md` |
 | Codex: executor authority (local edits/commits only) | `codex-office/skills/codex-executor/SKILL.md` |
 | Codex: successful exit ≠ evidence | `codex-office/skills/codex-cli/SKILL.md`; core: `evidence-and-handoff.md` |
 | Codex: deployment/migration planner-held, read-back required | `codex-office/skills/codex-closeout/SKILL.md` |

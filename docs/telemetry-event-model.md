@@ -74,6 +74,15 @@ are the same measurement.
 **Privacy: counts and redacted labels only.** No prompt text, no tool arguments, no file contents.
 Prompts reduce to a length and a truncated hash; repos to opaque slugs, with the slug map gitignored.
 
+### Tester measurements
+
+Tester lifecycle events use the existing run-event envelope and add `worker_kind: "tester"` while
+retaining `role: "executor"`. Harnesses that can observe the lifecycle may record
+`tester.dispatched`, `tester.checkpoint`, `tester.result`, and `tester.completed`; no role is asked
+to emit them. A result records the test mode, BASE/checkpoint identity, status, whether the run was
+live or stable, and the correction round. Executor fast-lane runs remain ordinary validation
+evidence and are attributed to the Executor rather than mislabelled as Tester work.
+
 ## Version attribution
 
 The offices are symlinked into `~/.claude/skills`, not installed from a marketplace cache, so the
@@ -129,6 +138,8 @@ costs.
 | Unselected office material | Bytes in a worker packet | 0 |
 | Invocation attribution | Runs carrying an event id | 100% of runs after hook install |
 | Duplicate writers | Overlapping sessions in one worktree | 0 |
+| Tester correction rounds | Tester → Executor fix rounds per task | ≤ 2 |
+| Tester efficiency | Combined Tester + Executor output versus Executor-only baseline | No regression without measured quality gain |
 | Required proof | Final gates showing real output | 100% |
 | Escaped defects | Reviewer or post-merge findings | No regression |
 

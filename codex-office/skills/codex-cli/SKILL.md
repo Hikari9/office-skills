@@ -64,11 +64,13 @@ reachable just because `--yolo` is set.
   often exists only in production; pin the shape in the prompt and require one real record pasted
   back.
 
-## One writer per working tree
+## Independent writers per working tree
 
-Never run two Codex processes against one working tree. Parallel work requires **separate
-worktrees and disjoint `Touches:` paths** — not just separate prompts. Before dispatch, confirm no
-other writer is already live in that tree.
+Never run two independent Codex processes against one working tree. Parallel work requires
+**separate worktrees and disjoint `Touches:` paths** — not just separate prompts. The coordinated
+Executor-owned Tester is the only in-tree exception and follows
+`office-core/protocol/tester-worker.md` for path ownership and Git locking. Before dispatch, confirm
+no uncoordinated writer is already live in that tree.
 
 **`codex exec resume` is the sharpest way to break this rule, because it does not look like a
 dispatch.** It takes no `--cd` and silently lands in the *caller's* cwd, not the session's — so a

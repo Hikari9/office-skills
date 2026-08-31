@@ -107,10 +107,11 @@ evaluate.
 
 1. **Verify the stated cause reproduces at `BASE` before implementing.** If it does not, return
    `BRIEF DEFECT` with what you found instead.
-2. **Any task shipping a test must paste that test failing at `BASE`** — or against the reverted
-   fix. A test that passes before the change and after it has demonstrated nothing about the
-   change. This is a brief clause and not a reviewer heuristic because a green test is invisible
-   to review: it looks exactly like a passing test that works.
+2. **Any task shipping a test must record that test failing against `BASE`, the pre-regression
+   checkpoint, or a deliberately reverted fix.** The Tester may run BASE in the read-only Planner
+   worktree while the Executor continues coding. A test that passes before the change and after it
+   has demonstrated nothing about the change. This is a brief clause and not a reviewer heuristic
+   because a green test is invisible to review: it looks exactly like a passing test that works.
 
 ## The fix loop
 

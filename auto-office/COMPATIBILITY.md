@@ -2,9 +2,9 @@
 
 | Line | Value |
 |---|---|
-| Plugin version | `6.0.0` (see `.claude-plugin/plugin.json`) |
-| Core protocol supported | `>=6.0.0 <7.0.0` |
-| Core protocol vendored | `6.0.0` (see `office-core/SNAPSHOT.json`) |
+| Plugin version | `7.0.0` (see `.claude-plugin/plugin.json`) |
+| Core protocol supported | `>=7.0.0 <8.0.0` |
+| Core protocol vendored | `7.0.0` (see `office-core/SNAPSHOT.json`) |
 | Vendored snapshot | `office-core/SNAPSHOT.json`, written by `scripts/vendor-core.sh` |
 | Sibling plugins required | `codex-office`, `agy-office` — for the CLI, executor, and closeout mechanics of those two routes. The claude route ships in this plugin as of `4.0.0`. |
 
@@ -30,10 +30,10 @@ exceptions:
     owner: auto-office
     reason: >
       The selected orchestrator may sub-delegate individual tasks to another tool (typically agy for
-      read-only recon and bulk mechanical work). Sub-delegation never creates a second writer — a
-      worker works inside the orchestrator's tree under its supervision or returns an artifact
-      the orchestrator applies — and inherits the orchestrator brief's file scope and constraints
-      rather than a wider one.
+      read-only recon and bulk mechanical work). Ordinary sub-delegation never creates a second
+      writer. The core Tester exception permits one Executor-owned Tester to write disjoint test/config
+      paths in the orchestrator's tree under the shared lock and pathspec contract, and inherits the
+      orchestrator brief's file scope and constraints rather than a wider one.
     widens_core_authority: false
   - id: auto-goal-locked-autonomy
     owner: auto-office

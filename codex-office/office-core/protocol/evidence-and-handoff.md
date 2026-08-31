@@ -92,7 +92,22 @@ numbered work items in scope for this packet · protected paths · blast-radius 
 (verbatim) · permitted side effects · validation commands · required evidence · handoff path ·
 office plugin id/version and core protocol version · invocation id.
 
-The Kernel is the only office material every role receives. Everything else is selected.
+The Kernel is the only office material every role receives. Everything else is selected. A Tester
+packet keeps `role: executor` and carries `worker_kind: tester`; its test-specific contract lives in
+[`tester-worker.md`](tester-worker.md).
+
+## Tester result report
+
+The Tester sends a concise result message as soon as a run finishes and writes the detailed report
+to a file. The report records the task, parent Executor, test mode, BASE/checkpoint identity,
+owned test/config paths, exact command, result status, output location, mutation-table rows, and
+next owner/action. Valid statuses are `PASS`, `FAIL_IMPLEMENTATION`, `FAIL_TEST`, `BLOCKED_ENV`, and
+`SPEC_AMBIGUITY`.
+
+Live-worktree green output is provisional. A red result is an Executor decision: the Executor may
+continue, pause for a stable rerun, or route the diagnosis back to Tester. A stable final result
+must be attributable to the relevant checkpoint. Tester reports never approve implementation;
+Verifier and Reviewer remain independent gates.
 
 ## Handoff report contract
 
@@ -116,6 +131,9 @@ Required sections:
 - **`## Upline`** — every unresolved or self-resolved question, labelled `[needs-planner]`,
   `[needs-user]`, or `[decided]` per
   [`roles-and-authority.md`](roles-and-authority.md).
+
+When a Tester contributed tests, the handoff also identifies the Tester report, every test/config
+commit, the checkpoint/base used for each result, and the Executor's token/time fast-lane decision.
 
 The planner resolves every Upline item before dispatching review, and carries the `[decided]`
 list into the reviewer's packet **as written** — no editorializing, no marking entries settled.

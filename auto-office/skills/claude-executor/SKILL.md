@@ -32,9 +32,10 @@ The planner fills these into the brief, and the executor is bound by them even i
 
 1. **Verify the stated cause reproduces at `BASE` before implementing.** If it does not, return
    `BRIEF DEFECT` rather than implementing anyway.
-2. **A task shipping a test must paste that test failing at `BASE`** (or against the reverted fix). A
-   test that passes before the change and after it has demonstrated nothing, and a green useless test
-   is invisible to review — it looks exactly like a passing test that works.
+2. **A task shipping a test must record that test failing against `BASE`, the pre-regression
+   checkpoint, or a deliberately reverted fix.** Tester may run BASE in the read-only Planner
+   worktree while Executor continues coding. A test that passes before and after the change proves
+   nothing, and a green useless test is invisible to review.
 3. **Self-review your own work before handing off** — per task before marking it complete, and
    once over the cumulative `BASE..HEAD` diff at Finish, including work you implemented inline.
    Record it in the handoff's required `## Self-review` section. It never substitutes for the
@@ -57,10 +58,11 @@ was faithful.
 ## In-session fan-out
 
 The executor **may fan out in-session** using this harness's built-in sub-agent mechanism — for
-parallel read-heavy work, or to keep a large read out of its own context. The limits are what matter:
-the fan-out stays inside **the brief's file scope**, and it never becomes a second writer —
-**one writer per tree, always.** A sub-agent that returns an artifact the executor applies is fine; a
-sub-agent editing the same tree in parallel is the failure this office exists to prevent.
+parallel read-heavy work, or to keep a large read out of its own context. The default remains one
+independent implementation writer per tree. The coordinated Tester exception allows one Tester to
+author tests/config in the same tree when `Touches:` paths are disjoint; it uses the core contract's
+Git lock, explicit pathspecs, staged-path audit, and result-report rules. No other peer writer may
+share the tree.
 
 A brief that prescribes *how* to fan out is overreaching — the mechanism belongs to this office — and
 a brief that is silent about fan-out is not forbidding it.
