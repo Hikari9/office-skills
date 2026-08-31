@@ -1,5 +1,21 @@
 # Changelog
 
+## 5.0.0 — 2026-08-31
+
+Core `6.0.0`.
+
+- Draft PR bodies now contain an immutable GitHub blob deeplink to the tracked plan, anchored to
+  the plan-only first commit.
+
+## 4.1.0 — 2026-08-31
+
+Core `5.1.0`.
+
+- Every complete reviewer verdict is now copied to the existing draft PR before triage or
+  follow-up.
+- `CHANGES REQUIRED` findings are preserved verbatim, with finding-by-finding resolution comments
+  after each fix wave for resumeability.
+
 ## 4.0.0 — 2026-08-31
 
 Core `5.0.0`.

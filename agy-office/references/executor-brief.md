@@ -19,8 +19,8 @@ flag ordering, workspace semantics, model names, quota, live monitoring. This fi
    once, fully; the executor must commit this file alone as its first branch commit.
 4. **Workspace scratch dir** — an absolute, git-ignored path where every artifact it writes lives.
 5. **Tracking issue and PR bootstrap** — the issue reference, remote, branch, base branch, and
-   exact authority to push the named branch, create one draft PR referencing the plan and issue, and
-   post resumability comments.
+   exact authority to push the named branch, create one draft PR whose body contains an immutable
+   plan blob deeplink and references the plan and issue, and post resumability comments.
 6. **BASE commit** — the tip before its work, so the diff range is unambiguous.
 7. **In-scope work** — the precise, numbered set of behaviors/files to implement, in imperative voice.
    Not "could you look at…"; agy has answered questions *about* a task instead of doing it.
@@ -66,8 +66,8 @@ citation you can check in seconds, and Phase 3 checks it.
 ## Bootstrap authority (non-negotiable)
 
 The prompt authorizes exactly this startup sequence before implementation: plan-only first commit,
-named-branch push, one draft PR whose body links the plan and references the tracking issue, and the
-initial/milestone resumability comments. If any action cannot be verified, stop and report a blocked
+named-branch push, one draft PR whose body contains the immutable plan blob deeplink and references
+the tracking issue, and the initial/milestone resumability comments. If any action cannot be verified, stop and report a blocked
 handoff. The prompt must say that the plan remains tracked until planner closeout removes it.
 
 After bootstrap, agy may commit **only** to the designated branch/worktree named in the prompt. It must not:

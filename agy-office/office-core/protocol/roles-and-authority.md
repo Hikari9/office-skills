@@ -7,7 +7,7 @@ obligations; it may never widen authority, remove a gate, or reassign a role.
 
 | Role | Held by | Owns | Never does |
 |---|---|---|---|
-| **Planner** | the invoking session | interview, plan, approval, escalation, fix triage, review gate, closeout, ready-for-review, merge, plan removal, all planner-held actions | **take the executor's task away from independent review**; approve the work |
+| **Planner** | the invoking session | interview, plan, approval, escalation, fix triage, review gate, review-record comments, closeout, ready-for-review, merge, plan removal, all planner-held actions | **take the executor's task away from independent review**; approve the work |
 | **Executor** | a fresh worker process/subagent | draft-PR bootstrap, implementing the approved plan inside its stated scope, milestone comments, the handoff report | approve its own work; act outside the blast-radius ceiling |
 | **Reviewer** | a fresh agent that did not do the work | the approval gate, numbered findings, the review verdict | write the fix it is gating; approve without evidence |
 
@@ -105,9 +105,10 @@ authorized.
 
 Every executor launch follows [`executor-bootstrap.md`](executor-bootstrap.md). The approved plan
 and brief grant the executor exactly these startup actions: commit the tracked plan file as the
-branch's first commit, push the named branch, create one draft PR whose body references the plan and
-tracking issue, and post the initial and milestone resumability comments. The executor must verify
-each action and stop before implementation if any bootstrap precondition fails.
+branch's first commit, push the named branch, create one draft PR whose body contains a clickable
+plan blob deeplink anchored to that first commit and references the tracking issue, and post the
+initial and milestone resumability comments. The executor must verify each action and stop before
+implementation if any bootstrap precondition fails.
 
 This exception transfers neither the review gate nor closeout. The PR remains draft until reviewer
 approval; the planner removes the plan in the final pre-merge commit, marks the PR ready, and merges.
@@ -135,8 +136,8 @@ the user read, instead of mid-run on a decision they have already made once.
 
 - **Outbound messages** — email, chat, public post, bulk outreach. Audience and draft surfaced,
   approval taken in the current session, every time. A plan cannot pre-authorize these. The required
-  GitHub PR body and milestone bookkeeping comments are the executor-bootstrap exception and must be
-  named in the approved plan.
+  GitHub PR body, milestone, review-verdict, and fix-resolution comments are the PR-bookkeeping
+  exceptions and must be named in the approved plan.
 - **A genuinely user-owned decision** the plan did not anticipate — a fork where different
   choices produce materially different work. Recommend first, then ask; never infer.
 

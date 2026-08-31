@@ -11,7 +11,8 @@ The planner has explicit approval for the plan, and the executor packet names:
 - `BASE`, the branch tip before the run;
 - the tracked plan at `docs/plans/<slug>.md`, including its tracking issue reference;
 - the exact remote and named branch allowed for the bootstrap;
-- the GitHub repository's base branch and the PR body fields.
+- the GitHub repository's base branch and the PR body fields, including the plan's absolute blob
+  deeplink.
 
 The plan file is copied from planner scratch into the designated worktree before dispatch. A plan in
 scratch alone is not a dispatchable plan.
@@ -25,9 +26,12 @@ The executor performs these actions in order, before implementing any numbered t
 2. Confirm `docs/plans/<slug>.md` exists, is tracked, and matches the approved plan version. Stage
    that file alone and commit it as the branch's first commit with a why-focused message.
 3. Push the named branch explicitly (`git push <remote> <branch>`). Never push `HEAD`.
-4. Create exactly one GitHub draft PR for the branch. The body links the plan path, references the
-   tracking issue, states that the PR is draft, and records the plan commit SHA. Reuse an existing
-   PR for the branch only when it is the same run's PR.
+4. Create exactly one GitHub draft PR for the branch. The body includes a clickable plan blob
+   deeplink in this form — `[docs/plans/<slug>.md](https://github.com/<owner>/<repo>/blob/<plan-commit-sha>/docs/plans/<slug>.md)` —
+   where `<plan-commit-sha>` is the full SHA of the plan-only first commit. It also references the
+   tracking issue, states that the PR is draft, and records the plan commit SHA. The immutable
+   commit anchor keeps the link valid after final closeout removes the plan from the branch. Reuse
+   an existing PR for the branch only when it is the same run's PR.
 5. Comment on the PR with the branch, plan path, issue, plan commit, and the next resume point.
 6. Begin the numbered implementation tasks.
 

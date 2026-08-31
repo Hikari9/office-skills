@@ -16,5 +16,6 @@ criteria:
   - "An explicit Out of scope section is present"
   - "The plan is written to tracked `docs/plans/<slug>.md` and names a tracking issue"
   - "The plan names the executor bootstrap and single-draft-PR milestone comment behavior"
+  - "The plan names complete reviewer verdict and CHANGES REQUIRED finding comments before follow-up work"
 allowed_tools: ["Read", "Grep", "Glob", "Write"]
 timeout: 400

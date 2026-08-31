@@ -93,6 +93,11 @@ with confidence, write `Fix: unclear — <what you'd need to know>` rather than 
 
 Do not soften findings to be agreeable, and do not manufacture findings to look rigorous. If the work is genuinely clean, say so and approve.
 
+Make the finalized verdict complete enough to copy verbatim into the run's existing PR comment.
+Do not omit a numbered finding, self-review, gate evidence, deferral, or Upline decision. The
+planner posts it before triage or follow-up work, then posts a finding-by-finding resolution
+comment with evidence after each fix wave.
+
 ## Your output
 
 Return exactly one verdict, in this shape and nothing else:

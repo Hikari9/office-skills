@@ -101,6 +101,13 @@ The reviewer returns one of three verdicts: `APPROVED`, `CHANGES REQUIRED` with 
 `PLAN DEFECT`. It is instructed to refuse approval without pasted command output for the build/test gate
 — if it approves without that evidence, send it back.
 
+After every complete verdict, the planner must post the reviewer's finalized verdict to the
+existing draft PR before triage, fixes, another review round, or closeout. The comment must carry
+the round, reviewer id, `HEAD`/range, complete verdict and self-review; for `CHANGES REQUIRED`,
+copy every numbered finding verbatim. After each fix wave, post a finding-by-finding
+`ADDRESSED`/`NOT ADDRESSED` resolution comment with evidence, fix range, and next resume point,
+then read both comments back. A `PENDING` or incomplete review is not posted or counted.
+
 ## `PLAN DEFECT` — the reviewer's upline path
 
 Sometimes the diff faithfully implements the plan and the **plan** is what's wrong. Treating that as

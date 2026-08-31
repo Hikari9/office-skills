@@ -46,6 +46,11 @@ package file for `BASE..HEAD`, the validation commands, **the planner's own Phas
 check summary** of what the verification pass found and what it is passing through unverified.
 Also hand it the handoff's `## Upline` `[decided]` list, verbatim, as scrutiny targets.
 
+The planner records the finalized verdict in the existing draft PR before triage or follow-up.
+Make the response complete enough to copy verbatim; every `CHANGES REQUIRED` finding, including
+its evidence and recommendation fields, must survive in the PR comment. After a fix wave, the
+planner posts each finding's resolution and the new commit range before resuming review.
+
 ## Do not compress the rubric because agy reviewed nothing
 
 Unlike `claude-office`, an `agy` run has no in-session subagents and reviews nothing itself: **Phase

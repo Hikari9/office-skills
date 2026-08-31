@@ -208,8 +208,9 @@ The cheap check — "what else consumes this file?" — was one grep.
   concurrent *edits*, not an agent running `git checkout` en route to its own worktree. A brief saying
   "make your own branch" is a request, not a control.
 - **Re-read the branch after any dispatch returns**, not only before committing.
-- **The executor owns the core bootstrap: plan-only first commit, named-branch push, one draft PR,
-  and initial/milestone comments.** The planner never authors a commit for code it did not write.
+- **The executor owns the core bootstrap: plan-only first commit, named-branch push, one draft PR
+  whose body contains the immutable plan blob deeplink, and initial/milestone comments.** The
+  planner never authors a commit for code it did not write.
   **Name the branch:** `git push <remote> <branch-name>`, **never**
   `HEAD` — `HEAD` inherits whatever you are on, so "I only push feature branches" is not true by
   construction, and this is exactly how a deploy has already happened by accident once. This rule

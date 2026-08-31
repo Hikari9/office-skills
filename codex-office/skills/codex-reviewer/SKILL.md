@@ -30,6 +30,11 @@ Exactly three, defined in `office-core/protocol/review-states.md`:
 **Approval without pasted real gate output for the reviewed `HEAD` is refused, not assumed.** A
 successful process exit or narration is not evidence.
 
+The planner records the finalized verdict in the existing draft PR before triage or follow-up.
+Make the response complete enough to copy verbatim; every `CHANGES REQUIRED` finding, including
+its evidence and recommendation fields, must survive in the PR comment. After a fix wave, the
+planner posts each finding's resolution and the new commit range before resuming review.
+
 ## Continuity and the round cap
 
 Resume the **same** reviewer session for every round of a given review — it keeps what it already

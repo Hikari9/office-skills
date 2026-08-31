@@ -22,9 +22,15 @@ the user's turns. Never spend a top-tier model on retrieval.
 Every plan that dispatches an executor is a tracked repository file at
 `docs/plans/<slug>.md`. The plan includes its exact `Plan path`, the approved `BASE`, the named
 branch/worktree, and a `Tracking issue` reference. The planner creates or identifies the tracking
-issue before approval and puts the same reference in the draft PR body. A repository without an
-issue tracker may state that exception explicitly; otherwise an absent issue reference is a plan
-defect.
+issue before approval and puts the same reference in the draft PR body. The body also carries a
+clickable GitHub blob deeplink for the plan, anchored to the full SHA of the plan-only first commit:
+`[docs/plans/<slug>.md](https://github.com/<owner>/<repo>/blob/<plan-commit-sha>/docs/plans/<slug>.md)`.
+A repository without an issue tracker may state that exception explicitly; otherwise an absent
+issue reference is a plan defect.
+
+If the approved plan is amended after PR creation, the planner updates the PR body to add or replace
+the deeplink with the full SHA of the commit containing the latest approved plan before dispatching
+or resuming work, then reads the body back. The original first-commit link may remain as history.
 
 ## Required sections
 
@@ -72,8 +78,12 @@ run that precedes it, the backup or revert target, and the read-back that proves
 it as unnamed.
 
 External outreach may never appear here: email, chat, public posts, and bulk messages are approved
-in session, at the time, always. The required GitHub PR body and milestone bookkeeping comments are
-executor-bootstrap actions and must appear here with their exact commands and read-backs.
+in session, at the time, always. The required GitHub PR body — including the immutable plan blob
+deeplink — and milestone bookkeeping comments are
+executor-bootstrap actions and must appear here with their exact commands and read-backs. The
+review-verdict and fix-resolution comments required by
+[`review-states.md`](review-states.md#the-pr-review-record) are also GitHub bookkeeping actions;
+name their exact `gh pr comment` command and read-back in the plan before dispatch.
 
 ## Claims discipline
 
