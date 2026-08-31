@@ -100,7 +100,7 @@ PR remains draft until final reviewer approval; no milestone is merged independe
   the named branch; precondition: the plan-only first commit exists and the remote is `origin`;
   revert target: delete the feature branch only during authorized closeout; read-back:
   `git ls-remote --heads origin feat/office-core-executor-draft-pr` matches `HEAD`.
-- `gh pr create --draft --base main --head feat/office-core-executor-draft-pr ...`; target: GitHub
+- `gh pr create --draft --base main --head feat/office-core-executor-draft-pr --title "feat: executor draft-PR bootstrap" --body "Plan: docs/plans/executor-draft-pr-bootstrap.md\nTracking issue: #1"`; target: GitHub
   draft PR; changes: creates one draft PR whose body links `docs/plans/executor-draft-pr-bootstrap.md`
   and references `#1`; precondition: the named branch is pushed and no PR exists for it; revert
   target: close the draft PR without merging if creation was mistaken; read-back:
