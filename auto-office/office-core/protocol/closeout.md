@@ -85,7 +85,8 @@ have created the one draft PR.
 
 Before marking the PR ready, read its comments and confirm that every completed reviewer verdict
 and every `CHANGES REQUIRED` fix-resolution comment is present, complete, and attributable to this
-run. An unrecorded review is an unfinished gate: keep the PR draft and stop.
+run. Also read the PR body and confirm its plan deeplink resolves to the latest approved plan
+commit. An unrecorded review or stale plan link is an unfinished gate: keep the PR draft and stop.
 
 Merge, ready-for-review, plan removal, and cleanup remain planner-held actions under
 [`roles-and-authority.md`](roles-and-authority.md). Push and draft-PR creation happen at executor

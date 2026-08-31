@@ -28,6 +28,10 @@ clickable GitHub blob deeplink for the plan, anchored to the full SHA of the pla
 A repository without an issue tracker may state that exception explicitly; otherwise an absent
 issue reference is a plan defect.
 
+If the approved plan is amended after PR creation, the planner updates the PR body to add or replace
+the deeplink with the full SHA of the commit containing the latest approved plan before dispatching
+or resuming work, then reads the body back. The original first-commit link may remain as history.
+
 ## Required sections
 
 1. **Context** — why this work exists.
