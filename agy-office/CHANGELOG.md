@@ -1,5 +1,12 @@
 # Changelog — agy-office
 
+## 6.0.0 — 2026-08-31
+
+Core `7.0.0`.
+
+- Adds the coordinated Executor-owned Tester worker exception for parallel test authoring, live
+  test execution, checkpoint evidence, and bounded correction loops.
+
 ## 5.0.0 — 2026-08-31
 
 Core `6.0.0`.

@@ -14,6 +14,10 @@
         "packet.built",
         "worker.dispatched",
         "worker.completed",
+        "tester.dispatched",
+        "tester.checkpoint",
+        "tester.result",
+        "tester.completed",
         "verification.completed",
         "review.round",
         "review.verdict",
@@ -34,6 +38,29 @@
     "core_version": { "type": "string" },
     "timestamp": { "type": "string", "format": "date-time" },
     "role": { "enum": ["planner", "executor", "verifier", "reviewer"] },
+    "worker_kind": {
+      "enum": ["implementer", "tester"],
+      "description": "Optional Executor-owned worker specialization; tester events retain role=executor."
+    },
+    "testing": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "enum": ["test-first", "implementation-first", "hybrid"] },
+        "state": {
+          "enum": ["planned", "authoring", "ready_for_checkpoint", "running", "result_reported", "executor_fixing", "retest_eligible", "pass", "escalated"]
+        },
+        "status": {
+          "enum": ["PASS", "FAIL_IMPLEMENTATION", "FAIL_TEST", "BLOCKED_ENV", "SPEC_AMBIGUITY"]
+        },
+        "base": { "type": "string" },
+        "checkpoint": { "type": "string" },
+        "command": { "type": "string" },
+        "live_result": { "type": "boolean" },
+        "stable_result": { "type": "boolean" },
+        "correction_round": { "type": "integer", "minimum": 0, "maximum": 2 }
+      }
+    },
     "dispatch_mode": {
       "type": "string",
       "description": "Office-specific: codex-exec, claude-cli, claude-in-session, agy-print, inline."

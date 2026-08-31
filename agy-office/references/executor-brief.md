@@ -39,7 +39,26 @@ flag ordering, workspace semantics, model names, quota, live monitoring. This fi
    (see [verification.md](verification.md)).
 14. **Handoff report path and contract** — `<scratch dir>/handoff.md`, in the shape given below.
 15. **No-clarifying-question instruction** — verbatim: *"Do not stop to ask questions; make reasonable
-    decisions yourself and implement the entire brief."*
+   decisions yourself and implement the entire brief."*
+
+## Optional Tester worker
+
+For a task with meaningful behavioral test surface, the Executor may dispatch one specialized
+Tester worker. The Tester keeps `role: executor` and adds `worker_kind: tester`; it owns only the
+declared test files, fixtures, test-local helpers, and test-specific configuration. The Executor
+owns implementation files. They may author concurrently in one worktree only when `Touches:` paths
+are disjoint. Both workers use a shared Git-operation lock, explicit pathspecs, and staged-path
+audits; `git add -A` and `git commit -a` are forbidden. The Executor makes implementation checkpoint
+commits, while Tester may commit its test/config paths separately.
+
+Use `test_mode` `test-first`, `implementation-first`, or `hybrid`. Planner sets the initial intent;
+Executor may activate, defer, or change it with a `[decided]` rationale. Tester may run BASE in a
+read-only Planner worktree and may test the live worktree while Executor continues coding. Live
+green output is provisional; Executor decides whether a red result needs a paused stable rerun.
+Executor may run simple CLI tests itself to keep the fix loop moving. Tester sends a concise result
+message and writes the detailed report to the workspace, using statuses `PASS`, `FAIL_IMPLEMENTATION`,
+`FAIL_TEST`, `BLOCKED_ENV`, or `SPEC_AMBIGUITY`. Tester does not approve implementation; the
+independent review gate remains authoritative.
 
 ## The real-signature clause (non-negotiable)
 
@@ -84,11 +103,13 @@ ready-for-review, merge, and cleanup.
 `--dangerously-skip-permissions` is required for unattended work, and it removes every approval stop.
 Like `codex --yolo`, that makes the prompt the only guardrail there is.
 
-## One tree, one agy process
+## One independent agy process per tree
 
-Never run two `agy` processes against the same working tree. Parallel dispatches get separate
-worktrees, each with its own branch, BASE, scratch dir, and report path. Two writers in one tree stage
-and commit half of each other's changes, and the corruption surfaces as a mystery diff later.
+Never run two independent `agy` processes against the same working tree. Parallel dispatches get
+separate worktrees, each with its own branch, BASE, scratch dir, and report path. The coordinated
+Executor-owned Tester is the only in-tree exception and follows
+`office-core/protocol/tester-worker.md`; unrelated writers in one tree still stage and commit half
+of each other's changes.
 
 ## Ledger and resumability
 

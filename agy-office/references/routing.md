@@ -45,8 +45,10 @@ reason to split. Neither is "these are conceptually separate steps."
 - **Every dispatch needs its own verification pass** ([verification.md](verification.md)). Seven checks
   per dispatch, on your time. That is a real per-split cost the other offices don't pay.
 
-**Parallel agy runs need separate worktrees, always.** Two processes in one tree stage and commit half
-of each other's changes. One tree, one agy process — no exceptions.
+**Parallel agy runs need separate worktrees, always.** The only in-tree exception is one coordinated
+Executor-owned Tester, using disjoint test/config paths, the shared Git lock, and explicit pathspec
+commits from `office-core/protocol/tester-worker.md`. Two independent agy processes in one tree
+still stage and commit half of each other's changes.
 
 ## The hard ceiling: ~3 tasks per dispatch
 

@@ -20,7 +20,7 @@ Planner ─▶ Plan-reviewer ─▶ retires │ Planner ─▶ ONE Executor per 
 | **Planner** | The current agent (you) | Interview → plan + GOAL → approval; **dispatch ONE executor per repo**; hold the review gate; answer consults; perform user-facing and irreversible actions | **Dispatch a per-task worker**; approve work, its own included |
 | **Plan-reviewer** | Fresh, planner's brand, Opus **low**. **Full gear only** | One adversarial pass before approval, then **retires** | Distribute work; return; hold a later gate |
 | **Executor** | **One per repo**, brand per plan, **sonnet-tier high always** | **Execute the WHOLE plan end to end** — bootstrap plan-only first commit, named-branch push, one draft PR and resume comments; then every task in dependency order; **self-review every task and the whole diff**; write `EXECUTOR-STATE.md` | Approve its own work; mark ready, remove the plan, merge, exceed the ceiling; amend a user-approved field |
-| **Worker** | Per task; **any** brand/model/effort the plan declares | One task, never a second writer | Widen scope; be promoted mid-run |
+| **Worker** | Per task; **any** brand/model/effort the plan declares | One task; Tester follows the core worker contract | Widen scope; be promoted mid-run |
 | **Reviewer (code)** | Fresh `opus` **low** (`codex-luna` xhigh/high when Codex *plans*) | Adversarial gate every round | Fix what it gates |
 
 **Core principle: no one gates their own work, and inline work is still reviewed.** Self-review is
@@ -91,11 +91,11 @@ production reads included, shape pinned in the brief, read-back required.
 
 ## Non-bypassable safety rules
 
-- One executor per repo, one writer per tree, ever. Sub-delegation is not a second writer; a planner
-  inline write never overlaps a live executor in that tree.
-- **The planner dispatches exactly three kinds of process in an approved run: the executor (one per
-  repo), the code reviewer, and — in Phase 1 only — read-only scouts.** A planner-launched worker
-  for a numbered task is a protocol violation regardless of how well it goes.
+- One executor per repo; one implementation writer per tree, except one Tester with disjoint
+  test/config paths and locked commits. A planner inline write never overlaps a live executor.
+- **The planner dispatches the executor, code reviewer, and Phase 1 read-only scouts.** After
+  bootstrap, the Executor may dispatch task workers and Tester under the core contract. A
+  planner-launched numbered-task worker is a protocol violation.
 - **No self-approval, ever** — not the executor on its diff, not the planner on its inline fix.
 - Executor is **sonnet-tier high** always; a worker's tier is the plan's call, never raised mid-run.
 - A delegation buys tier, isolation, parallelism, **or price** — and **every inline row states in a

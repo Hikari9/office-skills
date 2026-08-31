@@ -16,12 +16,14 @@ may reject with evidence, and on follow-up rounds the reviewer judges the result
 never on whether its own suggestion was followed.
 
 Offices may add roles (Agy's mandatory independent **verifier** is the planner wearing a
-distinct, non-judging hat). An added role never absorbs an existing role's gate.
+distinct, non-judging hat). An added role never absorbs an existing role's gate. An Executor-owned
+specialized worker such as **Tester** is not a standing role and keeps the Executor's authority.
 
 ### Every dispatch announces its role in its first line
 
 A spawned session's first brief line is `[ROLE] <repo> — <task>`, with `ROLE` one of `PLANNER`,
-`PM`, `EXECUTOR`, `WORKER`, `REVIEW`, `PLAN-REVIEW`. The repo is named because executors are one per
+`PM`, `EXECUTOR`, `WORKER`, `REVIEW`, `PLAN-REVIEW`. A specialized worker names its kind in the
+task, for example `[WORKER] repo — tester: task`. The repo is named because executors are one per
 repo, so the role alone does not identify a parallel run. Where a brand also exposes a label flag
 (`--remote-control` / `--name`), pass the same string; where it does not, the brief's first line is
 the whole mechanism.
@@ -145,11 +147,23 @@ the user read, instead of mid-run on a decision they have already made once.
 changes, a missing backup path, a read-back that does not match — each of those is a stop, and it
 is a stop *because the precondition failed*, not because the run lost its nerve.
 
-## One writer per working tree
+## One independent writer per working tree
 
-One writing process per tree, always. Parallel work requires separate worktrees **and**
-disjoint `Touches:` sets. Before dispatch the planner confirms no other writer is live in that
-tree; a newer overlapping writer is stopped before it can edit.
+One independent implementation writer per tree remains the default. Parallel independent work
+requires separate worktrees **and** disjoint `Touches:` sets. The only coordinated exception is one
+Executor plus at most one Executor-owned Tester in the same worktree, with disjoint declared paths.
+
+The Executor owns implementation paths. Tester owns tests, fixtures, test-local helpers, and
+test-specific configuration. Both may author concurrently, but Git index operations are serialized
+under a shared lock and every commit uses explicit pathspecs plus a staged-path audit. `git add -A`
+and `git commit -a` are invalid in this arrangement. Live test execution is allowed case by case;
+green live output is provisional, and the Executor decides whether a red result needs a paused
+stable retest. No other peer writers share the tree.
+
+The Planner's worktree may be reused for BASE testing only while it is read-only and non-conflicting.
+
+Before dispatch the planner confirms that no uncoordinated writer is live in that tree; a newer
+overlapping writer is stopped before it can edit.
 
 Pre-existing dirty changes are preserved and named as **protected paths** in the plan.
 
@@ -216,7 +230,8 @@ into full; it never deadlocks and it never lowers a bar to finish.
 
 Express drops **phases**, never **floors**. Everything in this file that is not a phase still
 binds: no self-approval, every gate held by someone who did not do the work, evidence over exit
-codes, read-backs for live-system writes, one writer per tree, the blast-radius ceiling, and the
+codes, read-backs for live-system writes, one independent writer per tree (with the coordinated
+Tester exception), the blast-radius ceiling, and the
 planner-held rules above.
 
 ### What the fit test may and may not do

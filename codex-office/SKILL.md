@@ -65,7 +65,8 @@ or three sentences and proceed. Full rule: `office-core/protocol/roles-and-autho
 
 - Explicit invocation only; never self-triggered.
 - The planner does not implement the plan; the executor never approves its own work.
-- One writer per working tree; parallel work needs separate worktrees and disjoint paths.
+- One independent implementation writer per working tree; the coordinated Executor-owned Tester is
+  the only in-tree exception and requires disjoint paths plus the core Git-lock contract.
 - `codex exec --yolo` has no sandbox or approval stop — the prompt and the stated blast-radius
   ceiling are the entire safety boundary.
 - When routing to Codex CLI, pass **both** `-m <model>` and

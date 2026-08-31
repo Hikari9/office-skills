@@ -40,6 +40,10 @@
       "enum": ["planner", "executor", "verifier", "reviewer"],
       "description": "The role this packet is built for. Determines which spokes are selected."
     },
+    "worker_kind": {
+      "enum": ["implementer", "tester"],
+      "description": "Optional Executor-owned worker specialization. A tester keeps role=executor and never becomes a standing gate."
+    },
     "plan": {
       "type": "object",
       "additionalProperties": false,
@@ -62,7 +66,7 @@
         "path": { "type": "string", "description": "Absolute repository or worktree root." },
         "worktree_id": {
           "type": "string",
-          "description": "Identity of the tree, used to enforce one writer per tree."
+          "description": "Identity of the tree, used to enforce one independent writer per tree and coordinate the Tester exception."
         },
         "branch": { "type": "string" },
         "base_commit": { "type": "string", "description": "BASE recorded before dispatch." }
@@ -146,7 +150,8 @@
           "interface_citations",
           "live_readback",
           "control_run",
-          "scope_readback"
+          "scope_readback",
+          "tester_report"
         ]
       }
     },

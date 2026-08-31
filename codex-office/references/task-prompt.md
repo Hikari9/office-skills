@@ -12,6 +12,25 @@ effects; full validation commands; and a handoff path. For a CLI executor, its
 Require a ledger at `<workspace>/progress.md` and a handoff at
 `<workspace>/handoff.md` containing these sections:
 
+## Optional Tester worker
+
+For a task with meaningful behavioral test surface, the Executor may dispatch one specialized
+Tester worker. The Tester keeps `role: executor` and adds `worker_kind: tester`; it owns only the
+declared test files, fixtures, test-local helpers, and test-specific configuration. The Executor
+owns implementation files. They may author concurrently in one worktree only when `Touches:` paths
+are disjoint. Both workers use a shared Git-operation lock, explicit pathspecs, and staged-path
+audits; `git add -A` and `git commit -a` are forbidden. The Executor makes implementation checkpoint
+commits, while Tester may commit its test/config paths separately.
+
+Use `test_mode` `test-first`, `implementation-first`, or `hybrid`. Planner sets the initial intent;
+Executor may activate, defer, or change it with a `[decided]` rationale. Tester may run BASE in a
+read-only Planner worktree and may test the live worktree while Executor continues coding. Live
+green output is provisional; Executor decides whether a red result needs a paused stable rerun.
+Executor may run simple CLI tests itself to keep the fix loop moving. Tester sends a concise result
+message and writes the detailed report to the workspace, using statuses `PASS`, `FAIL_IMPLEMENTATION`,
+`FAIL_TEST`, `BLOCKED_ENV`, or `SPEC_AMBIGUITY`. Tester does not approve implementation; the
+independent review gate remains authoritative.
+
 ```markdown
 # Codex handoff — <plan slug>
 ## Commits

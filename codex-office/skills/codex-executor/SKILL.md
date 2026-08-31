@@ -39,9 +39,10 @@ against the plan and declare success.
 
 1. **Verify the stated cause reproduces at `BASE` before implementing.** If it does not, return
    `BRIEF DEFECT` — do not implement anyway.
-2. **A task shipping a test must paste that test failing at `BASE`** (or against the reverted fix). A
-   test green before the change proves nothing about the change, and a green useless test is
-   invisible to review.
+2. **A task shipping a test must record that test failing against `BASE`, the pre-regression
+   checkpoint, or a deliberately reverted fix.** Tester may run BASE in the read-only Planner
+   worktree while Executor continues coding. A test green before the change proves nothing about the
+   change, and a green useless test is invisible to review.
 3. **Self-review your own work before handing off** — per task before marking it complete, and
    once over the cumulative `BASE..HEAD` diff at Finish, including work you implemented inline.
    Record it in the handoff's required `## Self-review` section. It never substitutes for the
@@ -61,10 +62,11 @@ it. Implementing anyway "just in case" spends the task's budget on a change nobo
 ## In-session fan-out
 
 The executor **may fan out in-session** using its own harness's built-in sub-agent mechanism, when
-doing so buys parallelism or keeps read-heavy work out of its context. Two limits, and they are the
-whole point of this section: the fan-out stays inside **the brief's file scope**, and it never becomes
-a second writer in the tree — **one writer per tree, always**. A sub-agent that returns an artifact the
-executor applies is not a second writer; a sub-agent editing the tree in parallel is.
+doing so buys parallelism or keeps read-heavy work out of its context. The default remains one
+independent implementation writer per tree. The coordinated Tester exception allows one Tester to
+author tests/config in the same tree when `Touches:` paths are disjoint; it uses the core contract's
+Git lock, explicit pathspecs, staged-path audit, and result-report rules. No other peer writer may
+share the tree.
 
 The mechanism is this harness's own; a brief that prescribes *how* to fan out is overreaching, and a
 brief that is silent about it is not forbidding it.

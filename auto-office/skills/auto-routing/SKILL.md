@@ -25,8 +25,10 @@ cannot do this, the file does not exist, the stated cause is false — is a `PLA
 `BRIEF DEFECT`, never a licence to re-decide routing. The decision lives in the plan so a bad route is
 reviewable before it is paid for.
 
-**A worker is never a second writer.** It works inside the executor's tree under supervision, or
-returns an artifact the executor applies. Fan-out is cheap; two writers corrupt a tree.
+**An uncoordinated worker is never a second writer.** The one narrow exception is an Executor-owned
+Tester writing only disjoint test/config paths under `office-core/protocol/tester-worker.md`, with
+the shared Git lock and explicit pathspec commits. All other fan-out returns an artifact for the
+Executor to apply or uses a separate worktree.
 
 ## Route by capability role, not by model name
 
@@ -256,7 +258,8 @@ unchanged: **never collapse the task carrying the run's main correctness or secu
 inline work, because inline work gets no independent per-task review.
 
 **Planner inline work never overlaps a live executor in that tree.** Before dispatch, or after the
-handoff — never alongside. One writer per tree reads in both directions.
+handoff — never alongside. One independent implementation writer per tree reads in both directions;
+the coordinated Executor-owned Tester is the only core-defined exception.
 
 ## Near-ties are not worth reasoning about
 
@@ -350,8 +353,9 @@ Rules that make this safe:
 - **Batch adjacent cheap edits.** Three tiny edits in the same file are one task, not three.
 - **Never batch across the review gate.** Cheapness is not a reason to bundle unrelated changes into
   one reviewable unit; a diff the reviewer cannot reason about costs more than the batching saved.
-- **A supervised sub-delegation is still one writer.** A worker inside an executor's tree does not
-  make two.
+- **A supervised sub-delegation is still one writer unless it is the coordinated Tester exception.**
+  A Tester inside an Executor's tree is allowed only under the core contract's path ownership and
+  Git-lock rules.
 - **A scout's answer is a claim, not a fact.** It returns file paths and line numbers so the caller
   can verify in one read. An unverifiable scout answer is discarded, not trusted.
 - **Agy: 3 consecutive tasks, hard cap.** At the cap, either re-brief from scratch with full context

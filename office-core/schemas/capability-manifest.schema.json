@@ -9,6 +9,10 @@
   "properties": {
     "invocation_id": { "type": "string" },
     "role": { "enum": ["planner", "executor", "verifier", "reviewer"] },
+    "worker_kind": {
+      "enum": ["implementer", "tester"],
+      "description": "Optional Executor-owned specialization; tester packets retain role=executor."
+    },
     "capabilities": {
       "type": "array",
       "items": {

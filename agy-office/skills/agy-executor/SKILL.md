@@ -72,9 +72,10 @@ All three are required fields of the packet contract, not optional additions:
 
 1. **Verify the stated cause reproduces at `BASE` before implementing.** If it does not, return
    `BRIEF DEFECT` instead of implementing.
-2. **A task shipping a test must paste that test failing at `BASE`** (or against the reverted fix). A
-   test that was green before the change proves nothing about it, and a green useless test is invisible
-   to review.
+2. **A task shipping a test must record that test failing against `BASE`, the pre-regression
+   checkpoint, or a deliberately reverted fix.** Tester may run BASE in the read-only Planner
+   worktree while Executor continues coding. A test that was green before the change proves nothing
+   about it, and a green useless test is invisible to review.
 3. **Self-review your own work before handing off** — per task before marking it complete, and
    once over the cumulative `BASE..HEAD` diff at Finish, including work you implemented inline.
    Record it in the handoff's required `## Self-review` section. It never substitutes for the
@@ -96,9 +97,10 @@ as correct, passes its own checks, and survives Phase 2b — because Phase 2b ve
 ## In-session fan-out
 
 The executor **may fan out in-session** using its own harness's built-in sub-agent mechanism. The
-limits are the point: within **the brief's file scope**, and never a second writer — **one writer per
-tree, always**, which for this office means one `agy` run per repo with no parallel writer inside it.
-A sub-agent that returns an artifact the executor applies is not a second writer.
+default remains one independent implementation writer per tree. The coordinated Tester exception
+allows one Tester to author tests/config in the same tree when `Touches:` paths are disjoint; it uses
+the core contract's Git lock, explicit pathspecs, staged-path audit, and result-report rules. No other
+peer writer may share the tree.
 
 The mechanism belongs to this office, not to the brief. A brief that prescribes *how* is overreaching;
 a brief that is silent is not forbidding.
