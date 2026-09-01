@@ -8,6 +8,11 @@ description: Adversarial review gate — fresh Opus reviewer, three verdicts, ev
 Loaded by: the planner (to dispatch) and the reviewer (as its own contract), at Phase 3.
 Assumes: the Office Kernel is already in the packet.
 
+When `HERDR_ENV=1`, dispatch and resume this reviewer through the [Herdr skill](../../office-core/skills/herdr/SKILL.md)
+in a visible pane; nested reviewer children go below their parent, and in-session Agent/Task
+subagents are not used. Close a pane created for the reviewer after its final verdict and any
+required review rounds are complete.
+
 Full mechanics and the fix loop live in
 [`../../references/review-gate.md`](../../references/review-gate.md); the reviewer's
 self-contained prompt template is [`../../references/reviewer-brief.md`](../../references/reviewer-brief.md).
@@ -44,10 +49,9 @@ gated surface require independent re-review.
 
 **Hand the diff over as a file**, never as prompt text.
 
-The planner records the finalized verdict in the existing draft PR before triage or follow-up.
-Make the response complete enough to copy verbatim; every `CHANGES REQUIRED` finding, including
-its evidence and recommendation fields, must survive in the PR comment. After a fix wave, the
-planner posts each finding's resolution and the new commit range before resuming review.
+The planner records the finalized verdict and each disposition in the review files and run state.
+Do not write for a PR comment: intermediate verdicts and fix resolutions stay internal. When the
+final verdict is `APPROVED`, the planner posts the core policy's short approval summary.
 
 **Reuse existing gate-hook output only when you can point at the real output and confirm it ran
 against `HEAD`.** A hook that discards passing output, or is conditional on uncommitted changes,

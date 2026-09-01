@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Independently versioned offices for irreversible or production-facing work, sharing the office-core protocol, plus a router office that selects among them and owns the claude route.",
-    "version": "4.0.0"
+    "version": "5.0.0"
   },
   "plugins": [
     {
       "name": "codex-office",
       "source": "./codex-office",
       "description": "Codex office. The active planner plans and closes out; Codex planners use in-session Codex subagents for Codex workers, while non-Codex planners use CLI workers.",
-      "version": "3.1.0",
+      "version": "8.0.0",
       "author": {
         "name": "office-skills"
       },
@@ -29,7 +29,7 @@
       "name": "agy-office",
       "source": "./agy-office",
       "description": "Agy office. The agy CLI executes, the planner independently verifies in a mandatory Phase 2b, and a non-agy reviewer holds the gate.",
-      "version": "3.0.0",
+      "version": "8.0.0",
       "author": {
         "name": "office-skills"
       },
@@ -47,7 +47,7 @@
       "name": "auto-office",
       "source": "./auto-office",
       "description": "Auto office. Routes each unit of work to a codex, agy, or claude executor by capability and measured quota, gates the plan before user approval, then runs goal-locked end-to-end to closeout behind an Opus code-review gate.",
-      "version": "4.1.0",
+      "version": "9.0.0",
       "author": {
         "name": "office-skills"
       },

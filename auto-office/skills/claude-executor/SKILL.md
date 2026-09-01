@@ -55,14 +55,16 @@ and looks, so it is the only role that can raise this. A mistaken `BRIEF DEFECT`
 disprove; a suppressed one costs the whole task plus the rounds spent discovering the implementation
 was faithful.
 
-## In-session fan-out
+## Fan-out
 
-The executor **may fan out in-session** using this harness's built-in sub-agent mechanism — for
-parallel read-heavy work, or to keep a large read out of its own context. The default remains one
-independent implementation writer per tree. The coordinated Tester exception allows one Tester to
-author tests/config in the same tree when `Touches:` paths are disjoint; it uses the core contract's
-Git lock, explicit pathspecs, staged-path audit, and result-report rules. No other peer writer may
-share the tree.
+When `HERDR_ENV=1`, load the [Herdr skill](../../office-core/skills/herdr/SKILL.md) and use a pane
+below this executor for any further subagent; close that created pane after reading its final
+result and confirming no follow-up is needed. The built-in in-session sub-agent mechanism is not used in that mode. When Herdr is absent, the executor
+may fan out in-session using this harness for parallel read-heavy work or to keep a
+large read out of its own context. The default remains one independent implementation writer per
+tree. The coordinated Tester exception allows one Tester to author tests/config in the same tree
+when `Touches:` paths are disjoint; it uses the core contract's Git lock, explicit pathspecs,
+staged-path audit, and result-report rules. No other peer writer may share the tree.
 
 A brief that prescribes *how* to fan out is overreaching — the mechanism belongs to this office — and
 a brief that is silent about fan-out is not forbidding it.

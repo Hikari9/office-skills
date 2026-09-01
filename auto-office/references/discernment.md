@@ -1,5 +1,9 @@
 # Discernment: inline vs. delegate, and the claude CLI as executor
 
+When `test "${HERDR_ENV:-}" = 1` passes, load [`../office-core/skills/herdr/SKILL.md`](../office-core/skills/herdr/SKILL.md)
+and use its visible pane dispatch for every real delegation; do not use the CLI or an in-session
+Agent/Task child. The CLI guidance below applies when Herdr is absent.
+
 Use this to decide whether to execute a task **INLINE** in the primary session or delegate implementation work to a **native `claude` background agent** (`claude --bg`) that can be attached to and steered live — not a fire-and-forget shell process, and not `claude -p`/`--print` (that's a one-shot pipe, not a live-managed agent). This is also the mechanism behind `claude-office`'s Phase 2A (`--cli` executor, the default).
 
 ## Triage gate: inline vs. delegated execution

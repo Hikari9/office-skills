@@ -34,12 +34,12 @@ The prompt must name the tracked `docs/plans/<slug>.md`, tracking issue, `BASE`,
 branch, and PR body fields, including an immutable blob deeplink to the plan anchored to the
 plan-only commit. Verify the worktree and branch, commit the plan file alone as the branch's first
 commit, push the named branch, create one draft PR whose body contains that plan deeplink and
-references the issue, and post the initial resume comment. A failed bootstrap precondition stops implementation and
+references the issue, and post the approved-plan/execution-begins comment. A failed bootstrap precondition stops implementation and
 returns a blocked handoff.
 
 After bootstrap, agy commits **only** to the designated branch or worktree named in the prompt. Its
-explicit outward authority is limited to the named-branch push, one draft-PR creation, and initial
-or milestone comments. It must not:
+explicit outward authority is limited to the named-branch push, one draft-PR creation, the
+approved-plan/execution-begins comment, and the first-executor-completion comment. It must not:
 
 - mark the PR ready or remove the plan
 - merge or deploy
@@ -51,8 +51,8 @@ or milestone comments. It must not:
 do not infer permission from the task's broader goal. Closeout owns plan removal, ready-for-review,
 merge, and cleanup.
 
-At every green milestone, post its name, commit range, validation output, and next resume point to
-the same draft PR before continuing.
+At the first completed handoff, post the executor-completion details required by the core bootstrap
+contract. Record later milestones in local run state, not on the PR.
 
 ## One executor per repository
 
@@ -94,13 +94,15 @@ self-consistent and wrong. An agy executor that implements a false premise produ
 as correct, passes its own checks, and survives Phase 2b — because Phase 2b verifies the work is
 *real*, not that the premise was *true*.
 
-## In-session fan-out
+## Fan-out
 
-The executor **may fan out in-session** using its own harness's built-in sub-agent mechanism. The
-default remains one independent implementation writer per tree. The coordinated Tester exception
-allows one Tester to author tests/config in the same tree when `Touches:` paths are disjoint; it uses
-the core contract's Git lock, explicit pathspecs, staged-path audit, and result-report rules. No other
-peer writer may share the tree.
+When `HERDR_ENV=1`, load the [Herdr skill](../../office-core/skills/herdr/SKILL.md) and use a pane
+below this executor for any further subagent; close that created pane after reading its final
+result and confirming no follow-up is needed. The built-in in-session sub-agent mechanism is not used in that mode. When Herdr is absent,
+the executor may use its existing harness route. The default remains one independent implementation
+writer per tree. The coordinated Tester exception allows one Tester to author tests/config in the
+same tree when `Touches:` paths are disjoint; it uses the core contract's Git lock, explicit
+pathspecs, staged-path audit, and result-report rules. No other peer writer may share the tree.
 
 The mechanism belongs to this office, not to the brief. A brief that prescribes *how* is overreaching;
 a brief that is silent is not forbidding.

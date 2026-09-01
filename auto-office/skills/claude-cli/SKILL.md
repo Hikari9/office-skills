@@ -8,6 +8,10 @@ description: The claude CLI adapter — --cli vs --in-session, the fork gotcha, 
 Loaded by: the planner, before dispatch.
 Assumes: the Office Kernel is already in the packet.
 
+When `HERDR_ENV=1`, this CLI spoke is not the dispatch surface. Load
+[`herdr`](../../office-core/skills/herdr/SKILL.md) and start the Claude agent in a Herdr pane;
+use this spoke when Herdr is absent or not detected.
+
 Full inline-vs-delegate method, the model decision matrix, effort tuning, worktree fan-out, and
 the complete list of verified CLI pitfalls live in
 [`../../references/discernment.md`](../../references/discernment.md) — read it before launching
@@ -90,9 +94,10 @@ Evidence this rule exists: on 2026-08-04 a planner skipped straight to `--in-ses
 2026-08-03 ledger row. A probe run minutes later launched, ran, and wrote its output file with the
 allowlist form on the first try. The stale note cost a correct dispatch form for no reason.
 
-**`--in-session` is the opt-out**, passed by the caller at invocation. It restores an in-session
-Agent-tool subagent as the executor instead. The reviewer is **always** in-session regardless of
-this setting — it never runs as a `--cli` background agent.
+**`--in-session` is the opt-out** only when Herdr is absent, passed by the caller at invocation. It
+restores an in-session Agent-tool subagent as the executor instead. With `HERDR_ENV=1`, Herdr takes
+precedence and neither this opt-out nor an in-session reviewer is used; the reviewer is a Herdr agent
+pane as well.
 
 ## The fork gotcha, in full
 

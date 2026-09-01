@@ -10,8 +10,8 @@ Assumes: the Office Kernel is already in the packet, and the reviewer has return
 
 The procedure is core: `office-core/protocol/closeout.md`. This office's additions are in
 [`../../references/closeout.md`](../../references/closeout.md). In order: verify the project's real
-gate (leave the existing draft PR draft on red), confirm the executor bootstrap and milestone
-comments, remove the tracked plan in a dedicated pre-merge commit, push and verify the deletion, mark
+gate (leave the existing draft PR draft on red), confirm the executor bootstrap and first-completion
+comment, remove the tracked plan in a dedicated pre-merge commit, push and verify the deletion, mark
 the PR ready, merge with `Closes #N`, document only what the repo already maintains, sync local
 `main` after a confirmed merge, remove the worktree only if this run's tooling created it, and close
 every open loop.

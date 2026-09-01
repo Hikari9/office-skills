@@ -5,8 +5,10 @@ The shared source contract for `codex-office`, `agy-office`, and the Claude rout
 **`office-core` is not a fourth office and is never invoked directly.** It holds only the
 rules that must genuinely agree across all three executor routes: role separation, plan approval,
 blast-radius ceilings, the Office Kernel, handoff/evidence requirements, reviewer states,
-executor draft-PR bootstrap, and rollback language. Runtime mechanics — `codex exec` flags, `--cli` vs `--in-session`,
-`agy` flag ordering — belong to the owning plugin and must not migrate here.
+executor draft-PR bootstrap, and rollback language. Brand-specific runtime mechanics — `codex exec`
+flags, `--cli` vs `--in-session`, `agy` flag ordering — belong to the owning plugin and must not
+migrate here. The shared Herdr dispatch surface is the exception: its pane topology, prompt, wait,
+and cleanup contract lives in `skills/herdr/SKILL.md`.
 
 ## Layout
 
@@ -22,6 +24,8 @@ office-core/
 │   ├── tester-worker.md             # Executor-owned test authoring and execution worker
 │   ├── closeout.md                  # final gate, plan removal, PR readiness, merge, cleanup
 │   └── compatibility.md             # versioning, adapters, exceptions, release rules
+├── skills/
+│   └── herdr/SKILL.md                # Herdr-aware dispatch, layout, prompting, and cleanup
 └── schemas/
     ├── office-kernel.schema.json    # the immutable per-run packet header
     ├── handoff.schema.json          # executor → planner report

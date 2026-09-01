@@ -1,6 +1,6 @@
 ---
 name: codex-office
-description: Use only when explicitly named for production-facing or irreversible repository work. The active planner plans and closes out; Codex planners use in-session Codex subagents for Codex workers, while non-Codex planners use CLI workers.
+description: Use only when explicitly named for production-facing or irreversible repository work. The active planner plans and closes out; Herdr-managed panes take precedence when HERDR_ENV=1, otherwise existing Codex/CLI routing applies.
 ---
 
 # Codex Office
@@ -15,8 +15,8 @@ in the spokes it routes to.
 | Role | Owner | Default model | Responsibility |
 |---|---|---|---|
 | Planner | Active Codex session | current session | scope, plan, escalation, closeout |
-| Executor | Fresh Codex in-session subagent when planner and assignee are Codex; otherwise the assignee's CLI | `gpt-5.6-luna`, high | bootstraps the draft PR, implements the approved plan, and comments milestones |
-| Reviewer | Separate fresh Codex in-session subagent when planner and assignee are Codex; otherwise the assignee's CLI | `gpt-5.6-luna`, xhigh (code review of a low-blast-radius leg: high) | adversarial gate and re-review |
+| Executor | Fresh Herdr-managed agent pane when HERDR_ENV=1; otherwise Codex in-session when planner and assignee are Codex, or the assignee's CLI | `gpt-5.6-luna`, high | bootstraps the draft PR, implements the approved plan, and posts the first-completion event |
+| Reviewer | Separate fresh Herdr-managed agent pane when HERDR_ENV=1; otherwise Codex in-session when planner and assignee are Codex, or the assignee's CLI | `gpt-5.6-luna`, xhigh (code review of a low-blast-radius leg: high) | adversarial gate and re-review |
 
 ## Invocation gate and caller overrides
 
@@ -33,6 +33,10 @@ the reviewer below its stated floor, or widen the blast-radius ceiling implicitl
 
 Route each assigned worker by the **planner brand** and **assignee brand**:
 
+- If `test "${HERDR_ENV:-}" = 1` succeeds, load [`herdr`](office-core/skills/herdr/SKILL.md) and
+  dispatch every non-inline worker/reviewer through a visible Herdr pane: direct children to the
+  right, further children below their parent. Never use an in-session Agent/Task subagent in this
+  mode; record the form as `herdr`.
 - If both the planner and the assigned executor or reviewer are Codex, use a fresh in-session
   Codex subagent. The reviewer is a new subagent identity, separate from both the planner and
   executor; in-session does not mean inline planner work or executor reuse.
@@ -40,9 +44,9 @@ Route each assigned worker by the **planner brand** and **assignee brand**:
   Codex assignee therefore runs through `codex exec` when the planner is Claude or Agy.
 - If the planner is Codex but the assignee is another brand, use that brand's CLI adapter.
 
-The assignee brand is the model family, not the display tier. A Codex model at any permitted tier
-still qualifies for the Codex in-session path. Record the selected form as `in-session` or `cli` in
-run telemetry.
+The assignee brand is the model family, not the display tier. Outside Herdr, a Codex model at any
+permitted tier still qualifies for the Codex in-session path. Record the selected form as `herdr`,
+`in-session`, or `cli` in run telemetry.
 
 ## Fit test — first, before anything, and it picks a gear
 
@@ -75,10 +79,11 @@ or three sentences and proceed. Full rule: `office-core/protocol/roles-and-autho
   and an unrecognised effort is accepted silently — read the launch banner back.
 - Executor authority includes the core bootstrap: plan-only first commit, named-branch push, one
   draft PR whose body contains an immutable plan blob deeplink and references the plan and issue,
-  and initial/milestone comments. The planner retains plan
+  and the approved-plan/execution-begins comment plus the first-executor-completion comment. The planner retains plan
   removal, ready-for-review, merge, deploy, remote config, messages, and credentials.
-- **Commit and comment each milestone as its criteria go green** on the single draft PR. Keep the PR
-  draft until final reviewer approval; closeout removes the plan, marks the PR ready, and merges it.
+- **Milestones are internal checkpoints; they do not create PR comments.** The final `APPROVED`
+  review gets one short summary comment; keep the PR draft until then. Closeout removes the plan,
+  marks the PR ready, and merges it.
 - **Dispatch live-system work with its access**: enumerate the MCP/API tools in the launch,
   production **reads** included, and pin the data shape in the prompt with a read-back required.
 - A successful process exit is not evidence; the gate is the repository's full validation
@@ -92,11 +97,11 @@ or three sentences and proceed. Full rule: `office-core/protocol/roles-and-autho
 
 ## Protocol version
 
-This plugin implements office-core protocol `8.0.0`, vendored at `office-core/` in this plugin.
+This plugin implements office-core protocol `9.0.0`, vendored at `office-core/` in this plugin.
 The vendored copy is authoritative for an installed plugin; the repo-root `office-core/` is the
 development source. Mandatory read: `office-core/protocol/roles-and-authority.md`.
 
-**Declared narrowing of core.** Core `8.0.0` lets the planner implement inline; this office
+**Declared narrowing of core.** Core `9.0.0` lets the planner implement inline; this office
 does **not** — the planner never implements the plan here. Narrowing is legal, and it is stated so a
 reader of both files need not guess which governs.
 
@@ -114,6 +119,7 @@ below it selects, and nothing else.
 |---|---|---|
 | Plan contract | `office-core/protocol/plan-contract.md` | Planner, before writing the plan |
 | Review verdicts | `office-core/protocol/review-states.md` | Planner, before dispatching the reviewer |
+| Herdr dispatch | [`herdr`](office-core/skills/herdr/SKILL.md) | Before any dispatch when `HERDR_ENV=1` |
 | Driving `codex exec` safely | `skills/codex-cli/SKILL.md` | Any phase whose routing selects Codex CLI |
 | Executor role and packet contract | `skills/codex-executor/SKILL.md` | Phase 2, building or receiving the executor dispatch |
 | Reviewer role and fix loop | `skills/codex-reviewer/SKILL.md` | Phase 3, building or receiving the reviewer dispatch |

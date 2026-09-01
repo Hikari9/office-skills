@@ -4,7 +4,9 @@ description: The executor's role contract and authority limits. Loaded by the co
 ---
 
 Loaded by: planner (to build the dispatch), and by the assigned executor, at Phase 2. The executor
-may be an in-session Codex subagent or a CLI worker, according to the hub's Dispatch routing.
+may be a Herdr-managed agent, an in-session Codex subagent, or a CLI worker, according to the hub's
+Dispatch routing. When `HERDR_ENV=1`, load [`herdr`](../../office-core/skills/herdr/SKILL.md) and
+use its pane/prompt/wait/cleanup contract.
 Assumes: the Office Kernel is already in the packet.
 
 ## Contract
@@ -25,12 +27,12 @@ initial resume comment.
 Any failed precondition stops implementation and returns a blocked handoff.
 
 After bootstrap, the executor may make local edits and commits in the named worktree, plus the
-explicit bootstrap push/PR and milestone comments. It may not mark the PR ready, remove the plan,
+explicit bootstrap push/PR and first-executor-completion comment. It may not mark the PR ready, remove the plan,
 merge, deploy, alter remote configuration, send messages, or touch credentials. Silence means not
 authorized.
 
-At every green milestone, post the milestone name, commit range, validation output, and next resume
-point to the same draft PR before continuing.
+At the first completed executor handoff, post the executor-completion details required by the core
+bootstrap contract. Milestones after that are recorded in local run state, not on the PR.
 
 The executor never approves its own work. It writes the handoff; it does not review the diff
 against the plan and declare success.
@@ -59,14 +61,17 @@ round**; it is the upstream twin of `PLAN DEFECT`. A reviewer cannot catch a wro
 faithfully implements a false premise looks correct — so this return is the only path that exists for
 it. Implementing anyway "just in case" spends the task's budget on a change nobody can evaluate.
 
-## In-session fan-out
+## Fan-out
 
-The executor **may fan out in-session** using its own harness's built-in sub-agent mechanism, when
-doing so buys parallelism or keeps read-heavy work out of its context. The default remains one
-independent implementation writer per tree. The coordinated Tester exception allows one Tester to
-author tests/config in the same tree when `Touches:` paths are disjoint; it uses the core contract's
-Git lock, explicit pathspecs, staged-path audit, and result-report rules. No other peer writer may
-share the tree.
+When `HERDR_ENV=1`, use the [Herdr skill](../../office-core/skills/herdr/SKILL.md): a child of this
+executor goes in a pane below it, and the created pane is closed after its final result is read and
+no follow-up is needed.
+The built-in in-session sub-agent mechanism is not used in that mode. When Herdr is absent, the executor
+may fan out in-session using its own harness when doing so buys parallelism or keeps
+read-heavy work out of its context. The default remains one independent implementation writer per
+tree. The coordinated Tester exception allows one Tester to author tests/config in the same tree
+when `Touches:` paths are disjoint; it uses the core contract's Git lock, explicit pathspecs,
+staged-path audit, and result-report rules. No other peer writer may share the tree.
 
 The mechanism is this harness's own; a brief that prescribes *how* to fan out is overreaching, and a
 brief that is silent about it is not forbidding it.

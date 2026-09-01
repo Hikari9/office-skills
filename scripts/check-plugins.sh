@@ -33,6 +33,15 @@ CORE_VERSION="$(tr -d '[:space:]' < "$SRC/VERSION")"
 SRC_HASH="$(core_hash "$SRC")"
 ok "core source version $CORE_VERSION ($SRC_HASH)"
 
+# Herdr is a shared dispatch surface, not an optional copy in one adapter. Keep the
+# internal skill present and loadable before checking the vendored snapshots.
+HERDR_SKILL="$SRC/skills/herdr/SKILL.md"
+if [ -f "$HERDR_SKILL" ] && grep -q '^name: herdr$' "$HERDR_SKILL" && grep -q 'HERDR_ENV' "$HERDR_SKILL"; then
+  ok "shared Herdr skill present"
+else
+  fail "shared Herdr skill missing, malformed, or lacks HERDR_ENV detection"
+fi
+
 # --- per plugin ---------------------------------------------------------------
 for p in "${PLUGINS[@]}"; do
   echo
@@ -67,6 +76,12 @@ PY
     fi
   else
     fail "$p missing SKILL.md"
+  fi
+
+  if grep -q 'HERDR_ENV' "$hub" && grep -q 'office-core/skills/herdr' "$hub"; then
+    ok "$p hub carries the Herdr dispatch pointer"
+  else
+    fail "$p hub is missing the Herdr dispatch pointer"
   fi
 
   # vendored core snapshot: present, fresh, unmodified

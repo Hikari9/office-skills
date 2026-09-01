@@ -1,6 +1,6 @@
 ---
 name: auto-office
-description: Use ONLY when explicitly invoked via /auto-office; never self-triggered by task shape. Router office — a fit test picks the gear, then ONE codex / agy / claude executor per repo runs the approved plan end to end, bootstrapping one draft PR and recording each milestone before final closeout. Opus gates code.
+description: Use ONLY when explicitly invoked via /auto-office; never self-triggered by task shape. Router office — a fit test picks the gear, then ONE codex / agy / claude executor per repo runs the approved plan end to end.
 ---
 
 # Auto Office
@@ -12,7 +12,7 @@ and landing once at final closeout — without asking again.
 ```
 Planner ─▶ Plan-reviewer ─▶ retires │ Planner ─▶ ONE Executor per repo ─▶ Workers
 (plans, self-reviews,  full gear only│ (whole plan, end to end; it fans out,
-  gates, lands the deploy)            │ it bootstraps draft PR, commits, comments)
+  gates, lands the deploy)            │ it bootstraps draft PR, commits, posts the two executor-event comments)
 ```
 
 | Role | Who | Job | Never does |
@@ -70,14 +70,13 @@ Brand by fit — **codex** backend/data/infra/long-horizon (preferred default), 
 recon, bulk breadth, **claude** cross-cutting ambiguity. Rubric:
 [auto-routing](skills/auto-routing/SKILL.md).
 
-**Dispatch form is derived, not priced** — planner → **executor** via CLI (its only fan-out in an
-approved run); executor → workers in-session, or CLI for a different brand; inline when a brief takes
-more thought than the change. **The planner plans every task's dispatch form and must say why; the
-executor performs it.** Near-ties: same tier, both fit, pick one.
+**Dispatch form is derived, not priced** — with `HERDR_ENV=1`, real children use [Herdr](office-core/skills/herdr/SKILL.md)
+(right, then below), never in-session; otherwise existing CLI/in-session/inline forms apply. The
+planner states why; the executor performs it.
 
 **Ownership once approved — the planner keeps only what the *user* must see, the gate, and
 *irreversible outward* actions.** Everything else is the executor's: every task, preview/staging
-writes, live reads, fixes, commits, its branch, the draft PR, and milestone comments. **Five fields it may
+writes, live reads, fixes, commits, its branch, the draft PR, and the two executor event comments. **Five fields it may
 never amend** — `goal`, `done_criteria`, `blast_radius`, `named_actions`, `non_goals`; it amends the
 *how* freely, reporting hash + rationale. [auto-loop](skills/auto-loop/SKILL.md) → *Ownership*.
 
@@ -93,6 +92,8 @@ production reads included, shape pinned in the brief, read-back required.
 
 - One executor per repo; one implementation writer per tree, except one Tester with disjoint
   test/config paths and locked commits. A planner inline write never overlaps a live executor.
+- With `HERDR_ENV=1`, read [`herdr`](office-core/skills/herdr/SKILL.md): delegated agents use visible
+  panes (right, then below), never in-session; otherwise existing CLI/in-session routing remains.
 - **The planner dispatches the executor, code reviewer, and Phase 1 read-only scouts.** After
   bootstrap, the Executor may dispatch task workers and Tester under the core contract. A
   planner-launched numbered-task worker is a protocol violation.
@@ -112,7 +113,7 @@ production reads included, shape pinned in the brief, read-back required.
   the plan did not **name them verbatim** with preconditions (dry run, revert target, read-back). The
   loop never widens blast radius or adds a repo/environment.
 
-Implements office-core `8.0.0`, vendored at `office-core/`. Mandatory read:
+Implements office-core `9.0.0`, vendored at `office-core/`. Mandatory read:
 `office-core/protocol/roles-and-authority.md`.
 
 ## The autonomous run
@@ -124,14 +125,14 @@ stops: [auto-loop](skills/auto-loop/SKILL.md).
 self-review → plan-review (full) → approve → GOAL locked
   per task:      dispatch → verify → Opus review → fix → APPROVED
   before tasks:  plan-only commit → push → draft PR → bootstrap comment
-  per milestone: gate → commit → milestone comment → keep going
+  first executor ends: completion gate → executor-completion comment → keep going
   at the end:    remove plan → ready PR → merge → sync, close loops, report
 ```
 
 **The run records work as it goes.** A milestone is a group of done-criteria declared at approval;
-when they go green the loop commits and comments on the single draft PR, then continues. **The branch,
-plan, and PR comments are the resume record until final closeout**, when the planner removes the plan,
-marks the PR ready, and merges it.
+when they go green the loop commits and updates local run state, then continues. **The branch, plan,
+run state, and three allowed PR comments are the resume record until final closeout**, when the planner
+posts the final approval summary, removes the plan, marks the PR ready, and merges it.
 
 It stops for two things: an **external send**, and a **user-owned decision the plan did not
 anticipate** (`AskUserQuestion`, recommendation first). Everything else — production applies and

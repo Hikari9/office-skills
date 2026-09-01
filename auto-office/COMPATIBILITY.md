@@ -2,9 +2,9 @@
 
 | Line | Value |
 |---|---|
-| Plugin version | `8.0.0` (see `.claude-plugin/plugin.json`) |
-| Core protocol supported | `>=8.0.0 <9.0.0` |
-| Core protocol vendored | `8.0.0` (see `office-core/SNAPSHOT.json`) |
+| Plugin version | `14.0.0` (see `.claude-plugin/plugin.json`) |
+| Core protocol supported | `>=14.0.0 <15.0.0` |
+| Core protocol vendored | `14.0.0` (see `office-core/SNAPSHOT.json`) |
 | Vendored snapshot | `office-core/SNAPSHOT.json`, written by `scripts/vendor-core.sh` |
 | Sibling plugins required | `codex-office`, `agy-office` — for the CLI, executor, and closeout mechanics of those two routes. The claude route ships in this plugin as of `4.0.0`. |
 
@@ -30,9 +30,11 @@ exceptions:
     owner: auto-office
     reason: >
       The selected orchestrator may sub-delegate individual tasks to another tool (typically agy for
-      read-only recon and bulk mechanical work). Ordinary sub-delegation never creates a second
-      writer. The core Tester exception permits one Executor-owned Tester to write disjoint test/config
-      paths in the orchestrator's tree under the shared lock and pathspec contract, and inherits the
+      read-only recon and bulk mechanical work). When `HERDR_ENV=1`, every real sub-delegation uses
+      the Herdr pane contract; otherwise same-brand fan-out may use the existing in-session route
+      and cross-brand fan-out uses CLI. Ordinary sub-delegation never creates a second writer. The
+      core Tester exception permits one Executor-owned Tester to write disjoint test/config paths in
+      the orchestrator's tree under the shared lock and pathspec contract, and inherits the
       orchestrator brief's file scope and constraints rather than a wider one.
     widens_core_authority: false
   - id: auto-goal-locked-autonomy
@@ -116,8 +118,9 @@ The remaining exceptions were re-checked against core `2.0.0` and all remain
 - `auto-orchestrator-selection` — still a runtime-mechanics choice about which brand fills the
   executor role, with every gate applying unchanged. The exception id is kept as-is for traceability
   even though this office's prose now says **Executor** rather than Orchestrator.
-- `auto-task-subdelegation` — unchanged, and core 3.0.0's dispatch-form rule narrows it further:
-  same-brand fan-out is in-session, cross-brand is CLI, and neither creates a second writer.
+- `auto-task-subdelegation` — unchanged, and core 9.0.0's Herdr override takes precedence when
+  `HERDR_ENV=1`; without Herdr, same-brand fan-out is in-session, cross-brand is CLI, and neither
+  creates a second writer.
 - `auto-goal-locked-autonomy` — unchanged. The loop still cannot raise a cap, remove a phase,
   downgrade a reviewer, or widen its blast radius, and it gained a stop (`BRIEF DEFECT`) rather than
   losing one.

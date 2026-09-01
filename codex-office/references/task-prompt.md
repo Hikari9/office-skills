@@ -60,8 +60,9 @@ $ <full command>
 
 The packet explicitly authorizes the core executor bootstrap: commit the tracked plan file alone as
 the branch's first commit, push the named branch, create one draft PR whose body contains an
-immutable plan blob deeplink and references the plan and tracking issue, and post the initial and
-milestone resumability comments. The executor must
+immutable plan blob deeplink and references the plan and tracking issue, and post the approved-plan/
+execution-begins comment. The first completed executor handoff also posts the executor-completion
+comment; milestones and later fix handoffs stay in local run state. The executor must
 stop before implementation if any bootstrap action cannot be verified. It may not mark the PR ready,
 remove the plan, merge, deploy, alter remotes, message anyone outside PR bookkeeping, or touch
 credentials. See `office-core/protocol/executor-bootstrap.md`.

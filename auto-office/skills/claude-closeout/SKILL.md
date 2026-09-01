@@ -18,17 +18,17 @@ happen regardless of wording.
 ## Runs once at final closeout
 
 A plan declares milestones (`office-core/protocol/plan-contract.md`). Each green milestone is
-committed and commented on the single draft PR during the loop. This file runs after the final
+committed and recorded in local run state during the loop. This file runs after the final
 reviewer approval: remove the tracked plan, mark the PR ready, merge it, then sync, remove the
 worktree, and close Upline entries. Removing a worktree at milestone 1 of 3 destroys the run.
 
-Never batch milestones. An uncommented green milestone is a re-entry point thrown away.
+Never batch milestones. An unrecorded green milestone is a re-entry point thrown away.
 
 ## Sequence
 
 Verify the project's real gate (not an invented one; don't skip one the project defines — for Next.js
 work that means a real build, not just lint) → if red, leave the existing draft PR draft and report
-→ confirm every milestone comment → remove `docs/plans/<slug>.md` in a dedicated pre-merge commit
+→ confirm local milestone state and the final approval summary → remove `docs/plans/<slug>.md` in a dedicated pre-merge commit
 → push and verify the deletion → `gh pr ready <number>` → `gh pr merge --auto` with `Closes #N` in
 the body → document only what the repo already maintains (no invented doc files) → sync local main,
 verify `main`==`origin/main` before removing a worktree your tooling created, close every open loop.

@@ -93,10 +93,9 @@ with confidence, write `Fix: unclear — <what you'd need to know>` rather than 
 
 Do not soften findings to be agreeable, and do not manufacture findings to look rigorous. If the work is genuinely clean, say so and approve.
 
-Make the finalized verdict complete enough to copy verbatim into the run's existing PR comment.
-Do not omit a numbered finding, self-review, gate evidence, deferral, or Upline decision. The
-planner posts it before triage or follow-up work, then posts a finding-by-finding resolution
-comment with evidence after each fix wave.
+Make the finalized verdict complete enough for the planner's internal review record. Do not omit a
+numbered finding, self-review, gate evidence, deferral, or Upline decision. Intermediate verdicts
+and fix resolutions are not PR comments; only the planner's short final `APPROVED` summary is posted.
 
 ## Your output
 

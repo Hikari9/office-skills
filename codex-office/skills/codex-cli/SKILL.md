@@ -6,6 +6,10 @@ description: Mechanics of driving `codex exec` safely — models, worktrees, tel
 Loaded by: planner, only when Dispatch routing selects the Codex CLI path.
 Assumes: the Office Kernel is already in the packet.
 
+When `HERDR_ENV=1`, this is not the dispatch path. Load
+[`herdr`](../../office-core/skills/herdr/SKILL.md) and use a Herdr-managed pane instead; this
+spoke remains the fallback mechanics when Herdr is absent or not detected.
+
 When the planner and assigned worker are both Codex, the hub routes the worker to a fresh
 in-session Codex subagent instead. This spoke's CLI mechanics do not apply to that path.
 

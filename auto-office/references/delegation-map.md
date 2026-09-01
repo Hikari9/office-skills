@@ -64,10 +64,14 @@ so it needs no diff package and no gate output — and it runs exactly once.
   keeps `xhigh` as its default for that same reason, but its floor is `high` because a docs or
   evidence-checking leg does not carry a wrong brief's blast radius — and a gate that outspends the
   work it gates was the measured failure that prompted the re-declaration.
-- **Dispatch form follows brand match.** Planner → executor is **CLI**. Executor → worker of the
-  **same** brand is **in-session**; a worker of a **different** brand is **CLI**, necessarily.
+- **Herdr overrides dispatch form when detected.** If `test "${HERDR_ENV:-}" = 1` passes, load the
+  [Herdr skill](../../office-core/skills/herdr/SKILL.md) and host every real delegation in a visible
+  pane: direct children to the right, further children below their parent. Do not use an in-session
+  Agent/Task subagent; record `herdr`. Close only panes created for the dispatch after final completion
+  and result read; keep a reviewer pane for later rounds. If Herdr is absent, planner → executor is **CLI**; executor → worker
+  of the **same** brand is **in-session**; a worker of a **different** brand is **CLI**, necessarily.
   Work a delegation buys nothing for is **inline**. The brief says the executor *may* fan out; it
-  never says how. Mechanism is the sibling office's, like every other mechanism.
+  never says how outside Herdr. Mechanism is the sibling office's, like every other mechanism.
 - **Enumerate the live-system tools in the launch.** A dispatch that needs Rock, Basecamp, Sheets, or
   any MCP server names those tools in its permission form — the scoped allowlist carries none of them
   by default. Mechanism per brand is the sibling `*-cli` spoke; the *obligation* is here, because a

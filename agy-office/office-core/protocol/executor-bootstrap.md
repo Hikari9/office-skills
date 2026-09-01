@@ -32,36 +32,39 @@ The executor performs these actions in order, before implementing any numbered t
    tracking issue, states that the PR is draft, and records the plan commit SHA. The immutable
    commit anchor keeps the link valid after final closeout removes the plan from the branch. Reuse
    an existing PR for the branch only when it is the same run's PR.
-5. Comment on the PR with the branch, plan path, issue, plan commit, and the next resume point.
+5. Post the **approved-plan / execution-begins** comment with the branch, plan path, issue, plan
+   commit, and the next resume point. Read it back before continuing.
 6. Begin the numbered implementation tasks.
 
 The first commit may contain only the plan file. The executor must not combine implementation,
 state files, generated output, or protected changes with that commit.
 
-## Milestone comments
+## First executor completion comment
 
-Every approved milestone is a why-focused implementation commit or commit range on the same branch.
-After its gate is green, the executor comments on the draft PR with:
+When the first executor returns its completed handoff, it posts one **executor-completion** comment
+to the draft PR and reads it back before ending. Include:
 
-- milestone name and done-criteria status;
-- commit range and current branch SHA;
-- the exact validation commands and their relevant output;
-- the next task or resume point.
+- executor identity and completion status;
+- the handoff path, commit range, and current branch SHA;
+- the exact validation commands and relevant output; and
+- the next resume point, including any open Upline item.
 
-The planner independently verifies and the reviewer gates the work. A milestone comment is evidence
-for resumption, never approval and never a substitute for the reviewer.
+Later fix executors write their handoffs and local run state but do not add PR comments. Milestones
+remain internal commit/checkpoint boundaries; they are not PR-comment events.
 
 ## Fail closed
 
 If worktree, branch, `BASE`, plan tracking, plan-only commit, push, PR creation, or the initial PR
 comment cannot be verified, stop before implementation and return a blocked handoff naming the failed
-precondition. Do not continue locally and promise to publish later. If a later milestone comment
-fails, stop before advancing to the next milestone and report the exact commit and missing comment.
+precondition. Do not continue locally and promise to publish later. If the first executor-completion
+comment cannot be posted or read back, stop before ending that executor and report the exact commit
+and missing comment.
 
 ## Closeout boundary
 
 The PR remains draft through implementation, verification, and review. After the final reviewer
-returns `APPROVED` and the final gate is green, the planner performs closeout: remove the tracked
-plan in a dedicated pre-merge commit, push that commit, confirm the deletion and all milestone
-comments, mark the PR ready, and merge it under the approved plan's authority. The plan is removed
+returns `APPROVED` and the final gate is green, the planner posts the final approval summary, then
+performs closeout: remove the tracked plan in a dedicated pre-merge commit, push that commit,
+confirm the deletion and approval summary, mark the PR ready, and merge it under the approved plan's
+authority. The plan is removed
 from the branch before it is merged to the base branch; its first commit remains in history.

@@ -7,8 +7,8 @@ obligations; it may never widen authority, remove a gate, or reassign a role.
 
 | Role | Held by | Owns | Never does |
 |---|---|---|---|
-| **Planner** | the invoking session | interview, plan, approval, escalation, fix triage, review gate, review-record comments, closeout, ready-for-review, merge, plan removal, all planner-held actions | **take the executor's task away from independent review**; approve the work |
-| **Executor** | a fresh worker process/subagent | draft-PR bootstrap, implementing the approved plan inside its stated scope, milestone comments, the handoff report | approve its own work; act outside the blast-radius ceiling |
+| **Planner** | the invoking session | interview, plan, approval, escalation, fix triage, review gate, review state, final approval summary, closeout, ready-for-review, merge, plan removal, all planner-held actions | **take the executor's task away from independent review**; approve the work |
+| **Executor** | a fresh worker process/subagent | draft-PR bootstrap, implementing the approved plan inside its stated scope, first-completion comment, the handoff report | approve its own work; act outside the blast-radius ceiling |
 | **Reviewer** | a fresh agent that did not do the work | the approval gate, numbered findings, the review verdict | write the fix it is gating; approve without evidence |
 
 A finding **recommends** a fix; it never writes one. A `Fix:` line is a hypothesis the implementer
@@ -66,6 +66,26 @@ An office that declares a reviewer floor (a model tier, an effort level) declare
 floors, neither overriding the other. Without this, a "stricter rule wins" clause silently
 promotes plan review to the code-review floor and doubles its cost for no gate strength.
 
+## Herdr dispatch override
+
+When `test "${HERDR_ENV:-}" = 1` succeeds, the run is inside a Herdr-managed pane. Load the
+[Herdr skill](../skills/herdr/SKILL.md) and use its CLI as the dispatch surface for every real
+delegation across every office — executor, reviewer, plan-reviewer, verifier, scout, worker, and
+Tester. This overrides the normal brand-matching dispatch form: same-brand work does **not** use an
+in-session Agent/Task subagent while Herdr is detected.
+
+The direct child of the calling agent is shown in a sibling pane to the **right**. A child spawned
+by that agent is shown in a pane **below** its parent. Preserve the caller's focus with `--no-focus`,
+read pane IDs from Herdr JSON responses, and send the approved brief with `herdr agent prompt`.
+After reading the final handoff/output and observing the role's final completion state, close only
+the pane created for that dispatch; keep a reviewer pane open while another review round is needed.
+Inline work remains inline. If `HERDR_ENV` is not `1`, the existing office
+routing — including in-session subagents where currently allowed — is unchanged. If Herdr is
+detected but its command fails, do not silently fall back to an in-session child; use an authorized
+CLI route or surface the blocked dispatch.
+
+The selected dispatch form is recorded as `herdr` in plans and telemetry.
+
 ## Invocation
 
 1. An office runs **only** on explicit invocation by name. It is never self-triggered because
@@ -109,7 +129,7 @@ Every executor launch follows [`executor-bootstrap.md`](executor-bootstrap.md). 
 and brief grant the executor exactly these startup actions: commit the tracked plan file as the
 branch's first commit, push the named branch, create one draft PR whose body contains a clickable
 plan blob deeplink anchored to that first commit and references the tracking issue, and post the
-initial and milestone resumability comments. The executor must verify each action and stop before
+initial and first-completion resumability comments. The executor must verify each action and stop before
 implementation if any bootstrap precondition fails.
 
 This exception transfers neither the review gate nor closeout. The PR remains draft until reviewer
@@ -138,8 +158,8 @@ the user read, instead of mid-run on a decision they have already made once.
 
 - **Outbound messages** — email, chat, public post, bulk outreach. Audience and draft surfaced,
   approval taken in the current session, every time. A plan cannot pre-authorize these. The required
-  GitHub PR body, milestone, review-verdict, and fix-resolution comments are the PR-bookkeeping
-  exceptions and must be named in the approved plan.
+  GitHub PR body and the three allowed PR comments are the PR-bookkeeping exceptions and must be
+  named in the approved plan.
 - **A genuinely user-owned decision** the plan did not anticipate — a fork where different
   choices produce materially different work. Recommend first, then ask; never infer.
 

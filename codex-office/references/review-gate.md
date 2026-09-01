@@ -7,17 +7,16 @@ the place to catch what the author could have found for free. Read the section, 
 handoff: **do not** copy its findings into the reviewer's brief. Handing a reviewer the author's own
 list anchors it and converts an independent pass into a verification of someone else's work.
 
-The reviewer is a fresh, independent Codex worker identity, either an in-session subagent when
-the planner is Codex or a CLI session otherwise. It reviews every changed
+The reviewer is a fresh, independent Codex worker identity, hosted in a visible Herdr pane when
+`HERDR_ENV=1`; otherwise it is an in-session subagent when the planner is Codex or a CLI session.
+It reviews every changed
 line and surrounding code, the plan, all constraints, handoff deviations,
 deferred items, Upline decisions, scope containment, and validation output.
 
-After every complete verdict, the planner must post the reviewer's finalized verdict to the
-existing draft PR before triage, fixes, another review round, or closeout. The comment must carry
-the round, reviewer id, `HEAD`/range, complete verdict and self-review; for `CHANGES REQUIRED`,
-copy every numbered finding verbatim. After each fix wave, post a finding-by-finding
-`ADDRESSED`/`NOT ADDRESSED` resolution comment with evidence, fix range, and next resume point,
-then read both comments back. A `PENDING` or incomplete review is not posted or counted.
+The planner keeps every complete verdict, finding, disposition, and fix wave in the review files and
+run state. It posts no intermediate review or fix-resolution comments. Only a final `APPROVED`
+review gets a PR comment: a short summary naming the reviewer, final `HEAD`, round count, total
+changes required across the rounds, and why each change was required — or why none were.
 
 For `CHANGES REQUIRED`, send a fresh executor a full task prompt limited to the
 findings. Then resume the *reviewer* session with the fix diff, per-finding

@@ -7,6 +7,9 @@ Appended at every closeout ([auto-closeout](../skills/auto-closeout/SKILL.md)), 
 time ([auto-routing](../skills/auto-routing/SKILL.md)). It is the **only** cross-run file in the
 plugin — everything else belonging to a run lives in that run's target repo.
 
+Historical rows retain the dispatch form used at the time. When `HERDR_ENV=1`, the current
+dispatch form is `herdr` regardless of older rows; use the shared Herdr skill for the pane layout.
+
 **Repo identity: opaque slugs only.** This plugin ships publicly. A row never names a real repo,
 host, org, or person; the slug map lives in gitignored `routing-outcomes.local.md`. Verbose
 pre-compaction rows are archived in gitignored `routing-outcomes-archive.local.md`.

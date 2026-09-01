@@ -6,7 +6,7 @@ description: Final closeout — verify the criteria are green, remove the plan, 
 # Auto Closeout
 
 Planner-only. Runs unless the caller said `skip cleanup`. The executor bootstraps one draft PR before
-implementation. Each green milestone is committed and commented on that PR inside the loop. Final
+implementation. Each green milestone is committed and recorded in local run state inside the loop. Final
 closeout runs once after the last milestone: gate → remove the plan → push → mark the PR ready → merge,
 then sync, worktree removal, loop closure, and the run report.
 
@@ -26,7 +26,7 @@ final evidence.
    ready). Off-list is a stop, not a silent absorb into "done."
 3. **Roles.** The executor bootstraps the plan-only first commit, pushes its named branch, opens one
    draft PR whose body contains the immutable plan blob deeplink and references the plan and issue,
-   and comments each milestone. The planner holds the gate,
+   and posts only the approved-plan/execution-begins and first-executor-completion comments. The planner holds the gate,
    removes the plan, marks the PR ready, and performs the merge. Never author a commit for code you
    didn't write.
 4. **Read the existing PR and promotion chain from the repo** before closeout (`gh pr list --head
@@ -46,7 +46,7 @@ final evidence.
    Re-run immediately before the merge, not only when choosing the number.
 6. **Remove the plan and land once.** After final reviewer `APPROVED` and a green final gate, delete
    `docs/plans/<slug>.md` in a dedicated pre-merge commit, push the named branch, verify the deletion
-   and all milestone comments, mark the existing draft PR ready, then merge it. Automerge if that's
+   and final approval summary, mark the existing draft PR ready, then merge it. Automerge if that's
    the repo's convention; merge directly if checks are green and automerge isn't available. Don't
    poll.
 7. **Promote along the real chain to its final branch, regardless of outcome**, unless the caller said

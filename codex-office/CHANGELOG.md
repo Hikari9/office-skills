@@ -1,5 +1,55 @@
 # Changelog
 
+## 13.0.0 — 2026-09-01
+
+Core `14.0.0`.
+
+- PR comments are limited to approved-plan/execution-begins, first-executor-completion, and final
+  `APPROVED` summary events. Intermediate review verdicts, fix resolutions, and milestones remain
+  in run artifacts.
+
+## 12.0.0 — 2026-09-01
+
+Core `13.0.0`. Re-vendor only.
+
+- Picks up the pane-hygiene hook as a shipped, vendored file
+  (`office-core/hooks/close-finished-panes.mjs`), installed only as an explicit opt-in and only where
+  Herdr is detected, plus the rule that a ledger entry without `session_id` is incomplete.
+
+## 11.0.0 — 2026-09-01
+
+Core `12.0.0`. Re-vendor only.
+
+- Picks up core's mechanical pane closing: the ledger at `/tmp/office/panes.jsonl` written inside the
+  spawn block, a `Stop` hook that closes `done`/`idle`/gone entries and nothing else, and
+  `--resume <session_id>` as the way a next round comes back rather than a pane left open.
+
+## 10.0.0 — 2026-09-01
+
+Core `11.0.0`. Re-vendor only.
+
+- Picks up core's Herdr pane-hygiene tightening: a `created_panes` ledger, four named closing
+  checkpoints, and closing from the ledger rather than from `herdr pane list`.
+
+## 9.0.0 — 2026-09-01
+
+Core `10.0.0`.
+
+- Herdr dispatch: `agent_status` is not receipt. A prompt counts as landed only once the pane
+  transcript reflects the brief, not when `herdr agent prompt` returns `working` — that status is
+  frequently the agent's own startup churn. A long brief is sent as a path to a file, not pasted
+  inline, since a long single-shot paste into a just-started agent is what gets silently dropped.
+- Re-vendored from core `10.0.0`; no codex-office-specific text changed.
+
+## 8.0.0 — 2026-09-01
+
+Core `9.0.0`.
+
+- Adds the shared Herdr dispatch override: when `HERDR_ENV=1`, delegated Codex workers and
+  reviewers run in visible Herdr panes, nested children go below their parent, in-session
+  subagents are disabled, and created panes close after settled results are read.
+- Preserves the existing Codex in-session/CLI routing when Herdr is not detected.
+
 ## 7.0.0 — 2026-09-01
 
 Core `8.0.0`.
