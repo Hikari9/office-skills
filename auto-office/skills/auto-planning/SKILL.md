@@ -230,7 +230,7 @@ blast_radius:
   repos: [...]
   environments: [...]     # name production or say "none"
 caps:
-  review_rounds_per_task: 5   # 2 in express, and a 2nd CHANGES REQUIRED promotes to full
+  review_rounds_per_task: 5   # 2 in express; planner decides whether to promote and continue
   agy_consecutive_tasks: 3
   loop_iterations: <n>
 ```
@@ -302,8 +302,9 @@ brand**, at that brand's plan-review row in [auto-routing](../auto-routing/SKILL
 
 **This gate stays because it is the best-value item in every run that has recorded one** — 14 vs 4,
 22 vs 8, 24 vs 6 findings against self-review, overlap near zero each time, blockers that were real.
-When the fit test picks express it is betting the run is small enough not to need it; a second
-`CHANGES REQUIRED` is that bet losing, and the run promotes to full and runs this pass.
+When the fit test picks express it is betting the run is small enough not to need this pass; a
+second `CHANGES REQUIRED` forces a planner disposition. If that disposition recommends another
+review, the run promotes to full and runs this pass; it does not promote automatically.
 
 It receives: the **plan file path**, the GOAL block, and the task assignment table. It returns
 **numbered findings**. **One pass, no rounds.** The planner applies the findings, records which it

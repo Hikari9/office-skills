@@ -221,12 +221,15 @@ these, in order, and may not thin them further:
    **No plan-review gate**, no coordinator, no quota probe, no benchmark read.
 2. **Implement** — delegated or inline per the delegation test.
 3. **One independent code review** by a fresh agent that did not do the work, on real evidence,
-   at the office's stated code-review floor. `CHANGES REQUIRED` re-enters the fix loop.
+   at the office's stated code-review floor. `CHANGES REQUIRED` goes to the planner's disposition
+   checkpoint; it does not automatically re-enter the fix loop.
 4. **Commit, PR, and land it** per the office's closeout.
 
-**Cap: two review rounds.** A second `CHANGES REQUIRED` **promotes the run to full** — re-plan the
-task with the full office's plan-review gate — rather than funding a third round. Express degrades
-into full; it never deadlocks and it never lowers a bar to finish.
+**Cap: two review rounds.** A second `CHANGES REQUIRED` forces the planner to record a disposition
+before any third review. If the planner recommends another round, express promotes the run to full
+and re-plans the task with the full office's plan-review gate. If it recommends no further round,
+the run preserves the open finding and stops or escalates; it never self-approves or lowers a bar to
+finish. Express degrades into full only when the planner elects to continue.
 
 Express drops **phases**, never **floors**. Everything in this file that is not a phase still
 binds: no self-approval, every gate held by someone who did not do the work, evidence over exit

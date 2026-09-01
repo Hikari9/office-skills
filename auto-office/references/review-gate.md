@@ -85,6 +85,13 @@ copy every numbered finding verbatim. After each fix wave, post a finding-by-fin
 `ADDRESSED`/`NOT ADDRESSED` resolution comment with evidence, fix range, and next resume point,
 then read both comments back. A `PENDING` or incomplete review is not posted or counted.
 
+Before triage or a follow-up, the planner also records a disposition for every finding: accepted,
+contested, deferred, or escalated; a recommendation of `FIX_AND_REVIEW`, `REPLAN`, `WAIVE_AND_STOP`,
+or `STOP`; the concrete failure scenario and expected outcome; and a pre-fix reflection. If the fix
+changes assumptions, scope, or risk, the planner pauses for a mid-fix checkpoint. The planner may
+decline to fund another round, but an accepted change to a gated surface requires independent
+re-review and an unresolved finding cannot be treated as approval.
+
 ## `PLAN DEFECT` — the reviewer's upline path
 
 Sometimes the diff faithfully implements the plan and the **plan** is what's wrong. Treating that as `CHANGES REQUIRED` cannot converge: you would be asking the executor to fix a correct implementation, and the loop burns its rounds getting nowhere.

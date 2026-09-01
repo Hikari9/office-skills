@@ -2,9 +2,9 @@
 
 | Line | Value |
 |---|---|
-| Plugin version | `7.0.0` (see `.claude-plugin/plugin.json`) |
-| Core protocol supported | `>=7.0.0 <8.0.0` |
-| Core protocol vendored | `7.0.0` (see `office-core/SNAPSHOT.json`) |
+| Plugin version | `8.0.0` (see `.claude-plugin/plugin.json`) |
+| Core protocol supported | `>=8.0.0 <9.0.0` |
+| Core protocol vendored | `8.0.0` (see `office-core/SNAPSHOT.json`) |
 | Vendored snapshot | `office-core/SNAPSHOT.json`, written by `scripts/vendor-core.sh` |
 | Sibling plugins required | `codex-office`, `agy-office` — for the CLI, executor, and closeout mechanics of those two routes. The claude route ships in this plugin as of `4.0.0`. |
 

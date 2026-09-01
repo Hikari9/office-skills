@@ -53,7 +53,7 @@ plausibly catch something?
 | Answers | Gear | What runs |
 |---|---|---|
 | Any yes to **(1)** | **full** | All four phases. One-way door — never downgraded. |
-| No to (1), **2+** yeses across (2)–(4) | **express** | Short plan → execute → **one** adversarial review → land it. **Cap 2 review rounds**; a second `CHANGES REQUIRED` promotes the run to full. |
+| No to (1), **2+** yeses across (2)–(4) | **express** | Short plan → execute → **one** adversarial review → land it. **Cap 2 review rounds**; a second `CHANGES REQUIRED` forces a planner disposition and promotes to full only if the planner elects to continue. |
 | No to (1), **≤1** yes | **direct** | No office. Do the work under the normal safety rules, then stop. |
 
 Express promotes to full before dispatch if the run needs more than one executor, more than one
@@ -92,11 +92,11 @@ or three sentences and proceed. Full rule: `office-core/protocol/roles-and-autho
 
 ## Protocol version
 
-This plugin implements office-core protocol `6.0.0`, vendored at `office-core/` in this plugin.
+This plugin implements office-core protocol `8.0.0`, vendored at `office-core/` in this plugin.
 The vendored copy is authoritative for an installed plugin; the repo-root `office-core/` is the
 development source. Mandatory read: `office-core/protocol/roles-and-authority.md`.
 
-**Declared narrowing of core.** Core `6.0.0` lets the planner implement inline; this office
+**Declared narrowing of core.** Core `8.0.0` lets the planner implement inline; this office
 does **not** — the planner never implements the plan here. Narrowing is legal, and it is stated so a
 reader of both files need not guess which governs.
 

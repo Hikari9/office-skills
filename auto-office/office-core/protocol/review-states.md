@@ -48,7 +48,7 @@ on an unrecorded review.
 | Verdict | Meaning | Effect |
 |---|---|---|
 | `APPROVED` | The work is right, and the reviewer saw real gate output for this `HEAD` | Leaves the review phase. Only this verdict does. |
-| `CHANGES REQUIRED` | Numbered findings against the diff | Consumes a round; planner triages and fixes |
+| `CHANGES REQUIRED` | Numbered findings against the diff | Planner records a disposition; a follow-up round is conditional |
 | `PLAN DEFECT` | The diff faithfully implements the plan and the **plan** is wrong | **Exits the loop without consuming a round** |
 
 A reviewer that approves without pasted validation output is sent back. Approval is refused, not
@@ -68,6 +68,36 @@ not only the first** — round 3 is where fatigue lands.
 A verdict returned with no self-review goes back to the reviewer to complete, and **does not
 re-consume the round.** Schema:
 [`../schemas/review-verdict.schema.json`](../schemas/review-verdict.schema.json).
+
+## Planner disposition after `CHANGES REQUIRED`
+
+`CHANGES REQUIRED` is the reviewer's gate state, not an instruction to launch another fix wave.
+The planner owns the next transition and must pause for a written disposition before fixing,
+re-dispatching the reviewer, or deciding that no further round is warranted. The disposition is
+recorded in the durable review log (the PR comment when a draft PR exists) and includes:
+
+- each finding's status: accepted, contested, deferred, or escalated;
+- the planner's recommendation: `FIX_AND_REVIEW`, `REPLAN`, `WAIVE_AND_STOP`, or `STOP`;
+- the concrete failure scenario and expected outcome that justify the choice;
+- a **pre-fix reflection**: whether the finding is material, whether the plan is at fault, and
+  what another round would buy;
+- a **mid-fix checkpoint** when the fix changes shape: whether the finding still holds, whether
+  the scope or risk changed, and whether to continue, revise, or stop; and
+- the evidence and next resume point.
+
+The planner may decide that another round is not worth funding. That decision preserves the open
+`CHANGES REQUIRED` state and routes to `WAIVE_AND_STOP` or `STOP`; it never authorizes closeout or
+turns the verdict into `APPROVED`. A finding that the planner contests is recorded with
+counter-reasoning rather than silently dropped.
+
+If an accepted fix changes executable behavior, security, data handling, runtime configuration, or
+another surface covered by the gate, the planner must choose `FIX_AND_REVIEW`. The same independent
+reviewer then reviews the new `HEAD`. A follow-up review may be skipped only when no gated artifact
+changed; the run still cannot leave review with unresolved findings without an `APPROVED` verdict.
+
+The round cap is a maximum, not a quota. The planner may continue only when the disposition explains
+why the expected value of another round justifies its cost. At every round, including rounds 3–5,
+the planner reflects before and during the fix wave instead of mechanically funding the next one.
 
 ### `PLAN DEFECT`
 
@@ -121,24 +151,15 @@ The **planner** applies fixes; the reviewer does not fix what it gates.
   and re-run the suite.
 - **Escalate out of the tool, not up within it.** A failure class the worker just demonstrated —
   an invented interface, a test that will not go red — does not go back to that worker.
-- **At 2 `CHANGES REQUIRED` rounds on one task — consecutive or not — the default presumption flips
-  to `PLAN DEFECT`.** An `APPROVED`-then-rejected sequence does not reset the count; a task that
-  needed two rounds of findings is a task whose instruction was wrong, whatever landed between them. Re-plan the task instead of funding a third fix wave. Two rounds of findings on
-  one task is evidence about the *instruction*, not about the worker's diligence, and "escalate out
-  of the tool" has nowhere to go when the tool is already the best fit or already the top tier. The
-  presumption is rebuttable — say why in one line if you rebut it — but it is the default.
-
-  **Handling, because this rule binds every office:** it takes the `PLAN DEFECT` route above.
-  Technical gap → the planner amends the plan and re-dispatches **only the affected tasks**;
-  tradeoff, scope, or cost → the user's call, with the reviewer's reasoning presented. No new
-  adjudicator role is introduced, and no agent is recalled to arbitrate.
-
-  **One bound:** a **second amendment to the same task goes to the user.** A planner amending its
-  own plan repeatedly is the author clearing their own work, and the second time is where that
-  stops being triage and starts being self-approval. The independent review gate still holds on
-  whatever the amendment produces, so the amendment itself is never self-approved.
-- **Re-run the gate after each wave** and capture the real output. Fix diff + fresh gate output
-  go back to the same reviewer.
+- **At 2 `CHANGES REQUIRED` rounds on one task — consecutive or not — force a fresh planner
+  disposition checkpoint.** The planner records whether the next action is another fix and review,
+  a plan amendment, a waiver/escalation, or a stop. Two rounds are evidence to weigh, not an
+  automatic `PLAN DEFECT`; the planner must explain why another round is or is not expected to
+  converge. A technical plan gap still takes the `PLAN DEFECT` route above, and a tradeoff, scope,
+  or cost decision still goes to the user.
+- **Re-run the gate after each accepted wave that changes a gated surface** and capture the real
+  output. The fix diff + fresh gate output go back to the same reviewer when the planner's
+  disposition is `FIX_AND_REVIEW`.
 - **A finding that contradicts the approved plan is the user's call.** Present the finding beside
   the plan text and ask which governs. Do not fix against the plan; do not dismiss the finding
   because the plan mandated it.

@@ -51,9 +51,10 @@ reviewer otherwise loses everything. That instruction collides with the single-v
 reviewer killed mid-run leaves a stub whose verdict line is already stamped, and a stub reading
 `CHANGES REQUIRED` with no findings behind it is indistinguishable from a real rejection.
 
-That matters because of the escalation rule — two `CHANGES REQUIRED` (total) presume a **plan
-defect**. A placeholder can therefore trigger a plan re-examination that nothing actually justifies,
-or (stamped `APPROVED`) close a wave that was never reviewed.
+That matters because the planner's disposition depends on a complete verdict. A placeholder can
+therefore trigger a fix or re-review that nothing actually justifies, or (stamped `APPROVED`) close
+a wave that was never reviewed. Two `CHANGES REQUIRED` rounds force the planner to reflect and
+record whether another round is worth funding; they do not automatically imply a plan defect.
 
 So require: **while the review is incomplete, the last line must read exactly `VERDICT: PENDING`.** It
 is replaced with the real verdict only once the review is genuinely complete. Any verdict line other
