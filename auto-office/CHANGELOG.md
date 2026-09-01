@@ -1,5 +1,12 @@
 # Changelog — auto-office
 
+## 15.0.0 — 2026-09-01
+
+Core `15.0.0`.
+
+- Pane hygiene preserves idle agents, which may have dropped their prompt, and closes only confirmed
+  `done` or gone agents.
+
 ## 14.0.0 — 2026-09-01
 
 Core `14.0.0`.
