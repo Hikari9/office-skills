@@ -361,10 +361,10 @@ Rules that make this safe:
 - **Agy: 3 consecutive tasks, hard cap.** At the cap, either re-brief from scratch with full context
   restated, or hand the next task to codex/claude. Track the count.
 - **Quick fixes may go to agy** — but the reviewer rubric then gains the agy miss-list below.
-- **Two `CHANGES REQUIRED` on one task — consecutive or not — is a plan signal, not a routing signal.** Presume
-  `PLAN DEFECT` and re-plan the task ([auto-loop](../auto-loop/SKILL.md)). There is no
-  "escalate to a bigger model" path left, and there never really was one once the executor tier was
-  already the best fit. Record `reroute_from` if the re-plan does change brand.
+- **Two `CHANGES REQUIRED` on one task — consecutive or not — is a planner disposition signal, not a
+  routing signal.** Reflect on whether another fix/review round is expected to converge before
+  choosing `FIX_AND_REVIEW`, `PLAN DEFECT`, `WAIVE_AND_STOP`, or `STOP` ([auto-loop](../auto-loop/SKILL.md)).
+  Record `reroute_from` only if the planner's disposition and amended plan actually change brand.
 - **Never sub-delegate a `PLANNER-HELD` step.** Those stop the loop for the user.
 
 ### Agy miss-list — appended to the reviewer rubric whenever agy touched a task

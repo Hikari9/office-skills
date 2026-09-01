@@ -27,7 +27,7 @@ Per `office-core/protocol/review-states.md`:
 | Verdict | Meaning | Effect |
 |---|---|---|
 | `APPROVED` | The work is right, and the reviewer saw real gate output for this `HEAD` | Leaves the review phase. Only this verdict does. |
-| `CHANGES REQUIRED` | Numbered findings against the diff | Consumes a round; planner triages and fixes |
+| `CHANGES REQUIRED` | Numbered findings against the diff | Planner records a disposition; a follow-up round is conditional |
 | `PLAN DEFECT` | The diff faithfully implements the plan and the **plan** is wrong | **Exits the loop without consuming a round** — routed to the planner (technical gap) or the user (tradeoff/scope/cost/business call) |
 
 ## Evidence — never approve without pasted real gate output
@@ -35,6 +35,12 @@ Per `office-core/protocol/review-states.md`:
 A reviewer that approves without pasted validation-command output for `HEAD` is sent back;
 approval is refused, not assumed, in the absence of evidence. **Do not pre-judge the reviewer's
 prompt** — never write "don't flag X" or "at most minor" into it.
+
+After `CHANGES REQUIRED`, the planner must record a finding-by-finding disposition before fixing or
+requesting another review: the recommendation, concrete failure scenario, expected outcome,
+pre-fix reflection, and any mid-fix change of course. The planner may decide not to fund another
+round, but that preserves the open finding and cannot become self-approval. Accepted changes to a
+gated surface require independent re-review.
 
 **Hand the diff over as a file**, never as prompt text.
 

@@ -23,12 +23,19 @@ not summarized from here.
 Exactly three, defined in `office-core/protocol/review-states.md`:
 
 - `APPROVED` — leaves the review phase. Only this verdict does.
-- `CHANGES REQUIRED` — numbered findings; consumes a round.
+- `CHANGES REQUIRED` — numbered findings; sends the planner to a disposition checkpoint. A
+  follow-up round is conditional on the planner's recorded recommendation.
 - `PLAN DEFECT` — the diff faithfully implements the plan and the plan is wrong; exits the loop
   without consuming a round, and routes to the planner (technical gap) or the user (tradeoff).
 
 **Approval without pasted real gate output for the reviewed `HEAD` is refused, not assumed.** A
 successful process exit or narration is not evidence.
+
+After `CHANGES REQUIRED`, the planner must record a finding-by-finding disposition before fixing or
+requesting another review: the recommendation, concrete failure scenario, expected outcome,
+pre-fix reflection, and any mid-fix change of course. The planner may decide not to fund another
+round, but that preserves the open finding and cannot become self-approval. Accepted changes to a
+gated surface require independent re-review.
 
 The planner records the finalized verdict in the existing draft PR before triage or follow-up.
 Make the response complete enough to copy verbatim; every `CHANGES REQUIRED` finding, including

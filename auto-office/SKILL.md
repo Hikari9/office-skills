@@ -53,7 +53,7 @@ adversarial reader plausibly catch something?
 | Answers | Gear | What runs |
 |---|---|---|
 | Any yes to **(1)** | **full** | Everything below. One-way door — never downgraded. |
-| No to (1), **2+** across (2)–(4) | **express** | Short plan → bootstrap draft PR → implement → **one** Opus review → final closeout lands it. No plan-review, benchmark read, run report, or ledger row. **Cap 2 rounds**; a 2nd `CHANGES REQUIRED` **promotes to full**. |
+| No to (1), **2+** across (2)–(4) | **express** | Short plan → bootstrap → implement → Opus review → closeout. **Cap 2 rounds**; 2nd `CHANGES REQUIRED` requires planner disposition, then full only if continuing. |
 | No to (1), **≤1** yes | **direct** | No office. Work under the normal safety rules, then stop. |
 
 **Express promotes to full before dispatch** if the run needs >1 executor, >1 repo, or more than ~3
@@ -102,17 +102,17 @@ production reads included, shape pinned in the brief, read-back required.
   clause what a delegation would have bought.** File and task count are never the test.
 - One final plan approval after all Phase 1 gates and amendments, before dispatch — silence is not
   approval.
-- Fresh Opus code reviewer, resumed across rounds; **`CHANGES REQUIRED`** re-enters the fix loop; no
-  approval without pasted evidence; **5-round cap** (2 in express, then promote to full).
-- `PLAN DEFECT` and `BRIEF DEFECT` exit the loop without consuming a round; at **2** total (not merely
-  consecutive) `CHANGES REQUIRED` on one task, presume `PLAN DEFECT` and re-plan it.
+- Fresh Opus code reviewer, resumed across rounds; **`CHANGES REQUIRED`** sends the planner to a
+  disposition checkpoint; no approval without pasted evidence; **5-round cap** (2 in express).
+- `PLAN DEFECT` and `BRIEF DEFECT` exit the loop without consuming a round; two `CHANGES REQUIRED`
+  findings on one task force a planner reflection and recommendation, not an automatic re-plan.
 - A successful exit is **not evidence** — the gate is the plan's validation commands with real
   output; live-system writes need a read-back.
 - Planner-held actions are **the planner's to perform**, never delegated. They stop the run only when
   the plan did not **name them verbatim** with preconditions (dry run, revert target, read-back). The
   loop never widens blast radius or adds a repo/environment.
 
-Implements office-core `6.0.0`, vendored at `office-core/`. Mandatory read:
+Implements office-core `8.0.0`, vendored at `office-core/`. Mandatory read:
 `office-core/protocol/roles-and-authority.md`.
 
 ## The autonomous run

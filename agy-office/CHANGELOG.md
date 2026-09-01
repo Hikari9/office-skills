@@ -1,5 +1,12 @@
 # Changelog — agy-office
 
+## 7.0.0 — 2026-09-01
+
+Core `8.0.0`.
+
+- Gives the planner an explicit disposition checkpoint after `CHANGES REQUIRED`, including
+  pre-fix and mid-fix self-reflection, while preserving independent re-review for gated changes.
+
 ## 6.0.0 — 2026-08-31
 
 Core `7.0.0`.

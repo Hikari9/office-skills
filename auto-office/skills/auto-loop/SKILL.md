@@ -1,6 +1,6 @@
 ---
 name: auto-loop
-description: Phase 2–3 — the goal-locked autonomous loop that runs draft-PR bootstrap → dispatch → liveness → verify → review → fix per task, comments each green milestone, and stops for only two things. Hard caps, the 2-round plan-defect presumption, named-action preconditions, and the compaction recommendation. Loaded by the auto-office hub; not invoked directly.
+description: Phase 2–3 — the goal-locked autonomous loop that runs draft-PR bootstrap → dispatch → liveness → verify → review → fix per task, comments each green milestone, and returns to the user only for two user-owned decisions. Planner review dispositions can park a task without self-approval. Hard caps, named-action preconditions, and the compaction recommendation. Loaded by the auto-office hub; not invoked directly.
 ---
 
 # Auto Loop
@@ -24,9 +24,11 @@ for each task the executor completes and hands back:
     executor returns BRIEF DEFECT → stop this task, do not implement, do not consume a round
                                     → planner (technical) or user (scope)
     fresh Opus review         (resumed reviewer, same session across rounds)
-    while verdict == CHANGES REQUIRED and round <= cap:
-        triage → fix → re-review
-        2 CHANGES REQUIRED on this task (total, not consecutive) → presume PLAN DEFECT (below)
+    while verdict == CHANGES REQUIRED and round < cap:
+        planner disposition checkpoint
+        if FIX_AND_REVIEW → triage → fix → re-review
+        if REPLAN → PLAN DEFECT route
+        if WAIVE_AND_STOP or STOP → preserve the open finding and stop/escalate
     verdict == PLAN DEFECT    → exits the loop for this task, does not consume a round
     verdict == APPROVED       → milestone check, then next task
 
@@ -232,7 +234,7 @@ planner commits and a `git push … HEAD` landed there and deployed in 59 second
 | Review rounds per task | **5 full / 2 express** | Full: stop, the failure is structural — report the deadlock with the last verdict. Express: **promote the run to full** and re-plan the task with a plan-review pass. |
 | Agy consecutive tasks | 3 | Re-brief from scratch, or re-route the next task. |
 | Loop iterations | as set in GOAL | Stop and report which criteria are still red. |
-| **`CHANGES REQUIRED` on one task** | **2** (total, not consecutive) | **Declare `PLAN DEFECT`** and take core's existing route. See below. |
+| Planner disposition after `CHANGES REQUIRED` | Every finding round | Record finding statuses, a recommendation, pre-fix reflection, and any mid-fix change of course before fixing or re-reviewing. |
 
 **Quota is not a cap.** If the tool the run depends on is draining, re-probe and re-decide the same
 way planning did — weigh what remains against what is left to do. Falling back to the named fallback
@@ -287,11 +289,21 @@ amending repeatedly is the same self-gate as the planner doing it.
 
 ### The 2-round plan-defect presumption
 
-At two `CHANGES REQUIRED` rounds on one task — consecutive or not — stop funding fix waves and re-plan the
-task. Route per `office-core/protocol/review-states.md`:
+At two `CHANGES REQUIRED` rounds on one task — consecutive or not — force the planner's disposition
+checkpoint. The planner may recommend another fix/review round when its evidence says the task can
+converge, or may choose the `PLAN DEFECT`, `WAIVE_AND_STOP`, or `STOP` route. Two rounds are a signal
+to reflect on the instruction and the expected value of more work, not an automatic re-plan.
 
-- **Technical gap** → the planner amends the plan and re-dispatches **only the affected tasks**.
+- **Technical plan gap** → the planner amends the plan and re-dispatches **only the affected tasks**.
 - **Tradeoff, scope, or cost** → the user's call, with the reviewer's reasoning presented.
+
+The planner writes the finding-by-finding disposition before the next fix or review. It includes
+accepted/contested/deferred/escalated statuses, the concrete failure scenario and expected outcome,
+why another round is or is not worthwhile, and the evidence/stop condition. If a fix changes shape,
+scope, or risk, pause for a mid-fix checkpoint and revise the recommendation instead of completing
+the wave mechanically. An accepted change to executable behavior, security, data handling, runtime
+configuration, or another gated surface still requires independent re-review; a waiver or stop
+cannot become approval.
 
 - **No agent is recalled.** The plan-reviewer retired after its single pass and never adjudicates work
   it approved.
@@ -302,7 +314,7 @@ task. Route per `office-core/protocol/review-states.md`:
 Evidence: one task burned 829k tokens over three review rounds. The loop now stops funding at round 2
 instead of 5.
 
-## The two stop conditions
+## The two user-stop conditions and the planner stop
 
 The loop returns to the user for exactly these, and nothing else:
 
@@ -313,11 +325,17 @@ The loop returns to the user for exactly these, and nothing else:
    the first option, and wait for the answer.** That is the pause; the run resumes on the answer, not
    on your inference. Recommend, never infer.
 
-Everything else the loop decides itself: which tool to use, how to fix a review finding, whether to
-re-route, how to sequence remaining tasks, when to fan out scouts.
+The planner may also park the affected task on a `STOP` or `WAIVE_AND_STOP` disposition after
+`CHANGES REQUIRED`. That is not a user-stop and does not authorize closeout: preserve the open
+finding, the disposition, and the draft PR, continue only with independent tasks, and report the
+blocked task at closeout. If the disposition is actually a user-owned tradeoff, use condition 2.
 
-**Nothing else is a stop.** A failing test is not a stop, it is the next task. An unclear finding is
-not a stop, it is a verification. A slow tool is not a stop, it is a reroute.
+Everything else the loop decides itself: which tool to use, how to fix a review finding, whether to
+fund another review round, whether to re-route, how to sequence remaining tasks, when to fan out
+scouts.
+
+**Nothing else is a user-stop.** A failing test is not a user-stop, it is the next task. An unclear
+finding is not a user-stop, it is a verification. A slow tool is not a user-stop, it is a reroute.
 
 ### Production work runs — under preconditions, not under a pause
 

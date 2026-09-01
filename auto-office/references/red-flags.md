@@ -24,7 +24,7 @@ Read the rows for the phase you are in; the whole table is not a startup cost.
 | "My worker said it'll report back" | That is a *return*. An in-session subagent unwinds once it has no live children. Blocking waits go `--bg`, or you hold them. |
 | "Executor says done" / "agy can review agy" | Nobody gates their own work; the **code** gate is a fresh Opus reviewer. |
 | "Round 6 will converge" | Past the cap the failure is structural. Report the deadlock. |
-| "Express needs a third round" | Two is the cap. A 2nd `CHANGES REQUIRED` promotes to full; it buys no extra round. |
+| "Express needs a third round" | A second `CHANGES REQUIRED` forces a planner disposition. Promote to full only when the planner records why another round is worth funding. |
 | "The loop can add one more repo" | That widens the blast radius. Not the loop's call. |
 
 ## Pre-dispatch checklist

@@ -64,11 +64,17 @@ Per [`office-core/protocol/review-states.md`](../../office-core/protocol/review-
 | Verdict | Meaning | Effect |
 |---|---|---|
 | `APPROVED` | The work is right, and the reviewer saw real gate output for this `HEAD` | Leaves the review phase — only this verdict does |
-| `CHANGES REQUIRED` | Numbered findings against the diff | Consumes a round; planner triages and fixes |
+| `CHANGES REQUIRED` | Numbered findings against the diff | Planner records a disposition; a follow-up round is conditional |
 | `PLAN DEFECT` | The diff faithfully implements the plan and the **plan** is wrong | Exits the loop without consuming a round |
 
 **No approval without pasted real output for this `HEAD`.** A reviewer that approves without it is
 sent back — approval is refused, not assumed, in the absence of evidence.
+
+After `CHANGES REQUIRED`, the planner must record a finding-by-finding disposition before fixing or
+requesting another review: the recommendation, concrete failure scenario, expected outcome,
+pre-fix reflection, and any mid-fix change of course. The planner may decide not to fund another
+round, but that preserves the open finding and cannot become self-approval. Accepted changes to a
+gated surface require independent re-review.
 
 ## Escalate out of the tool, not up within it
 
