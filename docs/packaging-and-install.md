@@ -81,6 +81,7 @@ keep that current; without them a version ships with no evidence until someone h
 ```bash
 node eval/hooks/install.mjs                       # every harness present
 node eval/hooks/install.mjs --brand codex,gemini  # just these
+node eval/hooks/install.mjs --with-pane-hygiene   # + the Herdr pane hook (opt-in)
 node eval/hooks/install.mjs --uninstall           # remove
 ```
 
@@ -99,6 +100,22 @@ actually has:
 | **Codex** | `~/.codex/hooks.json` | `SessionStart`, `PreCompact` | `catch-up.mjs --brand codex` |
 | **Gemini CLI** | `~/.gemini/config/hooks.json` | `SessionEnd`, `Stop` | `catch-up.mjs --brand gemini` |
 | **Hermes** | `~/.hermes/profiles/<active>/config.yaml` | `on_session_end`, `on_session_finalize` | `catch-up.mjs --brand hermes` |
+
+Plus one **opt-in, non-telemetry** hook, installed only with `--with-pane-hygiene` and only where
+Herdr is present (`HERDR_ENV=1`, or `herdr` on `PATH`):
+
+| Harness | Events | Hook |
+|---|---|---|
+| **Claude Code** | `Stop` | `office-core/hooks/close-finished-panes.mjs` |
+| **Gemini CLI** | `Stop` | same |
+
+It closes the panes of finished delegates from the ledger at `/tmp/office/panes.jsonl`. It lives
+under `office-core/` rather than `eval/` because it is core behaviour that has to ship inside a
+standalone plugin; `eval/hooks/close-finished-panes.mjs` remains as a shim so already-installed
+absolute paths keep working. Where Herdr is absent the option is not offered and nothing is wired —
+a no-op hook in a user's config is a maintenance liability with no upside. A plain re-run without the
+flag leaves an existing opt-in in place; removal is `--uninstall`. Full contract, including what it
+refuses to close, is in `office-core/skills/herdr/SKILL.md`.
 
 **Nothing is wired to an event a harness does not have.** Codex has no `SessionEnd` and no `Stop`;
 Gemini has no `PreCompact` (its compaction event is `PreCompress`). A hook that goes silent because

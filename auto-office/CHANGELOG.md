@@ -1,5 +1,101 @@
 # Changelog — auto-office
 
+## 15.0.0 — 2026-09-01
+
+Core `15.0.0`.
+
+- Pane hygiene preserves idle agents, which may have dropped their prompt, and closes only confirmed
+  `done` or gone agents.
+
+## 14.0.0 — 2026-09-01
+
+Core `14.0.0`.
+
+- PR comments are limited to approved-plan/execution-begins, first-executor-completion, and final
+  `APPROVED` summary events. Intermediate review verdicts, fix resolutions, and milestones remain
+  in run artifacts.
+- Pane hygiene closes only confirmed `done` or gone agents; idle agents remain available for prompt
+  recovery.
+
+## 13.0.0 — 2026-09-01
+
+Core `13.0.0`.
+
+- The pane-hygiene hook now **ships with the plugin**. It moved to
+  `office-core/hooks/close-finished-panes.mjs`, so vendoring carries a copy into every office and a
+  standalone install can reach it; `eval/hooks/close-finished-panes.mjs` stays as a shim so
+  already-installed absolute paths keep working with nothing to re-run.
+- **Opt-in, gated on detection.** `node eval/hooks/install.mjs --with-pane-hygiene` installs it;
+  plain installs no longer wire it. The option is offered only where Herdr is actually present
+  (`HERDR_ENV=1` or `herdr` on `PATH`) and is not mentioned at all elsewhere, rather than installing a
+  hook that could only no-op. A plain re-run leaves an existing opt-in in place; removal is
+  `--uninstall`. The script keeps its runtime guard regardless, because presence at install time does
+  not mean presence at run time.
+- Standalone install path documented: a `Stop` entry pointing at the plugin's own vendored copy.
+- **An entry without `session_id` is now stated to be incomplete.** Closing that pane discards the
+  only resume handle, and the id is readable from `herdr agent get` only while the agent lives. Seeded
+  entries missing it already caused exactly that loss.
+
+## 12.0.0 — 2026-09-01
+
+Core `12.0.0`.
+
+- Herdr pane closing becomes **mechanical**. The prose contract added in `11.0.0` did not stop panes
+  from accumulating, because closing still depended on the planner noticing. The ledger now has a
+  concrete path, `/tmp/office/panes.jsonl`, and writing a line to it is a required step *inside* the
+  spawn block next to `herdr agent start` — it cannot be forgotten separately from spawning.
+- New `Stop` hook, `eval/hooks/close-finished-panes.mjs`, wired by `eval/hooks/install.mjs`. At every
+  turn boundary it closes ledger entries whose agent is `done`, `idle`, or gone, and removes them. It
+  never closes an agent that is `working`, `blocked`, or `unknown`, never closes a pane whose agent
+  has moved, and never closes a pane absent from the ledger — `herdr pane list` also shows the user's
+  own panes and other sessions'. Silent when idle, re-runnable, and a no-op when `herdr` is not on
+  `PATH`. `Stop`, not `PostToolUse`: a delegate has just reported when a turn ends.
+- **A pending next round no longer keeps a pane open.** A session is restorable by
+  `--resume <session_id>`, so continuity lives in the ledger's session id and the agent's written
+  report, not in a live pane. The checkpoint table closes an executor or reviewer on its report,
+  whatever the verdict; only `working` and `blocked` stay open.
+- `auto-loop`'s drift-check item 8 now points at the ledger and the hook instead of restating the
+  rule, and names a missing ledger line as the defect to fix.
+
+## 11.0.0 — 2026-09-01
+
+Core `11.0.0`.
+
+- Herdr pane hygiene: closing a created pane is a **step the caller owes**, not a courtesy. A
+  dispatch is finished when its pane is gone, not when its result is read. Callers keep a
+  `created_panes` ledger in the run workspace and close from that ledger — never from
+  `herdr pane list`, which also shows other sessions' panes and other workspaces. Four named
+  checkpoints replace "eventually": executor task set approved, reviewer approved or dispositioned
+  with no round remaining, one-shot side task returned (same turn), and final closeout.
+- `auto-loop`'s drift check gains item 8, so finished-but-open panes are caught every iteration
+  instead of accumulating one dead agent per dispatch until the user notices and asks.
+
+## 10.0.0 — 2026-09-01
+
+Core `10.0.0`.
+
+- Herdr dispatch: `agent_status` is not receipt. A prompt is only confirmed live once the pane
+  transcript reflects the brief, not when `herdr agent prompt` returns `working` — that status is
+  frequently the agent's own startup churn (MCP client init, plugin loading). A long brief is sent
+  as a path to a file on the git-ignored workspace with a short prompt telling the agent to read
+  it, not pasted inline; a long single-shot paste into a just-started agent is what gets dropped.
+- `auto-loop`'s liveness check now names the transcript, not a status field, as the observable for
+  a Herdr dispatch, and states that re-prompting an agent confirmed idle-and-empty is not a
+  two-writers risk, since nothing was ever started.
+- Evidence: a live run on 2026-09-01 dispatched two Codex executors through Herdr; both prompts
+  were silently dropped by the agents' own MCP-startup churn, both agents sat idle at the splash
+  screen, and `agent_status: working` was read as success for both until a user asked whether the
+  executors were actually running.
+
+## 9.0.0 — 2026-09-01
+
+Core `9.0.0`.
+
+- Adds the shared Herdr dispatch override: when `HERDR_ENV=1`, every delegated brand runs in a
+  visible Herdr pane, direct children go right, nested children go below their parent, in-session
+  subagents are disabled, and created panes close after settled results are read.
+- Preserves the existing CLI/in-session routing when Herdr is not detected.
+
 ## 8.0.0 — 2026-09-01
 
 Core `8.0.0`.

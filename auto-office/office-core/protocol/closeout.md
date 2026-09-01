@@ -31,19 +31,20 @@ file exists, there is nothing to close; don't invent one to satisfy the step.
 ## Closeout runs per milestone, not once per run
 
 A plan declares milestones ([`plan-contract.md`](plan-contract.md)). **Every milestone whose
-done-criteria are green is committed and commented on the existing draft PR** — then the run
-continues into the next one. The final approved milestone runs the closeout landing steps. The last
-milestone additionally runs steps 5 and 6.
+done-criteria are green is committed and recorded in local run state** — then the run continues into
+the next one. The final approved milestone runs the closeout landing steps. The last milestone
+additionally runs steps 5 and 6.
 
-- **Steps 0–4 run at every milestone.** Commit, gate, update the draft PR, document.
+- **Steps 0–4 run at every milestone.** Commit, gate, update local run state, document.
 - **Steps 5 and 6 run once, at the end** — syncing main, removing the worktree, and closing loops
   are terminal acts. Removing a worktree at milestone 1 of 3 destroys the run.
   (Standalone invocation has no milestone list to split against — see *Standalone invocation*
   above; run every step in one pass.)
 - **A red gate stops that milestone, not silently the next one.** Keep the draft PR, add no success
   comment, and report — the run does not walk past a red milestone into the following one.
-- **The committed branch and PR comments are the resume record.** A run interrupted after milestone
-  2 resumes by reading the branch, draft PR, plan, and comments.
+- **The committed branch, local run state, and allowed PR comments are the resume record.** A run
+  interrupted after milestone 2 resumes by reading the branch, draft PR, plan, run state, and the
+  three allowed comments.
 
 ## 0. Confirm target
 
@@ -68,8 +69,8 @@ a real build surfaces and a linter never will.
 Don't invent a gate the project doesn't define; don't skip one it does.
 
 **If the gate is red: stop here.** Keep the existing draft PR, do not mark it ready or merge it,
-and report the failure. The branch and any already-posted milestone comments remain the resume
-record.
+and report the failure. The branch and local run state remain the resume record; do not add a PR
+comment for a red gate.
 
 ## 3. PR
 
@@ -78,15 +79,17 @@ have created the one draft PR.
 
 - **No PR:** this is a bootstrap defect in a normal executor run. Stop and report unless this is
   standalone closeout and the caller explicitly authorized creating one.
-- **Draft PR before reviewer approval:** keep it draft and add the milestone comment.
+- **Draft PR before reviewer approval:** keep it draft; add no milestone or intermediate-review comment.
 - **Draft PR after final reviewer approval:** after the plan-removal commit is pushed and read back,
   run `gh pr ready <number>`, then `gh pr merge --auto` (or the repository's approved merge form).
 - **PR exists but not merged:** reuse it; do not create a second PR.
 
-Before marking the PR ready, read its comments and confirm that every completed reviewer verdict
-and every `CHANGES REQUIRED` fix-resolution comment is present, complete, and attributable to this
-run. Also read the PR body and confirm its plan deeplink resolves to the latest approved plan
-commit. An unrecorded review or stale plan link is an unfinished gate: keep the PR draft and stop.
+Before marking the PR ready, read the local review files and planner run state and confirm that every
+completed verdict, disposition, fix wave, and gate result is present. Read the PR comments and confirm
+the allowed bootstrap, first-executor-completion, and final-approval comments are present where their
+events occurred. Also read the PR body and confirm its plan deeplink resolves to the latest approved
+plan commit. An unrecorded review, missing final approval summary, or stale plan link is an unfinished
+gate: keep the PR draft and stop.
 
 Merge, ready-for-review, plan removal, and cleanup remain planner-held actions under
 [`roles-and-authority.md`](roles-and-authority.md). Push and draft-PR creation happen at executor
@@ -155,7 +158,7 @@ Check merge state once with `gh pr view <n> --json state,mergedAt`. Do not poll.
 | Uncommitted changes | Commit, why-focused message |
 | Gate red | Commit + document only; no PR |
 | No PR after executor dispatch | Stop and report bootstrap failure |
-| Draft PR during run | Keep draft; post milestone comments |
+| Draft PR during run | Keep draft; post only the three allowed event comments |
 | Final reviewer approved | Remove plan, `gh pr ready`, then merge |
 | PR merged | Sync local main, verify `main` == `origin/main`, then worktree + branch |
 | PR pending | Leave worktree, don't poll, report status |

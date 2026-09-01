@@ -49,8 +49,8 @@ or resuming work, then reads the body back. The original first-commit link may r
 ## Milestones — the run's landing points
 
 A plan declares **milestones**: named groups of done-criteria that, once green, put the tree in a
-shippable state. Each milestone is a commit or commit range and a resumability comment on the
-single draft PR. The PR remains draft until final reviewer approval; the final closeout lands it.
+shippable state. Each milestone is a commit or commit range and a local run-state checkpoint. The
+single draft PR remains draft until final reviewer approval; the final closeout lands it.
 
 - **Declared at plan time, reviewed at approval.** The loop does not improvise a milestone
   boundary mid-run; if the grouping is wrong, that is a plan amendment.
@@ -61,8 +61,9 @@ single draft PR. The PR remains draft until final reviewer approval; the final c
 - **One milestone is a legitimate plan.** Small runs are not required to invent checkpoints.
 
 Why this is a contract requirement and not a closeout detail: a run whose milestones have no
-committed and commented re-entry points loses its state on interruption. The branch plus draft-PR
-comments are the resume record during the run; after merge, Git history is the durable record.
+committed and recorded re-entry points loses its state on interruption. The branch, local run state,
+and three allowed PR comments are the resume record during the run; after merge, Git history is the
+durable record.
 
 ## Named actions — pre-authorized outward steps
 
@@ -79,11 +80,10 @@ it as unnamed.
 
 External outreach may never appear here: email, chat, public posts, and bulk messages are approved
 in session, at the time, always. The required GitHub PR body — including the immutable plan blob
-deeplink — and milestone bookkeeping comments are
-executor-bootstrap actions and must appear here with their exact commands and read-backs. The
-review-verdict and fix-resolution comments required by
-[`review-states.md`](review-states.md#the-pr-review-record) are also GitHub bookkeeping actions;
-name their exact `gh pr comment` command and read-back in the plan before dispatch.
+deeplink — and the three allowed PR comments in
+[`review-states.md`](review-states.md#pr-comment-policy) are GitHub bookkeeping actions. Name
+their exact `gh pr comment` commands and read-backs in the plan before dispatch. Intermediate
+review-verdict and fix-resolution comments are not PR actions.
 
 ## Claims discipline
 
@@ -118,6 +118,11 @@ merged, and still runs nowhere.
 
 State routing, worker/dispatch count, and waves in one line each, with a ≤8-word reason for any
 off-default tag and a one-clause reason per delegation naming what it buys.
+
+When `HERDR_ENV=1`, every delegated row uses dispatch form `herdr`: direct children are placed in
+right-side panes and further children below their parent. When Herdr is absent, use the office's
+normal dispatch-form routing, including `in-session` where that office allows it. Inline rows stay
+inline in either environment.
 
 **An inline row carries the clause too**: what a delegation would have bought, and why the brief
 costs more than the edit. An inline row that cannot be justified in a clause is one to delegate.

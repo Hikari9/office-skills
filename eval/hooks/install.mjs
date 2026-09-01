@@ -1,31 +1,55 @@
 #!/usr/bin/env node
 /**
- * Installs the office-skills telemetry hooks into every agent harness present.
+ * Installs the office-skills telemetry hooks into every agent harness present,
+ * plus — only when asked for, and only where Herdr exists — the Herdr pane
+ * hygiene hook.
  *
  * The four harnesses agree on almost nothing — different config files, different
  * event names, different formats — so each gets what it actually supports:
  *
- *   claude  ~/.claude/settings.json      SessionEnd, PreCompact, Stop
- *   codex   ~/.codex/hooks.json          SessionStart, PreCompact   (no SessionEnd exists)
- *   gemini  ~/.gemini/config/hooks.json  SessionEnd, Stop           (namespaced)
+ *   claude  ~/.claude/settings.json      SessionEnd, PreCompact, Stop x2
+ *   codex   ~/.codex/hooks.json          SessionStart, PreCompact   (no SessionEnd or Stop exists)
+ *   gemini  ~/.gemini/config/hooks.json  SessionEnd, Stop x2        (namespaced)
  *   hermes  ~/.hermes/config.yaml        on_session_end, on_session_finalize
  *
  * Nothing is installed on an event a harness does not have. A hook that goes
  * silent because it was wired to an event that never fires is indistinguishable
  * from "no runs happened", which is the failure this whole system exists to stop.
  *
- * Usage: install.mjs [--uninstall] [--brand claude,codex,gemini,hermes]
+ * Pane hygiene is **opt-in**: `--with-pane-hygiene`. It closes real panes in a
+ * user's visible layout, so it is never installed as a side effect of installing
+ * telemetry. Where Herdr is absent the option is not even mentioned, rather than
+ * installing a hook that could only ever no-op.
+ *
+ * Usage: install.mjs [--uninstall] [--with-pane-hygiene]
+ *                    [--brand claude,codex,gemini,hermes]
  */
-import { readFileSync, writeFileSync, copyFileSync, existsSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, copyFileSync, existsSync, mkdirSync, accessSync, constants } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { homedir } from "node:os";
-import { resolve, dirname, join } from "node:path";
+import { resolve, dirname, join, delimiter } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const uninstall = process.argv.includes("--uninstall");
 const bflag = process.argv.indexOf("--brand");
 const only = bflag >= 0 ? (process.argv[bflag + 1] || "").split(",").filter(Boolean) : null;
+
+const wantPanes = process.argv.includes("--with-pane-hygiene");
+
+/**
+ * Is Herdr here at all? Same detection the skills use: the env marker the office
+ * checks for, or the CLI on PATH. Install-time presence is only about whether to
+ * OFFER the hook — the hook keeps its own runtime guard, because a machine that
+ * has Herdr today may run a session without it.
+ */
+const herdrPresent =
+  process.env.HERDR_ENV === "1" ||
+  (process.env.PATH || "").split(delimiter).some((d) => {
+    if (!d) return false;
+    try { accessSync(join(d, "herdr"), constants.X_OK); return true; } catch { return false; }
+  });
+const panes = wantPanes && herdrPresent;
 
 const node = process.execPath;
 const cmd = (file, args = "") => `${node} ${resolve(here, file)}${args ? " " + args : ""}`.trim();
@@ -56,8 +80,19 @@ function claude() {
   setEvent(s.hooks, "SessionEnd", cmd("session-end.mjs"));
   setEvent(s.hooks, "PreCompact", cmd("pre-compact.mjs"));
   setEvent(s.hooks, "Stop", cmd("compact-advisor.mjs"));
+  // A second, separate Stop hook, opt-in. Pane hygiene is not telemetry, and a
+  // turn boundary is exactly when a delegated agent has just reported.
+  // Deliberately the eval/ shim path, not office-core/hooks/ directly: installed
+  // commands are absolute, so keeping this path stable means an existing install
+  // needs no re-run and never ends up wired twice.
+  // Without the flag this is skipped entirely rather than removed: a plain re-run
+  // (release checklist step 5) must not silently un-wire someone's working opt-in.
+  // Removing it is `--uninstall`, which is explicit in the other direction.
+  const hadPanes = JSON.stringify(s.hooks.Stop || []).includes("close-finished-panes.mjs");
+  if (panes || uninstall) setEvent(s.hooks, "Stop", cmd("close-finished-panes.mjs"));
   writeJson(p, s);
-  report.push(["claude", "SessionEnd, PreCompact, Stop", p]);
+  const paneNote = panes ? " x2 (+pane hygiene)" : hadPanes ? " x2 (pane hygiene kept)" : "";
+  report.push(["claude", `SessionEnd, PreCompact, Stop${paneNote}`, p]);
 }
 
 // ---- codex ---------------------------------------------------------------
@@ -86,9 +121,11 @@ function gemini() {
   backup(p);
   setEvent(s["office-skills"], "SessionEnd", cmd("catch-up.mjs", "--brand gemini"), 20);
   setEvent(s["office-skills"], "Stop", cmd("catch-up.mjs", "--brand gemini"), 20);
+  const hadPanes = JSON.stringify(s["office-skills"].Stop || []).includes("close-finished-panes.mjs");
+  if (panes || uninstall) setEvent(s["office-skills"], "Stop", cmd("close-finished-panes.mjs"), 20);
   if (!Object.keys(s["office-skills"]).length) delete s["office-skills"];
   writeJson(p, s);
-  report.push(["gemini", "SessionEnd, Stop", p]);
+  report.push(["gemini", `SessionEnd, Stop${panes ? " x2 (+pane hygiene)" : hadPanes ? " x2 (pane hygiene kept)" : ""}`, p]);
 }
 
 // ---- hermes --------------------------------------------------------------
@@ -158,3 +195,17 @@ for (const [brand, fn] of Object.entries(all)) {
 console.log(uninstall ? "removed:" : "installed:");
 for (const [brand, events, path] of report) console.log(`  ${brand.padEnd(7)} ${events.padEnd(38)} ${path}`);
 if (!report.length) console.log("  (no matching harness found)");
+
+// Offer, once, and only where Herdr exists. Silence everywhere else: a machine
+// with no Herdr has no pane to close and does not need to know this option is here.
+if (herdrPresent && !wantPanes && !uninstall) {
+  console.log("");
+  console.log("Herdr detected. Pane hygiene is opt-in and was not installed or removed by this run:");
+  console.log("  node eval/hooks/install.mjs --with-pane-hygiene");
+  console.log("It closes the panes of finished delegates from /tmp/office/panes.jsonl on Stop.");
+  console.log("See office-core/skills/herdr/SKILL.md for what it will and will not close.");
+}
+if (wantPanes && !herdrPresent) {
+  console.log("");
+  console.log("--with-pane-hygiene ignored: no herdr on PATH and HERDR_ENV is not 1.");
+}

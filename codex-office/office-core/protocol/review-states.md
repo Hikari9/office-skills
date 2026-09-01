@@ -17,31 +17,26 @@ raised.
 
 **Hand over the diff as a file**, never as prompt text.
 
-## The PR review record
+## PR comment policy
 
-The existing draft PR is the run's durable review log. The planner posts **every complete
-reviewer verdict** to that same PR before triaging it, applying a fix, dispatching a follow-up
-round, or advancing closeout. Review feedback that exists only in a handoff or chat is not a
-resumeable run record.
+The PR is a concise run marker, not the complete review log. Preserve every reviewer verdict,
+finding, disposition, fix wave, and gate result in the review files and planner run state. The
+planner posts to the PR only at these three events:
 
-For each verdict, create one comment with:
+1. **Approved plan / execution begins.** The executor's bootstrap comment records the branch,
+   plan path, issue, plan commit, and next resume point.
+2. **First executor completion.** The first executor's completion comment records its status,
+   handoff, commit range, final `HEAD`, gate evidence, and next resume point. Follow-up fix
+   executors do not add PR comments.
+3. **Final `APPROVED`.** After the reviewer returns `APPROVED`, post one short summary with the
+   reviewer id, final `HEAD`, review rounds, the total number of changes required across those
+   rounds, and a brief reason for each change — or why none were required. Use
+   `gh pr comment <number> --body-file <approval-summary-file>` and read the comment back.
 
-- the review round, reviewer agent id, `HEAD` SHA, and commit range;
-- the reviewer's complete finalized verdict, including its `## Self-review`, gate evidence,
-  deferrals, and Upline decisions; and
-- for `CHANGES REQUIRED`, **every numbered finding verbatim**, including severity, failure,
-  expected behavior, fix recommendation, location, and rejected alternative when present.
-
-Post it with `gh pr comment <number> --body-file <verdict-file>` and read the comment back. A
-`VERDICT: PENDING` file, a killed/incomplete review, or a comment that omits any finding is not a
-review record and does not consume a round.
-
-After triage and each fix wave, post a second comment before re-dispatching the reviewer. It maps
-every prior finding to `ADDRESSED` or `NOT ADDRESSED`, gives the planner's evidence and any
-counter-reasoning, names the fix commit/range, and states the next resume point. The next verdict
-comment then carries the reviewer's complete follow-up response and all prior-finding statuses.
-If either comment or its read-back fails, stop with the draft PR intact; do not continue the loop
-on an unrecorded review.
+Do not post `CHANGES REQUIRED`, `PLAN DEFECT`, intermediate verdicts, or fix-resolution comments
+to the PR. A `VERDICT: PENDING` file, a killed/incomplete review, or a review without its required
+internal evidence is not a completed review and does not consume a round. If one of the three
+allowed comments or its read-back fails, stop with the draft PR intact.
 
 ## The three verdicts
 
@@ -74,7 +69,7 @@ re-consume the round.** Schema:
 `CHANGES REQUIRED` is the reviewer's gate state, not an instruction to launch another fix wave.
 The planner owns the next transition and must pause for a written disposition before fixing,
 re-dispatching the reviewer, or deciding that no further round is warranted. The disposition is
-recorded in the durable review log (the PR comment when a draft PR exists) and includes:
+recorded in the review files and planner run state and includes:
 
 - each finding's status: accepted, contested, deferred, or escalated;
 - the planner's recommendation: `FIX_AND_REVIEW`, `REPLAN`, `WAIVE_AND_STOP`, or `STOP`;

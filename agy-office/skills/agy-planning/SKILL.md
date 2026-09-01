@@ -48,8 +48,11 @@ implementation.
 **Dispatch explorer subagents** for anything that means sweeping files/directories/conventions —
 don't spend the user's turns on questions a read would settle. Default to `haiku`; step to
 `sonnet` only when reconciling conflicting patterns needs judgment, not retrieval. **Never dispatch
-an `opus` explorer.** Run independent explorers in parallel, `subagent_type: "Explore"`, ask for a
-specific answer with file:line citations.
+an `opus` explorer.** When `HERDR_ENV=1`, load [`herdr`](../../office-core/skills/herdr/SKILL.md)
+and put direct explorers in right-side panes, with any explorer's children below it; use Herdr
+prompts and close each created pane after its final result is read and no follow-up is needed. Do not use in-session
+explorers in that mode. When Herdr is absent, preserve the existing explorer route. Run independent
+explorers in parallel and ask for a specific answer with file:line citations.
 
 ## Pin every interface the plan touches, verbatim, during Phase 1
 
@@ -67,7 +70,8 @@ correctly in its prompt — which is why the brief also demands a citation (see
 **Write the plan to the tracked repository path** `docs/plans/<slug>.md` — the executor's contract.
 The plan must include the tracking issue, branch, `BASE`, and the draft-PR bootstrap actions:
 plan-only first commit, named-branch push, one draft PR whose body contains an immutable blob
-deeplink to the plan and references the issue, and milestone resumability comments. The plan may be
+deeplink to the plan and references the issue, and the approved-plan/execution-begins and
+first-executor-completion comments. The plan may be
 drafted in scratch, but it must be copied into this
 tracked path before dispatch:
 

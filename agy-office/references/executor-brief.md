@@ -20,7 +20,8 @@ flag ordering, workspace semantics, model names, quota, live monitoring. This fi
 4. **Workspace scratch dir** — an absolute, git-ignored path where every artifact it writes lives.
 5. **Tracking issue and PR bootstrap** — the issue reference, remote, branch, base branch, and
    exact authority to push the named branch, create one draft PR whose body contains an immutable
-   plan blob deeplink and references the plan and issue, and post resumability comments.
+   plan blob deeplink and references the plan and issue, and post the approved-plan/execution-begins
+   comment plus the first-executor-completion comment.
 6. **BASE commit** — the tip before its work, so the diff range is unambiguous.
 7. **In-scope work** — the precise, numbered set of behaviors/files to implement, in imperative voice.
    Not "could you look at…"; agy has answered questions *about* a task instead of doing it.
@@ -32,7 +33,8 @@ flag ordering, workspace semantics, model names, quota, live monitoring. This fi
 10. **The real-signature clause** — see below. This is the single highest-value field in the contract.
 11. **Blast-radius ceiling**, restated verbatim from the plan's Global Constraints.
 12. **Allowed side effects** — local edits/commits plus the explicitly named bootstrap push, draft PR,
-   and milestone comments; no ready-for-review, plan removal, merge, deployment, or unrelated
+   approved-plan/execution-begins comment, and first-executor-completion comment; no ready-for-review,
+   plan removal, merge, deployment, or unrelated
    messaging.
 13. **Required validation** — the exact command(s) that must pass, plus the requirement that its report
    contain the command *and its actual pasted output*. Treat that output as a claim, not evidence
@@ -86,7 +88,7 @@ citation you can check in seconds, and Phase 3 checks it.
 
 The prompt authorizes exactly this startup sequence before implementation: plan-only first commit,
 named-branch push, one draft PR whose body contains the immutable plan blob deeplink and references
-the tracking issue, and the initial/milestone resumability comments. If any action cannot be verified, stop and report a blocked
+the tracking issue, and the approved-plan/execution-begins and first-executor-completion comments. If any action cannot be verified, stop and report a blocked
 handoff. The prompt must say that the plan remains tracked until planner closeout removes it.
 
 After bootstrap, agy may commit **only** to the designated branch/worktree named in the prompt. It must not:
@@ -160,9 +162,9 @@ BASE commit (the tip before your work): <sha>
   this once — stop and report instead):
   <paste the plan's ceiling block verbatim>
 - Allowed side effects: <local edits and commits plus the explicitly named bootstrap
-  push, draft PR, and milestone comments>.
+  push, draft PR, approved-plan/execution-begins comment, and first-executor-completion comment>.
 - You may commit only to the designated branch/worktree. You may perform the named
-  bootstrap push, draft PR, and comments; do not mark ready, remove the plan, merge,
+  bootstrap push, draft PR, and the two named executor-event comments; do not mark ready, remove the plan, merge,
   deploy, alter remote configuration, send messages outside PR bookkeeping, or touch
   credentials.
 - Keep a ledger at <scratch dir>/progress.md, appending

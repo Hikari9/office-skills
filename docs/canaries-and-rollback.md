@@ -25,6 +25,12 @@ For each one, confirm the same 4 things:
 * The reviewer refused to approve without real, pasted gate output.
 * The run produced an event with a plugin version and a core version attached.
 
+For a Herdr-enabled canary (`HERDR_ENV=1`), also confirm that the delegated agent appears in the
+right-side pane, any child it starts appears below it, the dispatch is recorded as `herdr`, no
+in-session Agent/Task child is created, and each pane created by the canary closes after its final
+result is read. Repeat one control run without `HERDR_ENV` to confirm the office's prior routing is
+unchanged.
+
 ## codex-office
 
 * **Independent review round.** Force a `CHANGES REQUIRED`, then confirm the fix goes to a fresh scoped executor dispatch, and the **same** reviewer is resumed rather than replaced.
@@ -36,7 +42,8 @@ For each one, confirm the same 4 things:
 * **Live question and recovery.** Get the `--cli` executor to raise a question, both a numbered menu and an open-ended free-text one. Confirm both are answered in place through `claude-cli-send-message`, with the session ID unchanged, so no fork happened.
 * **Fork guard.** Attempt `--resume` against a live session. The correct outcome is a refusal that cites session and worktree identity, not a display label.
 * **Duplicate writer.** Launch a second executor into the same worktree. The newer writer is stopped before it can edit.
-* **`--in-session` fallback.** Same plan through the Agent-tool path. The gates behave identically.
+* **Non-Herdr fallback.** Same plan without `HERDR_ENV`; existing CLI/in-session routing and gates
+  behave identically.
 
 ## agy-office
 

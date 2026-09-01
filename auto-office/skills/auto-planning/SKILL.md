@@ -81,7 +81,8 @@ is meaningless (one run read `82% → 52% → 85%` and none of it described anyt
    self-review, plan-review (when required), and every resulting amendment has been resolved and
    self-reviewed. Do not ask for provisional approval before those gates or ask again for an
    amendment made before this approval. Silence is not approval. Say plainly that approval starts an
-   end-to-end run which bootstraps a plan-only first commit and draft PR, comments each milestone,
+   end-to-end run which bootstraps a plan-only first commit and draft PR, records each milestone in
+   local run state,
    executes the `named_actions:` list without asking again, and stops only for an external send or a
    decision the plan did not anticipate.
 
@@ -102,8 +103,7 @@ do not write a plan until every item is answered or explicitly deferred by the u
   perform it without stopping. An irreversible step you cannot yet write out exactly is one the
   interview is not finished on. External sends are the exception: they never go in the list.
 - **Milestones** — which done-criteria group into a shippable landing, and in what order. Ask the
-  user if the natural grouping is not obvious; each becomes a commit and resumability comment on the
-  single draft PR.
+  user if the natural grouping is not obvious; each becomes a commit and local run-state checkpoint.
 - **Interfaces** — the signatures, schemas, routes, or file boundaries that tasks must agree on.
   Pin these now; a routed executor cannot invent them consistently.
 - **Constraints** — stack, conventions, domain skills that must load, things not to touch.
@@ -125,9 +125,13 @@ only) read-only scouts. Every row below tells the **executor** how to run that t
 because the planner has read the whole codebase and the executor should not have to re-derive which
 task deserves a subagent — not because the planner is the one dispatching.
 
-A per-task row therefore obliges a **reason**: why *that* task should be inline, in-session, or a
-CLI worker. A `Dispatch` cell with no justification in `Why` is an unreviewable cost and the plan is
-not ready.
+A per-task row therefore obliges a **reason**: why *that* task should be inline, `herdr`, in-session,
+or a CLI worker. A `Dispatch` cell with no justification in `Why` is an unreviewable cost and the
+plan is not ready.
+
+The example below assumes `HERDR_ENV` is absent. With Herdr detected, replace every non-inline
+`cli`/`in-session` dispatch with `herdr`, place direct children right and further children below, and
+keep the same worker scope and review gates.
 
 **Row 0 is the executor, and it is the only process the planner launches for the work:**
 
@@ -180,7 +184,8 @@ PLANNER (opus, this session)
   merely a harder-looking one. Write the reason in `Why`. An above-default worker that is not
   declared here is the defect this office was revised to fix; note that the defect was the
   *invisibility*, not the bigger model. Declared is fine, undeclared is not.
-- **`Dispatch` is derived, not chosen** — `cli` / `in-session` / `inline`, per the dispatch-form table.
+- **`Dispatch` is derived, not chosen** — `herdr` when `HERDR_ENV=1`, otherwise `cli` / `in-session` /
+  `inline`, per the dispatch-form table.
   There is no tax to compute and no tier to pick. **But the reason is not derived**: `Why this
   dispatch form` must say what the form buys — parallelism, a different brand, isolation, an event
   loop for a blocking wait, or (for `inline`) that the brief would exceed the edit. "Executor has it

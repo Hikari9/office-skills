@@ -6,6 +6,7 @@ Read the rows for the phase you are in; the whole table is not a startup cost.
 | Thought | Reality |
 |---|---|
 | "This is routable, I'll auto-invoke" | Only an explicit `/auto-office` invokes this. |
+| "HERDR_ENV=1, I'll use Agent/Task for the child" | Load the Herdr skill: direct children go right, further children go below, and the created pane closes after its settled result is read. |
 | "It's only a few files, I'll do it" | You are the priciest writer in the office. Volume is a purchase. Justify the inline row in a clause, or delegate it. |
 | "Task 1 is recon, I'll dispatch it myself, then start the executor" | Recon inside an approved plan is **task 1 of the executor's run**. Planner scouts are Phase 1 and read-only; if it writes anything — even a reverted probe — it is the executor's. |
 | "The brief isn't writable until task 1 answers X" | The plan names both branches; that is what a branch point *is*. The executor picks by evidence. If the plan doesn't name them, fix the plan. |
@@ -18,7 +19,7 @@ Read the rows for the phase you are in; the whole table is not a startup cost.
 | "The plan's done, I'll ask before executing" | You have approval. The run is end-to-end. |
 | "It's a prod apply, so the loop stops" | Only if the plan didn't name it. A named action with preconditions met runs — and *you* perform it. |
 | "'Deploy when done' — that's named" | It names nothing. Exact command, target, dry run, revert, read-back. Vague = unauthorized = stop. |
-| "I'll merge everything at the end" | Bootstrap one draft PR, then commit and comment each milestone so the run remains resumable. |
+| "I'll merge everything at the end" | Bootstrap one draft PR, then commit and record each milestone in local run state so the run remains resumable. |
 | "This needs MCP, so I'll keep it" | Delegate it *with* the tools enumerated, production reads included. Withholding access is a dispatch bug. |
 | "CLI was blocked last time" | A past denial is not evidence about now; the dispatch form is an assignment. Attempt it. |
 | "My worker said it'll report back" | That is a *return*. An in-session subagent unwinds once it has no live children. Blocking waits go `--bg`, or you hold them. |
@@ -45,6 +46,8 @@ before every dispatch; each line cost something real once.
       an approval and record it as evidence?
 - [ ] Every claim an amendment makes about a file: verified against the file?
 - [ ] Changed a mechanism? Grep the repo for prose describing the old one.
+- [ ] `HERDR_ENV=1`? Use `herdr` for the dispatch, verify the right/below pane topology, and close
+      only panes this run created after their results settle.
 - [ ] Self-reviewed, **then** sent to the fresh gate — the second is not optional because the first
       found things.
 

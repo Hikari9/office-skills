@@ -11,8 +11,9 @@ description: The discernment engine — which brand is the executor, which brand
    model and effort are **fixed** by the table below.
 2. **Which brand, model, and effort each worker gets** — per task. Routed by fit, and **not pinned
    to the executor's tier.** A worker may be a different brand, a bigger model, or both.
-3. **How each unit of work is dispatched** — CLI, in-session, or inline. **Derived**, not chosen: it
-   follows from who is dispatching whom (see *Dispatch form* below).
+3. **How each unit of work is dispatched** — Herdr, CLI, in-session, or inline. **Derived**, not
+   chosen: when `HERDR_ENV=1`, real delegations use Herdr; otherwise it follows from who is
+   dispatching whom (see *Dispatch form* below).
 
 Decisions 1 and 2 stay separate because they differ in kind. The executor holds the tree for the whole
 run, so pinning it makes cost predictable and authority singular. A worker is a bounded, supervised,
@@ -184,8 +185,14 @@ remaining quota.
 
 No arithmetic. The form follows from who is dispatching whom:
 
+When `HERDR_ENV=1`, load [`herdr`](../../office-core/skills/herdr/SKILL.md) and use `herdr` for every
+real delegation before applying the table below. Direct children occupy right-side panes; further
+children occupy panes below their parent. Record `herdr`, never `in-session`, for those dispatches.
+Inline work remains inline. When Herdr is absent, the table below is unchanged.
+
 | Who dispatches whom | Form | What the delegation buys |
 |---|---|---|
+| Any real delegation while `HERDR_ENV=1` | **Herdr pane** | Visible topology, prompt/read/wait control, and no hidden in-session child |
 | Planner → executor, **one per repo, whole plan** | **CLI, own worktree** | Isolation, unattended running, and a ~6× cheaper writer that already holds the reviewed plan |
 | Planner → code reviewer | **CLI / fresh agent** | Independence — the executor may never launch its own gate |
 | Planner → read-only scout, **Phase 1 only** | **CLI, `agy` by default**; if agy is unavailable, the planner's own brand at its **lower** tier (`haiku` in-session for claude, `gpt-5.6-luna` for codex) — **never planner tier** | Breadth before a plan or an executor exists |
@@ -242,12 +249,15 @@ deployment spent 63k tokens, armed a monitor, said it would report back, and sto
 watching; the planner re-ran every step itself.
 
 **The test is whether the work contains a blocking wait**, not whether the role sounds like a
-watcher. Route those to a `--bg` process that owns its own event loop, or hold them yourself.
+watcher. Route those to a `--bg` process that owns its own event loop, or hold them yourself. When
+`HERDR_ENV=1`, the Herdr agent pane owns the wait and remains visible until the final result is read;
+do not replace it with an in-session child.
 
-**Every brand has a built-in in-session sub-agent mechanism.** The brief *prompts* the executor that
-it may fan out; **it never prescribes how.** Sub-agent mechanics belong to the sibling office, exactly
-like CLI mechanics — auto-office owns neither. A brief that tries to specify the mechanism is how the
-last run shipped a task assignment that was impossible to execute as written.
+**Every brand has a built-in in-session sub-agent mechanism**, but it is not used when `HERDR_ENV=1`.
+In that environment the [Herdr skill](../../office-core/skills/herdr/SKILL.md) owns the pane split,
+agent start, prompt, wait, read, and cleanup mechanics. When Herdr is absent, the brief *prompts* the
+executor that it may fan out; **it never prescribes how.** Sub-agent mechanics otherwise belong to the
+sibling office, exactly like CLI mechanics — auto-office owns neither.
 
 Core's [delegation test](../../office-core/protocol/roles-and-authority.md) still governs *whether* to
 delegate at all: a delegation must buy tier, isolation, or parallelism, and if it buys none of the

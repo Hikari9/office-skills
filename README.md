@@ -9,8 +9,8 @@ An "office" is a strict, role-separated delivery process. A planner plans, a sep
 | Plugin | Executor | Shape |
 |---|---|---|
 | [auto-office](auto-office/) | **Chosen** — codex, agy, or claude | Plan + GOAL, plan-review, route, then a goal-locked autonomous loop to closeout |
-| [codex-office](codex-office/) | Codex in-session workers when planner and assignee are Codex; otherwise CLI | Plan, execute, adversarial review, closeout |
-| [agy-office](agy-office/) | The `agy` CLI (Antigravity/Gemini) | Plan, execute, **independent verification**, adversarial review, closeout |
+| [codex-office](codex-office/) | Herdr panes when detected; otherwise Codex in-session workers when planner and assignee are Codex, or CLI | Plan, execute, adversarial review, closeout |
+| [agy-office](agy-office/) | Herdr panes when detected; otherwise the `agy` CLI (Antigravity/Gemini) | Plan, execute, **independent verification**, adversarial review, closeout |
 
 Each one installs, versions, and rolls back on its own. Improving one office never quietly changes the others.
 
@@ -25,8 +25,9 @@ executed — and a gate every run depends on cannot live in a plugin a run might
 
 Three decisions, not a tier ladder: **which brand is the executor** (one per repo, the only writer),
 **which brand and tier each worker gets** per task, and **how each is dispatched** — and the third is
-derived, not chosen (same-brand planner/worker pairs use in-session subagents, cross-brand pairs
-use the assignee's CLI, and work a delegation buys nothing for is done inline). The executor is
+derived, not chosen (when Herdr is detected, delegated work uses visible Herdr panes; otherwise
+same-brand planner/worker pairs use in-session subagents, cross-brand pairs use the assignee's CLI,
+and work a delegation buys nothing for is done inline). The executor is
 pinned to sonnet-tier, so a hard task
 gets a better *plan*, not a bigger executor; a worker may be assigned higher when the sub-task is a
 different *kind* of question, declared in the plan and never promoted mid-run. The plan itself is

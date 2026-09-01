@@ -5,21 +5,19 @@ description: Use ONLY when explicitly invoked via /agy-office, for irreversible 
 
 # Agy Office
 
-Same discipline as `claude-office`, with the `agy` CLI (Antigravity/Gemini) as Executor.
 **Plan → Execute → Verify (2b) → Review → Closeout.**
 
 | Role | Who | Model | Job |
 |---|---|---|---|
 | **Planner** | The current agent (you) | session's own | Plan → approval; **independently verify**; fix/close out |
-| **Executor** | `agy --print`, unsandboxed | **Flash latest**, resolved at dispatch | Bootstrap the draft PR, implement ≤3 tasks, comment milestones, write handoff |
-| **Reviewer** | Fresh reviewer (agy CLI or subagent) | `gemini-3.7-flash-high` | Adversarial review each round; holds the gate |
+| **Executor** | Herdr `agy` pane when HERDR_ENV=1; otherwise `agy --print` | **Flash latest**, resolved at dispatch | Bootstrap, implement ≤3 tasks, first-completion event, handoff |
+| **Reviewer** | Fresh Herdr pane when HERDR_ENV=1; otherwise existing fresh reviewer route | `gemini-3.7-flash-high` | Adversarial review; holds the gate |
 
 **Core principle:** the planner never implements the plan; the executor never approves its own
 work. Each gate is held by whoever did not do the work.
 
-**REQUIRED BACKGROUND:** load the **`agy` skill** before your first dispatch — the living record
-of the CLI's sharp edges (flags, workspace, timeout, models, quota). Don't reconstruct it from
-memory; append what you learn there.
+**REQUIRED BACKGROUND:** load the **`agy` skill** before your first dispatch — the living record of
+its flags, workspace, timeout, models, and quota. Don't reconstruct it from memory.
 
 ## Why five phases, not four
 
@@ -72,6 +70,9 @@ rule: `office-core/protocol/roles-and-authority.md` → *Fit test*.
 ## Non-bypassable safety rules
 
 - Explicit `/agy-office` only, never self-triggered; load the `agy` skill first.
+- With `HERDR_ENV=1`, read [`herdr`](office-core/skills/herdr/SKILL.md), use it for every delegated
+  agent, record `herdr`, and keep direct children right/nested children below; otherwise preserve
+  existing agy CLI/subagent routing.
 - Planner never implements the plan; executor never approves its own work.
 - Phase 2b never skipped, not review — a clean pass ≠ a lighter Phase 3.
 - Exit 0 means nothing; green tests only prove tests agree with the implementation.
@@ -80,10 +81,10 @@ rule: `office-core/protocol/roles-and-authority.md` → *Fit test*.
 - One tree, one agy process; run in an isolated git worktree (`.worktrees/<branch>` or `worktrees/<branch>`), never directly in the primary repo checkout.
 - Executor bootstrap is authorized by the approved plan: commit the plan alone first, push the named
   branch, open one draft PR whose body contains an immutable plan blob deeplink and references the
-  plan and issue, and post initial/milestone comments.
+  plan and issue, and post the approved-plan/execution-begins comment plus the first-executor-completion comment.
   Planner-held closeout removes the plan, marks the PR ready, and merges it.
-- Commit and comment each milestone as its criteria go green on the single draft PR. Keep it draft
-  until final reviewer approval; do not merge milestones independently.
+- Milestones are internal checkpoints and do not create PR comments. Keep the single PR draft until
+  final reviewer approval, which gets one short summary comment; do not merge milestones independently.
 - Dispatch live-system work **with** its access: MCP/API tools named in the launch, production
   **reads** included, data shape pinned in the brief, read-back required.
 - Reviewer defaults to `gemini-3.7-flash-high` (fresh reviewer separate from executor); escalate out of the tool, not to it.
@@ -94,12 +95,12 @@ rule: `office-core/protocol/roles-and-authority.md` → *Fit test*.
 
 ## Protocol version
 
-Implements office-core **`8.0.0`**, vendored at `office-core/` here. Mandatory read:
+Implements office-core **`9.0.0`**, vendored at `office-core/` here. Mandatory read:
 [`roles-and-authority.md`](office-core/protocol/roles-and-authority.md) — vendored copy
 authoritative once installed; repo-root `office-core/` is the dev source. Exception:
 `agy-phase-2b` (`COMPATIBILITY.md`).
 
-**Declared narrowing of core.** Core `8.0.0` lets the planner implement inline; this office
+**Declared narrowing of core.** Core `9.0.0` lets the planner implement inline; this office
 does **not** — the planner never implements the plan here. Narrowing is legal, and it is stated so a
 reader of both files need not guess which governs.
 
@@ -109,8 +110,6 @@ reader of both files need not guess which governs.
 acting.** This binds whoever holds the phase — the same agent across a boundary as much as a fresh
 one. Protocol amnesia past Phase 2 is the observed failure; a re-read is the cheapest fix for it.
 
-
-No role reads the whole corpus — each gets the Office Kernel plus the spokes below.
 
 | Phase / need | Load | When |
 |---|---|---|
@@ -127,7 +126,7 @@ No role reads the whole corpus — each gets the Office Kernel plus the spokes b
 
 ## The Five Phases
 
-One todo per phase; close each with `compact: yes|no — why` (core evidence floor).
+Close each phase with `compact: yes|no — why`.
 
 **Phase 1 — Plan (Planner).** File tracking issue, interview to 95%, pre-create the isolated
 git worktree (`.worktrees/<slug>`), pin every touched interface verbatim, write the plan (Context /
@@ -136,7 +135,7 @@ get approval. → [`agy-planning`](skills/agy-planning/SKILL.md).
 
 **Phase 2 — Execute (Executor).** Record `BASE`, copy the approved plan into tracked
 `docs/plans/<slug>.md`, build the packet for the worktree, and require plan-only first commit,
-named-branch push, one draft PR, and its initial comment before implementation. Launch per
+named-branch push, one draft PR, and its approved-plan/execution-begins comment before implementation. Launch per
 [`agy-cli`](skills/agy-cli/SKILL.md), never edit the tree it writes to, handle its `## Upline`.
 → [`agy-executor`](skills/agy-executor/SKILL.md).
 
@@ -149,7 +148,7 @@ Constraints, handoff, diff, your Phase 2b evidence; triage/fix; re-run Phase 2b 
 round; cap 5. → [`agy-reviewer`](skills/agy-reviewer/SKILL.md).
 
 **Phase 4 — Closeout (Planner).** Verify the final gate, remove the plan in a pre-merge commit, push,
-confirm milestone comments, mark the existing draft PR ready, merge to main (`gh pr merge --auto --squash`
+confirm the first-executor-completion and final-approval-summary comments, mark the existing draft PR ready, merge to main (`gh pr merge --auto --squash`
 or standard merge), sync local `main`, remove the worktree, close every open Upline entry, and report
 in ≤6 lines. → [`agy-closeout`](skills/agy-closeout/SKILL.md).
 

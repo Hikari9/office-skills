@@ -8,6 +8,12 @@ description: The adversarial Phase 3 gate — default reviewer is gemini-3.7-fla
 Loaded by: reviewer, at Phase 3.
 Assumes: the Office Kernel is already in the packet.
 
+When `HERDR_ENV=1`, the fresh Claude reviewer is hosted in a right-side Herdr pane, and any
+further reviewer child goes below its parent. Load [`herdr`](../../office-core/skills/herdr/SKILL.md)
+and close each pane created for the dispatch after reading its final verdict and completing any
+needed review rounds; never use an
+in-session Agent/Task subagent in that mode.
+
 Points at [`../../references/review-gate.md`](../../references/review-gate.md) (mechanics + fix
 loop) and [`../../references/reviewer-brief.md`](../../references/reviewer-brief.md) (the prompt
 template) for full detail. This spoke restates what cannot be compressed away.
@@ -46,10 +52,9 @@ package file for `BASE..HEAD`, the validation commands, **the planner's own Phas
 check summary** of what the verification pass found and what it is passing through unverified.
 Also hand it the handoff's `## Upline` `[decided]` list, verbatim, as scrutiny targets.
 
-The planner records the finalized verdict in the existing draft PR before triage or follow-up.
-Make the response complete enough to copy verbatim; every `CHANGES REQUIRED` finding, including
-its evidence and recommendation fields, must survive in the PR comment. After a fix wave, the
-planner posts each finding's resolution and the new commit range before resuming review.
+The planner records the finalized verdict and each disposition in the review files and run state.
+Do not write for a PR comment: intermediate verdicts and fix resolutions stay internal. When the
+final verdict is `APPROVED`, the planner posts the core policy's short approval summary.
 
 ## Do not compress the rubric because agy reviewed nothing
 

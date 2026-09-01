@@ -1,6 +1,6 @@
 ---
 name: auto-loop
-description: Phase 2–3 — the goal-locked autonomous loop that runs draft-PR bootstrap → dispatch → liveness → verify → review → fix per task, comments each green milestone, and returns to the user only for two user-owned decisions. Planner review dispositions can park a task without self-approval. Hard caps, named-action preconditions, and the compaction recommendation. Loaded by the auto-office hub; not invoked directly.
+description: Phase 2–3 — the goal-locked autonomous loop that runs draft-PR bootstrap → dispatch → liveness → verify → review → fix per task, records milestones locally, and returns to the user only for two user-owned decisions. Planner review dispositions can park a task without self-approval. Hard caps, named-action preconditions, and the compaction recommendation. Loaded by the auto-office hub; not invoked directly.
 ---
 
 # Auto Loop
@@ -33,7 +33,7 @@ for each task the executor completes and hands back:
     verdict == APPROVED       → milestone check, then next task
 
     milestone check: every done-criterion in this task's milestone green?
-        → RECORD IT: gate → commit → comment on the draft PR
+        → RECORD IT: gate → commit → local run state
         → then continue the loop. Do not batch milestones or merge early.
 re-read GOAL:
     all done_criteria green?  → final closeout
@@ -52,10 +52,10 @@ each task boundary, write `EXECUTOR-STATE.md`, and wait — so review happens pe
 has. What changed is who launches the next one: the executor resumes itself, or the planner resumes
 it with `--continue`. The planner never launches a *different* process for the next task.
 
-**Recording a milestone is part of the loop, not a phase after it.** The loop commits and comments
-each green milestone on the single draft PR, so an interruption has a branch, plan, commit range,
-and verification record to resume from. If the milestone's gate is red, do not post a success
-comment and do not walk past it into the next one.
+**Recording a milestone is part of the loop, not a phase after it.** The loop commits and records
+each green milestone in local run state, so an interruption has a branch, plan, commit range, and
+verification record to resume from. If the milestone's gate is red, do not post a PR comment and do
+not walk past it into the next one.
 
 ## Liveness check after every CLI dispatch
 
@@ -64,9 +64,20 @@ the harness's completion notification, a growing log, or a handoff file whose mt
 producing nothing is not a dispatch that is thinking. (One run lost 1h38m of wall clock and zero
 tokens to an unwatched dispatch; wall clock is a first-class cost.)
 
+For a Herdr-managed dispatch, **the observable is the brief appearing in the agent's transcript,
+not a `working` status.** `agent_status: working` right after `agent start` is frequently the
+agent's own startup churn (MCP client init, plugin loading), not proof the prompt landed — an
+agent that dropped the prompt returns to `idle` with an empty composer, which reads as "produced
+no output" only if you read the pane instead of trusting the status field. (Evidence, 2026-09-01:
+`herdr agent prompt ... --wait --until working` returned `working` for two dispatched executors;
+both had silently dropped the brief and were idle at the splash screen minutes later. See
+`skills/herdr/SKILL.md` § *Send and supervise the prompt*.)
+
 **Silence does not authorize a re-dispatch. Confirm the process is dead first** — `pgrep`, handoff
 mtime, or stop it explicitly. A silent-but-live process plus a replacement is **two writers in one
-tree**. Kill or confirm exit, *then* re-dispatch.
+tree**. Kill or confirm exit, *then* re-dispatch. A Herdr agent confirmed idle with an empty
+composer and no trace of the brief is not this case: nothing was ever started, so re-prompting the
+same agent is correct and safe, not a two-writers risk.
 
 ### `EXECUTOR-STATE.md` is mandatory, and the memory cap is the executor's to manage
 
@@ -151,12 +162,14 @@ Beyond the plan path, GOAL block, blast-radius ceiling, and file scope:
    contradict, which converts an early failure into a late one. Core:
    [`evidence-and-handoff.md`](../../office-core/protocol/evidence-and-handoff.md) → *Briefs that
    touch a live system*.
-5. **You may fan out in-session** using your own harness's built-in sub-agent mechanism, within your
-   file scope. The default remains one independent implementation writer per tree. The coordinated
+5. **Fan-out follows the environment.** When `HERDR_ENV=1`, load
+   [`herdr`](../../office-core/skills/herdr/SKILL.md), put further children below the current agent,
+and close created panes after final results are read and no follow-up is needed. Do not use in-session Agent/Task
+   subagents. When Herdr is absent, the executor may fan out in-session using its own harness within
+   its file scope. The default remains one independent implementation writer per tree. The coordinated
    Tester exception allows one Tester to author tests/config in the same tree when `Touches:` paths
    are disjoint; follow `office-core/protocol/tester-worker.md` for Git locking, live-test results,
-   checkpoints, and reports. The brief never prescribes *how* — that is your office's mechanism, not
-   this one's.
+   checkpoints, and reports.
 6. **Self-review your own work — mandatory, and it covers what you implemented inline.** Per task,
    before marking it complete: a spec-compliance verdict and a quality verdict, graded
    Critical / Important / Minor. Then once at Finish, with the gate green, over the cumulative
@@ -180,11 +193,16 @@ they are what keeps an autonomous run honest:
 4. **Is this `planner_held`?** Then *you* perform it, never a delegate — and check `named_actions`:
    named with its preconditions met, you execute it and keep going; not named, or a precondition
    failed, you stop for the user.
-5. **Which milestone does this task belong to, and did the previous one get commented?** An
-   uncommented milestone behind you is a lost re-entry point.
+5. **Which milestone does this task belong to, and did the previous one get recorded?** An
+   unrecorded milestone behind you is a lost re-entry point.
 6. **Agy consecutive-task count** — at 3, re-brief with full context restated or re-route.
 7. **`git rev-parse --abbrev-ref HEAD` before every commit and every push.** Read it; do not assume
    the branch you created is still checked out.
+8. **Any finished pane still open?** Under `HERDR_ENV=1`, read `/tmp/office/panes.jsonl` and close
+   the pane of every agent that has reported — including one facing another round, which resumes by
+   `session_id` in a fresh pane. Every spawn must already have written its ledger line; a missing
+   line is the defect, because the `Stop` hook that sweeps the rest reads that file. Mechanism and
+   the full rule: [`herdr`](../../office-core/skills/herdr/SKILL.md) → *Close created panes*.
 
 ## A deploy's targets come from the diff, not from the file you edited
 
@@ -215,7 +233,8 @@ The cheap check — "what else consumes this file?" — was one grep.
   "make your own branch" is a request, not a control.
 - **Re-read the branch after any dispatch returns**, not only before committing.
 - **The executor owns the core bootstrap: plan-only first commit, named-branch push, one draft PR
-  whose body contains the immutable plan blob deeplink, and initial/milestone comments.** The
+  whose body contains the immutable plan blob deeplink, and the approved-plan/execution-begins and
+  first-executor-completion comments.** The
   planner never authors a commit for code it did not write.
   **Name the branch:** `git push <remote> <branch-name>`, **never**
   `HEAD` — `HEAD` inherits whatever you are on, so "I only push feature branches" is not true by
@@ -255,8 +274,8 @@ The planner keeps only what is structurally not the executor's: things the **use
 | **Dispatching the code reviewer**; triaging findings | Resolving branch points the plan already anticipated |
 | **Contesting** a review finding on the executor's behalf | **Implementing** every finding the reviewer raises |
 | **Production and irreversible applies**; deploys | **All preview/staging writes and all live reads** |
-| External sends — never delegable, ever | Bootstrap commit, pushing its named branch, opening the draft PR, milestone comments |
-| **Plan removal, ready-for-review, and merging into any base branch** | Implementation commits and milestone comments |
+| External sends — never delegable, ever | Bootstrap commit, pushing its named branch, opening the draft PR, and the two executor event comments |
+| **Plan removal, ready-for-review, and merging into any base branch** | Implementation commits; the planner owns the final approval summary |
 | Accepting or re-revising a plan amendment | Proposing a plan amendment, committed, with its hash |
 | Posting the run report | Drafting the run report from its own evidence |
 
@@ -364,7 +383,7 @@ Any of 1–4 failing turns the action into a stop with a named reason. This is t
 ## Progress reporting without blocking
 
 Post a one-line status per task completion — task, brand, review rounds, **wall clock**, verdict,
-criteria now green, milestone state (`commented → draft PR #n` or `n/m criteria`), **`compact:`**. It informs;
+criteria now green, milestone state (`recorded → local run state` or `n/m criteria`), **`compact:`**. It informs;
 it does not ask. Never end a status line with a question the run's continuation depends on. Wall
 clock goes on the line because it is the cost invisible in a token count and the one a silent
 dispatch spends.
@@ -378,7 +397,7 @@ followed, because it asked the planner to remember it at exactly the moment its 
 
 Two things still need you:
 
-  - **A commented milestone is the strongest boundary before closeout** — the state that must survive
+  - **A recorded milestone is the strongest boundary before closeout** — the state that must survive
     is a branch name, plan path, PR number, commit range, and verification output. The hook cannot see
     that a milestone just got recorded; say so when it does.
 - **A `no` reading "nothing points at a file" is a defect report, not a wait instruction.** Something
@@ -429,7 +448,7 @@ surface, and split on surface boundaries, never on file count.
 
 ## Resuming an interrupted run
 
-**The draft PR milestones are the resume record before closeout.** Read the branch, tracked plan,
+**The branch, local run state, and three allowed PR comments are the resume record before closeout.** Read the branch, tracked plan,
 draft PR, comments, and commit range first. Then re-read the GOAL, re-check which done-criteria are
 green **by running their verify commands** rather than trusting prior notes, and re-enter the loop at
 the first red one. After merge, Git history is the durable record.

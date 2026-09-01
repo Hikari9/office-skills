@@ -4,15 +4,17 @@ description: Adversarial review gate mechanics and the fix loop. Loaded by the c
 ---
 
 Loaded by: planner (to build the dispatch), and by the assigned reviewer, at Phase 3. The reviewer
-may be a fresh in-session Codex subagent or a CLI worker, according to the hub's Dispatch routing.
+may be a fresh Herdr-managed agent, an in-session Codex subagent, or a CLI worker, according to the
+hub's Dispatch routing. When `HERDR_ENV=1`, load [`herdr`](../../office-core/skills/herdr/SKILL.md)
+and do not use an in-session subagent.
 Assumes: the Office Kernel is already in the packet.
 
 ## Who reviews
 
 A fresh, separate `gpt-5.6-luna` reviewer identity at xhigh effort (a **code** review of a
 low-blast-radius leg runs at `high` instead — `auto-office/skills/auto-routing` → *Review effort is
-priced per leg*) — in-session when both planner
-and reviewer are Codex, otherwise launched through CLI — never the executor, never a session that
+priced per leg*) — a Herdr pane when `HERDR_ENV=1`, in-session when both planner
+and reviewer are Codex otherwise, or through CLI — never the executor, never a session that
 did any of the work being gated. Mechanics live in
 [../../references/review-gate.md](../../references/review-gate.md); the exact prompt contract is
 [../../references/reviewer-brief.md](../../references/reviewer-brief.md). Both are read in full,
@@ -37,10 +39,9 @@ pre-fix reflection, and any mid-fix change of course. The planner may decide not
 round, but that preserves the open finding and cannot become self-approval. Accepted changes to a
 gated surface require independent re-review.
 
-The planner records the finalized verdict in the existing draft PR before triage or follow-up.
-Make the response complete enough to copy verbatim; every `CHANGES REQUIRED` finding, including
-its evidence and recommendation fields, must survive in the PR comment. After a fix wave, the
-planner posts each finding's resolution and the new commit range before resuming review.
+The planner records the finalized verdict and each disposition in the review files and run state.
+Do not write for a PR comment: intermediate verdicts and fix resolutions stay internal. When the
+final verdict is `APPROVED`, the planner posts the core policy's short approval summary.
 
 ## Continuity and the round cap
 

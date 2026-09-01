@@ -8,6 +8,10 @@ description: The agy CLI adapter — launch form, flag order, workspace, quota, 
 Loaded by: planner, before dispatch.
 Assumes: the Office Kernel is already in the packet.
 
+When `HERDR_ENV=1`, this is not the dispatch surface. Load
+[`herdr`](../../office-core/skills/herdr/SKILL.md) and start the assigned `agy` agent in a Herdr
+pane. Use this spoke when Herdr is absent or not detected.
+
 **The `agy` skill is the living record of the CLI's sharp edges.** Load it before your first
 dispatch and do not reconstruct any of this from memory — append what you learn there, not here.
 This spoke is the runtime contract this office depends on; the `agy` skill is the general

@@ -7,7 +7,9 @@ the diff is real and its interface claims are true. Dispatching a reviewer at an
 whose tests were written against an invented signature, wastes a round on something you could have
 caught in the Phase 2b checks.
 
-Dispatch a **fresh** agent that did not do the work — never agy, never yourself:
+Dispatch a **fresh** agent that did not do the work — never agy, never yourself. When
+`HERDR_ENV=1`, use the [Herdr skill](../office-core/skills/herdr/SKILL.md) to put that Claude agent
+in a right-side pane; otherwise use the existing in-session route shown below:
 
 ```
 Agent(
@@ -32,7 +34,8 @@ the place to catch what the author could have found for free. Read the section, 
 handoff: **do not** copy its findings into the reviewer's brief. Handing a reviewer the author's own
 list anchors it and converts an independent pass into a verification of someone else's work.
 
-**The reviewer is always a Claude subagent here.** Unlike `codex-office`, there is no caller tweak that
+**The reviewer is always a fresh Claude agent here.** When `HERDR_ENV=1`, host it in a visible Herdr
+pane; otherwise use the existing Claude subagent route. Unlike `codex-office`, there is no caller tweak that
 routes review through the executor CLI: an agy run reviewing an agy diff shares the blind spots that
 produced it, and this executor's characteristic failure — self-consistent wrong work that passes its own
 tests — is precisely the one a same-family reviewer cannot see. If the user asks for a second opinion
@@ -101,12 +104,10 @@ The reviewer returns one of three verdicts: `APPROVED`, `CHANGES REQUIRED` with 
 `PLAN DEFECT`. It is instructed to refuse approval without pasted command output for the build/test gate
 — if it approves without that evidence, send it back.
 
-After every complete verdict, the planner must post the reviewer's finalized verdict to the
-existing draft PR before triage, fixes, another review round, or closeout. The comment must carry
-the round, reviewer id, `HEAD`/range, complete verdict and self-review; for `CHANGES REQUIRED`,
-copy every numbered finding verbatim. After each fix wave, post a finding-by-finding
-`ADDRESSED`/`NOT ADDRESSED` resolution comment with evidence, fix range, and next resume point,
-then read both comments back. A `PENDING` or incomplete review is not posted or counted.
+The planner keeps every complete verdict, finding, disposition, and fix wave in the review files and
+run state. It posts no intermediate review or fix-resolution comments. Only a final `APPROVED`
+review gets a PR comment: a short summary naming the reviewer, final `HEAD`, round count, total
+changes required across the rounds, and why each change was required — or why none were.
 
 Before triage or a follow-up, the planner also records a disposition for every finding: accepted,
 contested, deferred, or escalated; a recommendation of `FIX_AND_REVIEW`, `REPLAN`, `WAIVE_AND_STOP`,

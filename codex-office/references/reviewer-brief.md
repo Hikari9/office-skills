@@ -2,8 +2,9 @@
 
 Use a fresh, separate Codex reviewer identity at `gpt-5.6-luna`. Effort is `xhigh` for plan review
 and for code review of a high-blast-radius leg; a **code** review of a low-blast-radius leg runs at
-`high` (`auto-office/skills/auto-routing` → *Review effort is priced per leg*). When the planner is
-Codex, this is a fresh in-session subagent; when the planner is another brand, use
+`high` (`auto-office/skills/auto-routing` → *Review effort is priced per leg*). When
+`HERDR_ENV=1`, dispatch this fresh reviewer through a visible Herdr pane; otherwise when the planner
+is Codex, this is a fresh in-session subagent; when the planner is another brand, use
 `codex exec -m gpt-5.6-luna -c model_reasoning_effort="<xhigh|high>"`. Both CLI flags are required:
 `-m` alone runs at the operator's configured default, not at the effort you meant.
 Give it the absolute repo path, branch, plan path, BASE..HEAD range, diff
@@ -39,10 +40,9 @@ fix for a lag. The reviewer still **never writes the fix** — `Fix:` is a recom
 implementer may reject with evidence — and on follow-up rounds it judges the result on correctness,
 never on whether its own suggestion was followed.
 
-Make the finalized verdict complete enough to copy verbatim into the run's existing PR comment.
-Do not omit a numbered finding, self-review, gate evidence, deferral, or Upline decision because
-the planner will preserve the full response there. The planner must post that response before
-triage or follow-up work, then post a finding-by-finding resolution comment after each fix wave.
+Make the finalized verdict complete enough for the planner's internal review record. Do not omit a
+numbered finding, self-review, gate evidence, deferral, or Upline decision. Intermediate verdicts
+and fix resolutions are not PR comments; only the planner's short final `APPROVED` summary is posted.
 
 ## `VERDICT: PENDING` while the review file is incomplete
 

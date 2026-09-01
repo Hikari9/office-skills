@@ -63,7 +63,7 @@
     },
     "dispatch_mode": {
       "type": "string",
-      "description": "Office-specific: codex-exec, claude-cli, claude-in-session, agy-print, inline."
+      "description": "Office-specific: codex-exec, claude-cli, claude-in-session, agy-print, herdr, inline."
     },
     "selected_spokes": { "type": "array", "items": { "type": "string" } },
     "capability_manifest": {
@@ -111,8 +111,8 @@
       "description": "Effort level for this dispatch. Duplicates model.effort at the top level so a cost retrospective can read model and effort without unwrapping; emit both consistently or neither."
     },
     "dispatch_form": {
-      "enum": ["cli", "in-session", "inline"],
-      "description": "How the work was dispatched, not how expensive it was. Derived from the office's brand-routing rule: same-brand planner/worker pairs may use in-session subagents, cross-brand assignments use the assignee's CLI, and work the delegation test says buys nothing is inline."
+      "enum": ["cli", "in-session", "herdr", "inline"],
+      "description": "How the work was dispatched, not how expensive it was. When HERDR_ENV=1, delegated work uses a visible Herdr pane; otherwise the office's normal brand-routing rule applies. Work the delegation test says buys nothing is inline."
     },
     "review_rounds": {
       "type": "integer",

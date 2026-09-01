@@ -1,5 +1,11 @@
 # Phase 3 — Adversarial Review (detail)
 
+When `HERDR_ENV=1`, do not use the in-session `Agent(...)` invocation below. Load
+[`../office-core/skills/herdr/SKILL.md`](../office-core/skills/herdr/SKILL.md), place the fresh
+reviewer in the required Herdr pane, send the brief with `herdr agent prompt`, and close only the
+created pane after the final review round is read. This reference's existing in-session path applies
+when Herdr is absent.
+
 Announce: `Phase 3: dispatching reviewer (<model>) for final gate.`
 
 Dispatch a **fresh** agent — never reuse the executor, never review it yourself:
@@ -78,12 +84,10 @@ When the control shows the tool is blind, you have found a second defect — fix
 
 The reviewer returns one of three verdicts: `APPROVED`, `CHANGES REQUIRED` with numbered findings, or `PLAN DEFECT`. It is instructed to refuse approval without pasted command output for the build/test gate — if it approves without that evidence, send it back.
 
-After every complete verdict, the planner must post the reviewer's finalized verdict to the
-existing draft PR before triage, fixes, another review round, or closeout. The comment must carry
-the round, reviewer id, `HEAD`/range, complete verdict and self-review; for `CHANGES REQUIRED`,
-copy every numbered finding verbatim. After each fix wave, post a finding-by-finding
-`ADDRESSED`/`NOT ADDRESSED` resolution comment with evidence, fix range, and next resume point,
-then read both comments back. A `PENDING` or incomplete review is not posted or counted.
+The planner keeps every complete verdict, finding, disposition, and fix wave in the review files and
+run state. It posts no intermediate review or fix-resolution comments. Only a final `APPROVED`
+review gets a PR comment: a short summary naming the reviewer, final `HEAD`, round count, total
+changes required across the rounds, and why each change was required — or why none were.
 
 Before triage or a follow-up, the planner also records a disposition for every finding: accepted,
 contested, deferred, or escalated; a recommendation of `FIX_AND_REVIEW`, `REPLAN`, `WAIVE_AND_STOP`,
