@@ -100,7 +100,8 @@ production reads included, shape pinned in the brief, read-back required.
 - Executor is **sonnet-tier high** always; a worker's tier is the plan's call, never raised mid-run.
 - A delegation buys tier, isolation, parallelism, **or price** — and **every inline row states in a
   clause what a delegation would have bought.** File and task count are never the test.
-- Explicit plan approval before dispatch — silence is not approval.
+- One final plan approval after all Phase 1 gates and amendments, before dispatch — silence is not
+  approval.
 - Fresh Opus code reviewer, resumed across rounds; **`CHANGES REQUIRED`** re-enters the fix loop; no
   approval without pasted evidence; **5-round cap** (2 in express, then promote to full).
 - `PLAN DEFECT` and `BRIEF DEFECT` exit the loop without consuming a round; at **2** total (not merely

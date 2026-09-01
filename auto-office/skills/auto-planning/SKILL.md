@@ -77,7 +77,10 @@ is meaningless (one run read `82% → 52% → 85%` and none of it described anyt
    This is what the loop is measured against and what authorizes its landings.
 7.4 **Self-review the plan** (below). Mandatory in **both** gears, before any hand-off.
 7.5 **One adversarial plan-review** (below). Mandatory in **full**; **not run in express**.
-8. **Get explicit approval.** Silence is not approval. Say plainly that approval starts an
+8. **Get the single final approval.** This is the only plan-approval prompt: take it after
+   self-review, plan-review (when required), and every resulting amendment has been resolved and
+   self-reviewed. Do not ask for provisional approval before those gates or ask again for an
+   amendment made before this approval. Silence is not approval. Say plainly that approval starts an
    end-to-end run which bootstraps a plan-only first commit and draft PR, comments each milestone,
    executes the `named_actions:` list without asking again, and stops only for an external send or a
    decision the plan did not anticipate.
