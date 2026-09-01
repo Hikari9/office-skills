@@ -7,6 +7,8 @@ Core `14.0.0`.
 - PR comments are limited to approved-plan/execution-begins, first-executor-completion, and final
   `APPROVED` summary events. Intermediate review verdicts, fix resolutions, and milestones remain
   in run artifacts.
+- Pane hygiene closes only confirmed `done` or gone agents; idle agents remain available for prompt
+  recovery.
 
 ## 13.0.0 — 2026-09-01
 

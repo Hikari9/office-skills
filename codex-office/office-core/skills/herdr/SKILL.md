@@ -159,9 +159,9 @@ treats a marked entry as already handled and prunes it without announcing anythi
 standalone install can reach it. Wired to `Stop`, it reads the ledger at every turn boundary and
 closes what has finished:
 
-- **closes** an entry whose agent is `done`, `idle`, or gone (herdr answers `agent_not_found`), and
+- **closes** an entry whose agent is `done` or gone (herdr answers `agent_not_found`), and
   removes it from the ledger;
-- **never closes** an agent that is `working`, `blocked`, or `unknown`; a pane whose agent has since
+- **never closes** an agent that is `idle`, `working`, `blocked`, or `unknown`; a pane whose agent has since
   moved to a different pane than the ledger recorded; or **any pane absent from the ledger** —
   `herdr pane list` also shows the user's own panes and other sessions', and it is never the input;
 - is silent when there is nothing to do, is safe to re-run, and is a no-op when `herdr` is not on

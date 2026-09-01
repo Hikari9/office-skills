@@ -15,11 +15,12 @@
  * It closes ONLY panes recorded in the ledger. `herdr pane list` also shows the
  * user's own panes and other sessions' panes, so the listing is never the input.
  *
- * Closable, with no role exceptions: `done`, `idle`, or gone (herdr answers
- * `agent_not_found`). An idle agent has finished its turn, and a closed pane is
- * not lost work — the ledger records each agent's session id, so a session is
- * restored by id in a fresh pane. Continuity lives in the id and the agent's
- * written report, never in a pane left open in case it is needed again.
+ * Closable, with no role exceptions: `done` or gone (herdr answers
+ * `agent_not_found`). An idle agent may have dropped its prompt, so it stays
+ * open until completion is confirmed. A closed pane is not lost work — the
+ * ledger records each agent's session id, so a session is restored by id in a
+ * fresh pane. Continuity lives in the id and the agent's written report, never
+ * in a pane left open after confirmed completion.
  *
  * Never closable: an agent that is `working`, `blocked`, or `unknown`; a pane
  * whose agent has since moved to a different pane than the ledger recorded; and
@@ -41,7 +42,7 @@ import { tmpdir } from "node:os";
 import { join, delimiter } from "node:path";
 
 const LEDGER = process.env.OFFICE_PANE_LEDGER || join("/tmp", "office", "panes.jsonl");
-const FINISHED = new Set(["done", "idle", "gone"]);
+const FINISHED = new Set(["done", "gone"]);
 
 /** herdr on PATH? Outside a Herdr environment this hook is a no-op. */
 const onPath = (bin) => {
