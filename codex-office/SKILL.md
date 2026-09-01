@@ -124,7 +124,10 @@ below it selects, and nothing else.
 1. **Plan.** Identify or create the tracking issue, explore read-only, write an approval-ready plan
    at tracked `docs/plans/<slug>.md` (context, global constraints,
    verbatim blast-radius ceiling, numbered tasks with dependencies and model strategy,
-   verification, out-of-scope). Obtain explicit approval before dispatch. Load
+   verification, out-of-scope). Complete every applicable pre-dispatch self-review and plan-review
+   gate first, including any amendment and follow-up self-review. Obtain **one** explicit approval
+   only for the final plan version; never ask for provisional approval before those gates or a
+   second approval merely because a pre-approval gate caused an amendment. Load
    `office-core/protocol/plan-contract.md`.
 2. **Execute.** Record `BASE=$(git rev-parse HEAD)`, assign one executor per repository using
    Dispatch routing, copy the approved plan into tracked `docs/plans/<slug>.md`, and require the
