@@ -45,9 +45,13 @@ final verdict is `APPROVED`, the planner posts the core policy's short approval 
 
 ## Continuity and the round cap
 
-Resume the **same** reviewer session for every round of a given review — it keeps what it already
-flagged and accepted, and a fresh reviewer per round cannot tell you whether round 2 regressed
-round 1. Cap at 5 rounds; past the cap, stop dispatching and report the deadlock rather than
+Resume the **same** reviewer session for every round of a given review by default — it keeps what
+it already flagged and accepted, and a fresh reviewer per round cannot tell you whether round 2
+regressed round 1. Resuming is not free at accumulated size, though: by round 4 the replay cost may
+exceed a fresh pass plus a written digest of what's settled. Whether to keep resuming is a per-round
+cost call — see
+[`office-core/protocol/review-states.md`](../../office-core/protocol/review-states.md#resume-vs-fresh--a-cost-decision-not-a-default).
+Cap at 5 rounds regardless; past the cap, stop dispatching and report the deadlock rather than
 self-approving.
 
 ## Fixes are not the reviewer's job

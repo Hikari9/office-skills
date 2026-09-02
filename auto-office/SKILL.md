@@ -103,8 +103,9 @@ production reads included, shape pinned in the brief, read-back required.
   clause what a delegation would have bought.** File and task count are never the test.
 - One final plan approval after all Phase 1 gates and amendments, before dispatch — silence is not
   approval.
-- Fresh Opus code reviewer, resumed across rounds; **`CHANGES REQUIRED`** sends the planner to a
-  disposition checkpoint; no approval without pasted evidence; **5-round cap** (2 in express).
+- Fresh Opus code reviewer; resume vs. fresh per round is a cost call, not a default (see
+  `review-states.md`). **`CHANGES REQUIRED`** sends the planner to a disposition checkpoint; no
+  approval without pasted evidence; **5-round cap** (2 in express).
 - `PLAN DEFECT` and `BRIEF DEFECT` exit the loop without consuming a round; two `CHANGES REQUIRED`
   findings on one task force a planner reflection and recommendation, not an automatic re-plan.
 - A successful exit is **not evidence** — the gate is the plan's validation commands with real

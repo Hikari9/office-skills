@@ -33,7 +33,7 @@ the place to catch what the author could have found for free. Read the section, 
 handoff: **do not** copy its findings into the reviewer's brief. Handing a reviewer the author's own
 list anchors it and converts an independent pass into a verification of someone else's work.
 
-**Record the returned agent ID/name.** Every subsequent round goes back to that same agent via SendMessage so it keeps the full history of what it already flagged and accepted. A fresh reviewer per round re-litigates settled findings and cannot tell you whether round 2 regressed round 1.
+**Record the returned agent ID/name.** Resume is the default — every subsequent round goes back to that same agent via SendMessage so it keeps the full history of what it already flagged and accepted, and a fresh reviewer per round re-litigates settled findings and cannot tell you whether round 2 regressed round 1. But resume is not free at accumulated size, and by round 4 it may no longer be the cheaper option: weigh measured cost, round count, and relatedness, and if you go fresh, hand the new agent a written digest instead of the transcript. Full rubric: [`../office-core/protocol/review-states.md`](../office-core/protocol/review-states.md#resume-vs-fresh--a-cost-decision-not-a-default). Declare `resume` or `fresh` and the reason in the round line either way.
 
 Build the prompt from **[reviewer-brief.md](reviewer-brief.md)**. Hand it: the plan file path, the Global Constraints block copied verbatim, the executor's handoff report path, a diff package file for `BASE..HEAD`, and the validation commands.
 

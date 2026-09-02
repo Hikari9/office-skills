@@ -55,6 +55,11 @@ is meaningless (one run read `82% → 52% → 85%` and none of it described anyt
    the cheap-and-parallel property that made agy right; falling back to planner tier would spend
    Decider rates on locating files. Say in the kickoff line that agy was unavailable and what
    replaced it.
+   Every scout dispatch states, verbatim: *"Phase 1 is PLAN ONLY. `HEAD` must not move. Read and
+   report locations; do not create, edit, or delete files."* Also name which worktree/checkout the
+   scout is reading in — explicit ownership, not an assumption it will infer the right tree. Observed
+   failure: a scout with no such line skipped straight to implementation, wrote 130 lines of
+   unapproved code, and reported that none existed.
    Verify their claims cheaply before building on them. A scout claim you cannot verify is dropped.
 5. **Route, fully** ([auto-routing](../auto-routing/SKILL.md)) — **every task's brand**, and how many
    executors the run needs. Model and effort are fixed by role, so they are filled in, not decided.
@@ -171,7 +176,7 @@ PLANNER (opus, this session)
   │     ├─ T4 ─── worker claude opus (in-sess) ─┘  arbitration, runs alongside T3
   │     └─ T5 ─── in-session --bg (blocking wait)
   │
-  ├─▶ CODE REVIEWER  opus low   (fresh, resumed across rounds)   ← planner-dispatched, per task
+  ├─▶ CODE REVIEWER  opus low   (resume vs fresh per round — cost call, not a default)   ← planner-dispatched, per task
   └─▶ [Phase 1 only] read-only scouts
 ```
 

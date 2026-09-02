@@ -54,6 +54,13 @@ prompts and close each created pane after its final result is read and no follow
 explorers in that mode. When Herdr is absent, preserve the existing explorer route. Run independent
 explorers in parallel and ask for a specific answer with file:line citations.
 
+Every explorer dispatch states, verbatim: *"Phase 1 is PLAN ONLY. `HEAD` must not move. Read and
+report locations; do not create, edit, or delete files."* Also name which worktree/checkout the
+explorer is reading in, explicitly — the pre-created run worktree from *Worktree creation* above, or
+the primary checkout, never left to inference. Observed failure: an explorer with no such line
+skipped straight to implementation, wrote 130 lines of unapproved code, and reported that none
+existed.
+
 ## Pin every interface the plan touches, verbatim, during Phase 1
 
 For each hook, callback, event, SDK method, or endpoint in scope, have an explorer return the real

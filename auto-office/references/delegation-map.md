@@ -66,7 +66,9 @@ so it needs no diff package and no gate output — and it runs exactly once.
   work it gates was the measured failure that prompted the re-declaration.
 - **Herdr overrides dispatch form when detected.** If `test "${HERDR_ENV:-}" = 1` passes, load the
   [Herdr skill](../../office-core/skills/herdr/SKILL.md) and host every real delegation in a visible
-  pane: direct children to the right, further children below their parent. Do not use an in-session
+  pane: executors/workers grouped into one column, reviewers into a separate column, further
+  children below their parent. Every brief for an agent that will itself issue Herdr commands states
+  its own agent name up front, per the skill's *Know your own name* rule. Do not use an in-session
   Agent/Task subagent; record `herdr`. Close only panes created for the dispatch after final completion
   and result read; keep a reviewer pane for later rounds. If Herdr is absent, planner → executor is **CLI**; executor → worker
   of the **same** brand is **in-session**; a worker of a **different** brand is **CLI**, necessarily.
