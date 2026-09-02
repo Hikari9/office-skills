@@ -3,6 +3,12 @@
 ## What is not evidence
 
 - **A successful process exit.** Exit 0 is compatible with having done nothing at all.
+- **A green gate, for a claim narrower than what the gate checks.** This is a different failure
+  from a successful exit: the gate is real, ran, and genuinely passed — it just validates less than
+  the claim resting on it. A `check:rock-endpoints` gate compared method/path pairs only, not
+  per-call-site line citations, so it stayed green while the citations it appeared to validate were
+  wrong. Before citing a gate as evidence for a specific claim, state what the gate actually checks
+  — never what its name, or its place in the pipeline, implies.
 - **Narration.** "Implemented and verified" is a claim about the claimant's own work.
 - **A handoff's pasted output block, unattributed.** Output you cannot tie to the current `HEAD`
   proves nothing about the current `HEAD`.
@@ -21,6 +27,17 @@
 | A verification tool says PASS | A control run against a case that *should* fail, proving the tool can fail at all |
 | Something was written to a live system | A **read-back of the deployed artifact** matching committed source, plus the observable behavior that motivated the change |
 | An interface was used correctly | The real signature at `file:line`, read from source |
+| The current state of the working tree | `git status --short`, pasted, run in the same turn as the claim |
+
+**Require `git status --short`, pasted, before every status report — not only at the end.** Three
+false state reports happened in one run this way: "no implementation exists" over 130 lines already
+on disk; "the endpoint gate is green" when it was red; and a done-criterion that rode through a full
+review round claiming a passing production build that was unrunnable in that worktree for
+environment reasons. All three were caught only by running the command instead of accepting the
+claim — reading back the actual state costs one command; believing a wrong claim costs the round
+that finds it later. **Name the failure mode: the report tracked whether a worker was dispatched,
+not what the worker actually wrote.** Dispatch is not a proxy for outcome, and a status line that
+only reflects "I sent the task" reads as a completion claim it never verified.
 
 **A verification tool's PASS is a claim until a control run proves the tool can fail.** If the
 control comes back identical, the tool measured nothing: it answered a question adjacent to the

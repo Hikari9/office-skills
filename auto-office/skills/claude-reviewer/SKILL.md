@@ -21,9 +21,11 @@ This spoke restates what must survive regardless of either file's wording.
 ## Fresh reviewer, never the executor, never self-approval
 
 Dispatch a **fresh** agent — never reuse the executor as its own reviewer, and the planner never
-reviews its own plan's output. **Record the reviewer's agent id** and resume that same reviewer
-via SendMessage every round, so it keeps what it already flagged and accepted. A fresh reviewer
-per round re-litigates settled findings and cannot tell you whether round 2 regressed round 1.
+reviews its own plan's output. **Record the reviewer's agent id.** Resume is the default across
+rounds, so it keeps what it already flagged and accepted, but it is not free — replaying the whole
+prior transcript grows costlier each round. Whether to keep resuming or switch to a fresh reviewer
+with a written digest is a per-round call: see
+[`office-core/protocol/review-states.md`](../../office-core/protocol/review-states.md#resume-vs-fresh--a-cost-decision-not-a-default).
 
 ## The three verdicts
 

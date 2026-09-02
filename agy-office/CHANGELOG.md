@@ -1,5 +1,26 @@
 # Changelog — agy-office
 
+## 15.0.0 — 2026-09-02
+
+Core `16.0.0`.
+
+- Herdr: pane-move mechanics (same-tab no-op, the scratch-tab bounce to rearrange a layout, and
+  `--tab` being required on the split form), `pane close`'s positional pane id, why a `down` split
+  off a tab's only pane makes a row instead of a column, self-name awareness before issuing Herdr
+  commands, and a status-check-before-send rule plus a non-blocking prompt recipe to replace
+  `agent prompt --wait --until working`.
+- Evidence: a green gate is not evidence for a claim narrower than what the gate checks (distinct
+  from a successful exit not being evidence); `git status --short`, pasted, is now required before
+  every status report — not only at the end.
+- Roles and authority: a brief mentioning co-located agents must state the positive collision test
+  (files changing under you that you did not write) rather than a bare "other agents are live"
+  warning, which caused false-positive halts.
+- Reviewer brief carries a Herdr self-identity anchor (`You are herdr agent <name>`), and explorer
+  dispatches in `agy-planning` now require the literal "Phase 1 is PLAN ONLY, `HEAD` must not move"
+  clause plus explicit worktree ownership.
+- Closeout: a branch can be reviewer-approved and still be empty at merge — `gh pr diff <n>
+  --name-only` before marking ready now confirms the pushed diff matches what review covered.
+
 ## 14.0.0 — 2026-09-01
 
 Core `15.0.0`.

@@ -185,6 +185,18 @@ The Planner's worktree may be reused for BASE testing only while it is read-only
 Before dispatch the planner confirms that no uncoordinated writer is live in that tree; a newer
 overlapping writer is stopped before it can edit.
 
+**State what a collision looks like, positively, in every brief that mentions other agents at
+all.** "Other agents are live in this repo," with no further detail, is not a concurrency warning —
+it is an invitation to halt on any co-located pane, including entirely benign ones. One such
+sentence caused four separate agent halts in a single run, none of them a real collision. A brief
+that mentions co-located agents states which panes are known-benign and gives the positive test
+below verbatim, so the agent has a check to run instead of a feeling to act on:
+
+> A genuine collision looks like files changing under you that you did not write. It does not look
+> like another pane existing. Check before stopping: `git status` (unexpected changes to paths you
+> did not touch), `git log --oneline -1` (a HEAD that moved without your commit), `ls .git/*.lock`
+> (another process mid-write). Only a positive result on one of these is a collision.
+
 Pre-existing dirty changes are preserved and named as **protected paths** in the plan.
 
 **The planner works in the run's worktree too, and its scratch lives there.** Plans, briefs, review

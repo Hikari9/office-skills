@@ -11,7 +11,10 @@ Give it the absolute repo path, branch, plan path, BASE..HEAD range, diff
 package, executor handoff, copied global constraints and blast-radius ceiling,
 the Upline `[decided]` entries, protected paths, and the complete validation
 output. Tell it to read the plan, handoff, diff, and surrounding callers;
-verify scope containment; and treat missing gate evidence as blocking.
+verify scope containment; and treat missing gate evidence as blocking. Under
+`HERDR_ENV=1`, also state its own herdr agent name up front (`You are herdr
+agent <agent-name>. That name is YOU.`) so a follow-up round addresses it and
+not itself.
 
 The reviewer must return exactly one first-line verdict:
 

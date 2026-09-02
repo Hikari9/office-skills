@@ -11,6 +11,32 @@ findings and cannot tell you whether round 2 regressed round 1. If continuity is
 unavailable, carry the previous findings list verbatim and say in the round line that
 continuity was lost.
 
+### Resume vs. fresh — a cost decision, not a default
+
+Resume is the default because it preserves what the reviewer already flagged and accepted. It is
+not free: each round replays the entire prior transcript, so its cost grows with round count and
+accumulated size — a resumed reviewer's later rounds have been measured well into six figures of
+tokens, several times the round before it, for the same review. Weigh that against a fresh
+reviewer primed with a written digest of what is already settled, on three signals together:
+
+- **Measured cost.** Check the reviewer's own reported context/usage before dispatching the next
+  round. When this round's replay cost would exceed a fresh pass plus a digest, go fresh.
+- **Round count as an independent signal.** Rounds 1–3 default to resume. By round 4, lean fresh
+  unless measured cost still favors resuming — mirroring the same threshold this office already
+  applies to a stuck implementer. The round cap is the hard backstop either way, not the trigger.
+- **Relatedness.** Resume when this round checks whether a prior fix regressed a prior finding —
+  that is the property resume exists to preserve. Go fresh when this round's diff is a
+  substantially disjoint slice that does not depend on the reviewer's prior findings.
+
+**Going fresh is not going in blind.** Write down what the new reviewer needs — settled findings,
+accepted verdicts, anything fragile — and hand that over instead of the transcript. There is no
+fixed template for the digest; its shape is the planner's call, scoped to what this round actually
+needs. What is not optional is writing one: a fresh reviewer with nothing handed over silently
+drops the regression-detection property resume exists for.
+
+**Declare the choice.** State `resume` or `fresh` and the one-line reason in the round line, the
+same as any other dispatch-form decision this office requires declared rather than assumed.
+
 **Do not pre-judge.** Never write "don't flag X", "the plan chose Y", or "at most minor" into a
 reviewer's prompt. A finding you expect to be a false positive is one to adjudicate after it is
 raised.

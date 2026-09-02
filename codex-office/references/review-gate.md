@@ -19,8 +19,10 @@ review gets a PR comment: a short summary naming the reviewer, final `HEAD`, rou
 changes required across the rounds, and why each change was required — or why none were.
 
 For `CHANGES REQUIRED`, send a fresh executor a full task prompt limited to the
-findings. Then resume the *reviewer* session with the fix diff, per-finding
-notes, and fresh whole-gate output. On every follow-up it must mark all prior
+findings. Then resume the *reviewer* session by default with the fix diff, per-finding
+notes, and fresh whole-gate output — or go fresh with a written digest once resuming
+stops being the cheaper option (`codex-reviewer/SKILL.md` § Continuity and the round cap).
+On every follow-up it must mark all prior
 findings addressed or not addressed and only add new findings caused by the
 fix. Stop after five fix rounds; a plan defect returns to the planner rather
 than consuming a fix round.

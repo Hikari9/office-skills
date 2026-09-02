@@ -9,6 +9,11 @@ effects; full validation commands; and a handoff path. For a CLI executor, its
 
 > Do not stop to ask questions; make reasonable decisions yourself and implement the entire brief.
 
+If `HERDR_ENV=1`, the packet also states: `You are herdr agent <agent-name>. That name is YOU —
+never target it with herdr agent prompt/get/wait when addressing a Tester worker; those commands
+address other agents.` This matters once the Executor itself spawns a Tester through Herdr, not
+only when it is on the receiving end of a dispatch.
+
 Require a ledger at `<workspace>/progress.md` and a handoff at
 `<workspace>/handoff.md` containing these sections:
 

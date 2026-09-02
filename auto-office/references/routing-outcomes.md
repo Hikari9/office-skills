@@ -81,6 +81,7 @@ nothing; a rule in an owning file binds the next run. If a lesson has no owner, 
 40. **Quota headroom went unprobed at both ends of four separate runs.** Filed once (#232) rather than absorbed into "done". Still the most-repeated omission in this ledger.
 41. **A CLI quota wall can be account-level, not per-session/per-task.** Two consecutive codex dispatches (executor fix-wave, then the very next reviewer resume) both failed with an identical "workspace is out of credits" — the second failed before any work began, which is what distinguished it from the ordinary 10-min-ceiling kill this office already resumes through silently. Surfaced to the user rather than silently rerouted, because it also meant abandoning the run's standing reviewer brand (an `AskUserQuestion`-worthy decision, not an in-loop one) → `auto-routing` (headroom is a cost, not a gate) should add: distinguish "killed" (resume same brand) from "errored with a credits/billing message" (stop and ask) before choosing a recovery path.
 42. **A uniform top-tier review gate outspends the work it gates.** One `xhigh` code review cost **293k** against a 226k-269k executor leg. Price codex code-review effort per leg by blast radius; the gate still always runs. → `auto-routing` (*Review effort is priced per leg*)
+43. **A low-effort reviewer at a stronger model can outperform a stronger-effort executor at a weaker one.** `sonnet` high executor + `opus` low reviewer, small backend guard change: the reviewer caught an unconditional, non-fail-soft `GET` added to a hot path that the executor introduced and missed — on a 5xx it would have zeroed materialization for a class of records the change was explicitly scoped to leave alone. `opus` low was worth its cost as the gate, independent of the executor's own effort tier. Both PRs merged same day. → `auto-routing` (reviewer floor is not the executor's tier)
 
 ## Ledger
 
@@ -164,9 +165,13 @@ retelling. An essay that adds tokens without changing a decision is a defect in 
 | 08-30 | repo-j | campus-scoped settings + T5–T15 admin actions | claude | `sonnet` high, 4 rounds | 4 | ~1.3M | ~5h | CR×4 → shipped on operator call | Per-finding fixes reproduced the same defect class in the adjacent arm twice; converged only when round 3 audited the parameter space instead of the clause → §1 |
 | 08-31 | repo-h | signups links + type scale + ?date= parity | claude | `sonnet` | 4 | 1.2M | ~3h | APPROVED | Two URL-guard predicates the planner proposed both leaked; only a differential fuzz settled it → §24 |
 | 08-31 | repo-h | plan-review of a 2-line security amendment | claude | `opus` low | 1 | 49k | 3m | 3 blockers | Rejected the planner's predicate AND its layer; cheapest item in the run → §3 |
+| 09-01 | repo-h | dashboard access + fence + dimensions + names, 3 executors, 2 repos | mixed | `codex-luna` high, `opus` low then `codex-luna` high reviewers | 9 | n/r | ~6h | APPROVED ×3 | Five rounds hardened the *structure* of a generated script and never once executed it; the first real run refused it. A hermetic gate on generated code proves nothing about its contract |
+| 09-01 | repo-h | same run, planner-inline prod work | — | `opus` inline | 2 | n/r | — | 4 claims retracted | cwd silently reset to the default branch; deploys ran from the wrong tree and overwrote correct prod assets. Every conclusion from a tool's own success line was wrong; every one from an independent hash was right. Pin the worktree, verify out-of-band |
 
 **Compaction log**
 
 | Date | What moved |
 |---|---|
 | 2026-08-14 | First compaction. 7,802 → ~2,400 words. 40 standing lessons compiled from 30 rows; verbose rows archived. **Fixed a live leak:** rows had been naming real hosts/repos against this file's own opaque-slug rule — all re-slugged (`repo-c` `repo-e` `repo-f` `repo-g` added to the local map). Git history still contains the real names; that is not fixable from here. |
+
+| 2026-09-02 | rock-pages per-campus signups board | claude opus planner, codex `gpt-5.6-luna` high executors x2, codex verifier (user override) | 15 tasks, 6 review rounds, 2 repos, both merged | Offline gates proved nothing about Lava: 1194 green tests hid two live-only defects, one of them pinned by a test asserting the buggy line. Every real defect this run came from a rendered fetch as a genuinely-authenticated viewer, never from the suite. |

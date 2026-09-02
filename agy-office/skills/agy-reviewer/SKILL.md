@@ -92,8 +92,11 @@ producing internally-consistent wrong answers again.
 
 - **Every fix wave gets a fresh re-run of the Phase 2b verification pass**, plus a fresh gate run,
   before the diff goes back to the reviewer.
-- **Same reviewer resumed each round** (via SendMessage to the recorded agent ID) — a fresh
-  reviewer per round re-litigates settled findings.
+- **Same reviewer resumed each round by default** (via SendMessage to the recorded agent ID) — a
+  fresh reviewer per round re-litigates settled findings. But resuming is not free at accumulated
+  size; whether to keep resuming or switch to a fresh reviewer with a written digest is a per-round
+  cost call, not an unconditional default — see
+  [`office-core/protocol/review-states.md`](../../office-core/protocol/review-states.md#resume-vs-fresh--a-cost-decision-not-a-default).
 - **5-round cap.** At round 5 with findings open, stop dispatching and report the deadlock: each
   open finding, the reviewer's reasoning, your counter-reasoning, the fix history. Never
   self-approve past the cap.

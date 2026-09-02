@@ -23,17 +23,39 @@ failure, use an authorized CLI route if one is available, or report the dispatch
 
 ## Put agents in the layout
 
-The calling agent owns the current pane and keeps focus. A direct child gets a visible sibling on
-the right; a child spawned by that agent gets a visible child pane below its parent. Preserve the
-caller working directory and do not guess IDs:
+The calling agent owns the current pane and keeps focus. Direct children are grouped into columns
+by role, not by spawn order: every executor/worker lives in one column, and every reviewer
+(plan-reviewer and code-reviewer) lives in a separate column. A child spawned by that agent (its
+own subagent, e.g. a Tester under an executor) still gets a visible child pane below its parent,
+nested inside the parent's column — that rule is unchanged. Preserve the caller working directory
+and do not guess IDs:
 
 ```bash
-# planner or another first-level caller
+# first executor/worker from the caller — opens the executor column
 herdr pane split --current --direction right --cwd "$PWD" --no-focus
 
-# a worker/reviewer that is spawning its own child
+# each additional executor/worker — stacks under the last executor/worker pane, same column
+herdr pane split --pane <last-executor-pane-id> --direction down --cwd "$PWD" --no-focus
+
+# first reviewer (plan-reviewer or code-reviewer) from the caller — opens the reviewer column
+herdr pane split --current --direction right --cwd "$PWD" --no-focus
+
+# each additional reviewer — stacks under the last reviewer pane, same column
+herdr pane split --pane <last-reviewer-pane-id> --direction down --cwd "$PWD" --no-focus
+
+# a worker/reviewer that is spawning its own child — nested below itself, not a new column
 herdr pane split --current --direction down --cwd "$PWD" --no-focus
 ```
+
+Track the most recently spawned pane id per role. The first executor/worker and the first reviewer
+each open their own column with `right`; every later same-role pane joins that column with `down`
+aimed at the last same-role pane via `--pane`, not `--current`. Splitting `right` again for a role
+that already has a column opens a stray third column instead of grouping into the one that exists.
+
+**`down` from a tab's only pane does not make a column.** It makes the root split a down-split
+spanning the full tab width, so the two panes stack as full-width rows, not side-by-side columns.
+This is exactly why the recipe above always opens a column with `right` first — splitting `right`
+creates the sibling to stack under — and never `down`s off the tab's original, still-solo pane.
 
 Read `.result.pane.pane_id` from the JSON response, then start the requested brand in that pane
 **and record it in the ledger in the same step**. The ledger line is not bookkeeping for later; it
@@ -63,20 +85,58 @@ reports. Capture it here. If it is not populated yet, append the line without it
 `herdr agent get` once the agent is live. `role` is recorded for readability; no behavior branches
 on it.
 
+**Know your own name, separately from the names you spawn.** `herdr agent prompt <name>` addresses
+whichever agent owns `<name>` in Herdr's flat namespace, including yourself if your own name is
+passed by mistake. Observed: a planner with no stated identity ran `herdr agent prompt
+<its-own-name> "Pause all further edits"`, intending to reach a worker, and queued the message to
+itself instead — deadlocking on its own pause. Every brief for an agent that will itself issue Herdr
+commands states its own agent name up front (`You are herdr agent <name>. That name is YOU — never
+target it with agent prompt/get/wait.`), so self and other are never resolved from context.
+
 Use the model and effort required by the office's routing table as native arguments after `--`
 when that agent kind supports them. The pane direction is the topology rule; it does not change
 the agent's role, worktree, scope, or authority.
 
+## Rearranging an existing layout
+
+`herdr pane move` cannot rearrange a pane within the tab it is already in — targeting a pane at its
+current tab is a silent no-op: `changed:false, reason:"same_tab"`, exit 0. A success exit that did
+nothing. There is no in-place reshuffle; to fix a column that landed wrong, bounce the pane out to a
+scratch tab and back in with a split:
+
+```bash
+herdr pane move <pane-id> --new-tab --workspace <workspace-id>
+herdr pane move <pane-id> --tab <target-tab-id> --split right|down --target-pane <anchor-pane-id>
+```
+
+**The split form requires `--tab <tab_id>`.** Omit it and the command prints usage to stderr and
+does nothing — it does not guess the target tab from the pane you're moving. The emptied scratch
+tab auto-closes once its last pane leaves it.
+
 ## Send and supervise the prompt
+
+**Check status before sending anything time-sensitive.** Prompts queue behind an agent whose status
+is `working` — a pause, gate, or approval sent to a busy agent can be applied only after the action
+it was meant to stop, not before it. `herdr agent get <unique-name>` first; if the agent is
+`working`, that prompt will sit until the current turn ends, so treat "sent" and "received" as
+different events for anything time-sensitive. Observed: a queued amendment arrived after the
+executor had already acted, and the planner read the gap as the executor ignoring a mandatory
+amendment it had, in fact, not yet received — check queue position before concluding non-compliance.
 
 A brief longer than a few lines: write it to the git-ignored workspace and send a short prompt
 that tells the agent to read that file, instead of pasting the brief inline. A long single-shot
-paste into a just-started agent is what gets silently dropped — the agent is still doing its own
-startup work (MCP client init, plugin loading) when the paste arrives:
+paste is what gets silently dropped, and this is not only a just-started-agent problem — the agent
+is still doing its own startup work (MCP client init, plugin loading) right after `agent start`, and
+a busy agent has the paste sitting behind its current turn either way. Send a pointer, not the text,
+regardless of which state the agent is in.
+
+Send the prompt **without** `--wait --until working`: that combination blocks synchronously inside
+the tool call and can itself hit the harness's ~120s ceiling if the agent is mid-turn or slow to
+pick the prompt up — the same ceiling that makes a long `herdr agent wait` unusable (see below).
+Send it, then confirm receipt by reading the pane instead:
 
 ```bash
-herdr agent prompt <unique-name> "Read the file <path-to-brief> in full and execute it end to end." \
-  --wait --until working --timeout 60000
+herdr agent prompt <unique-name> "Read the file <path-to-brief> in full and execute it end to end."
 ```
 
 **`agent_status` is not receipt.** `working` observed right after `agent start` is frequently that
@@ -100,6 +160,62 @@ For a follow-up, use the same live agent name and the same read-to-confirm step.
 Wait for the office's actual completion condition, such as `report-exists OR state=done`, not a
 bare process exit. If Herdr reports `blocked`, inspect the agent and its output before sending
 keys; surface a genuinely user-owned question instead of answering it by inference.
+
+### Waiting on a long-running agent: use Monitor, not repeated `herdr agent wait --timeout`
+
+`herdr agent wait <name> --until <status> --timeout <ms>` is a **one-shot** poll — correct for
+confirming a prompt landed (a few seconds), wrong for watching a multi-minute task through to a
+task boundary. The harness backgrounds any Bash call past ~120s regardless of the `--timeout`
+you passed it, so a long `herdr agent wait` produces a stream of "failed with exit code 1"
+task-completion notifications (a **timeout**, not a real failure — `herdr agent get` right after
+each one shows the agent still `working`) with nothing useful in between, and each one still
+costs a manual re-check. Observed 2026-09-02: six consecutive `herdr agent wait ... --timeout
+150000` calls against one codex executor each timed out at the harness's ~120s ceiling and had to
+be individually re-issued, for no signal beyond "still running."
+
+**Prefer a `Monitor` tailing the agent's own session transcript**, which pushes events as they
+happen instead of requiring a poll-and-reissue loop:
+
+- **Claude**: `~/.claude/projects/<project-slug>/<session-id>.jsonl`.
+- **Codex**: `~/.codex/sessions/<yyyy>/<mm>/<dd>/rollout-*-<session-id>.jsonl` — find it with
+  `find ~/.codex/sessions -iname "*<session-id>*"` using the `session_id` from the ledger line.
+
+Both are JSONL, appended to live. Tail and filter to the events that actually matter — task/turn
+boundaries and the agent's own narration — not every tool call, which is too frequent to be a
+useful signal and will trip the "too many events" auto-stop:
+
+```bash
+tail -f -n0 <rollout-or-transcript-path> | python3 -u -c '
+import json, sys
+for line in sys.stdin:
+    line = line.strip()
+    if not line:
+        continue
+    try:
+        d = json.loads(line)
+    except Exception:
+        continue
+    payload = d.get("payload") or {}
+    pt = payload.get("type")
+    if pt == "task_started":
+        print("TASK_STARTED")
+    elif pt == "task_complete":
+        print("TASK_COMPLETE")
+    elif pt == "message" and payload.get("role") == "assistant":
+        for c in payload.get("content", []):
+            t = c.get("text", "")
+            if t.strip():
+                print("ASSISTANT: " + t.strip()[:500].replace(chr(10), " "))
+'
+```
+
+Run this as a `persistent: true` Monitor (max timeout 3600000ms) rather than the default 5-minute
+window, since an executor task can run longer than that. Drop the `custom_tool_call`/tool-call
+event type from the filter entirely — printing just the tool name (e.g. `TOOL_CALL: exec`) on
+every shell command is pure noise with no diagnostic value and is what triggers the volume
+auto-stop; task boundaries and assistant text carry the actual signal. `herdr agent wait` remains
+correct for its original, short-lived purpose (confirming a prompt landed after `agent prompt`);
+this Monitor pattern replaces it only for open-ended "tell me when this task/round finishes."
 
 ## No in-session dispatch while Herdr is detected
 
@@ -144,6 +260,9 @@ only handle back into the agent's session — the resume id is readable from `he
 the agent lives and from nowhere afterwards. This has already happened once to hand-seeded entries;
 it was harmless only because that work was already committed and pushed. If a line went out without
 the id, re-read `herdr agent get <name>` and rewrite the line while the agent is still there.
+
+`herdr pane close` takes the pane id **positionally** — unlike `split`/`move`, it has no `--pane`
+flag; passing one prints usage and closes nothing:
 
 ```bash
 herdr pane close <created-pane-id>

@@ -91,6 +91,12 @@ events occurred. Also read the PR body and confirm its plan deeplink resolves to
 plan commit. An unrecorded review, missing final approval summary, or stale plan link is an unfinished
 gate: keep the PR draft and stop.
 
+**A branch can be approved and still be empty.** Review and self-review cover the local worktree
+diff; neither proves that diff was ever pushed. `gh pr diff <n> --name-only` before marking ready,
+and confirm the file list matches what the review actually covered. Observed: a reviewer approved
+the local diff, but the executor's five implementation commits were never pushed — the PR's real
+diff was a single plan doc, and it would have merged effectively empty had this check not run.
+
 Merge, ready-for-review, plan removal, and cleanup remain planner-held actions under
 [`roles-and-authority.md`](roles-and-authority.md). Push and draft-PR creation happen at executor
 bootstrap under the explicit exception there. An approved plan carrying these actions is the
