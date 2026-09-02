@@ -20,6 +20,8 @@ Core `16.0.0`.
   clause plus explicit worktree ownership.
 - `routing-outcomes.md`: recorded that an `opus` low reviewer caught a real production failure mode
   a `sonnet` high executor introduced and missed, independent of the executor's own effort tier.
+- Closeout: a branch can be reviewer-approved and still be empty at merge — `gh pr diff <n>
+  --name-only` before marking ready now confirms the pushed diff matches what review covered.
 
 ## 15.0.0 — 2026-09-01
 

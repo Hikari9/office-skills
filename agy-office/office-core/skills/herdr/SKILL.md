@@ -119,7 +119,9 @@ tab auto-closes once its last pane leaves it.
 is `working` — a pause, gate, or approval sent to a busy agent can be applied only after the action
 it was meant to stop, not before it. `herdr agent get <unique-name>` first; if the agent is
 `working`, that prompt will sit until the current turn ends, so treat "sent" and "received" as
-different events for anything time-sensitive.
+different events for anything time-sensitive. Observed: a queued amendment arrived after the
+executor had already acted, and the planner read the gap as the executor ignoring a mandatory
+amendment it had, in fact, not yet received — check queue position before concluding non-compliance.
 
 A brief longer than a few lines: write it to the git-ignored workspace and send a short prompt
 that tells the agent to read that file, instead of pasting the brief inline. A long single-shot

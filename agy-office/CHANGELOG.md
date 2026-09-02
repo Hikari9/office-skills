@@ -18,6 +18,8 @@ Core `16.0.0`.
 - Reviewer brief carries a Herdr self-identity anchor (`You are herdr agent <name>`), and explorer
   dispatches in `agy-planning` now require the literal "Phase 1 is PLAN ONLY, `HEAD` must not move"
   clause plus explicit worktree ownership.
+- Closeout: a branch can be reviewer-approved and still be empty at merge — `gh pr diff <n>
+  --name-only` before marking ready now confirms the pushed diff matches what review covered.
 
 ## 14.0.0 — 2026-09-01
 

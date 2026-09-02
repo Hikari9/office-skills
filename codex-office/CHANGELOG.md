@@ -17,6 +17,8 @@ Core `16.0.0`.
   warning, which caused false-positive halts.
 - Executor and reviewer prompt contracts carry a Herdr self-identity anchor (`You are herdr agent
   <name>`), stated once the Executor itself spawns a Tester through Herdr.
+- Closeout: a branch can be reviewer-approved and still be empty at merge — `gh pr diff <n>
+  --name-only` before marking ready now confirms the pushed diff matches what review covered.
 
 ## 14.0.0 — 2026-09-01
 
