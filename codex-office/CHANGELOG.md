@@ -1,5 +1,15 @@
 # Changelog
 
+## 16.0.0 — 2026-09-03
+
+Core `17.0.0`.
+
+- Herdr: `herdr agent start` now requires an explicit model and effort on every spawn and resume —
+  brand alone silently inherited the harness default tier instead of the routing table's. The
+  recipe block itself carries the flags (`--model`/`--effort` for claude, `-c
+  model_reasoning_effort=` for codex), and the spawn step now asserts the launched `argv` back
+  against what was intended, the same way `session_id` capture is already mandatory.
+
 ## 15.0.0 — 2026-09-02
 
 Core `16.0.0`.

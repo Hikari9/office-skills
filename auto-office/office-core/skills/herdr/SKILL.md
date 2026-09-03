@@ -62,7 +62,14 @@ Read `.result.pane.pane_id` from the JSON response, then start the requested bra
 is part of spawning, because it is both what closes the pane and what resumes the session:
 
 ```bash
-herdr agent start <unique-name> --kind <codex|claude|agy|...> --pane <pane-id>
+# Required on every spawn: brand, model, AND effort — never brand alone. Values come from the
+# dispatching office's routing table, never the harness default, never the agent's own judgement.
+# Native flags differ by kind — verify per kind before using this literally:
+herdr agent start <unique-name> --kind claude --pane <pane-id> -- --model <model> --effort <effort>
+herdr agent start <unique-name> --kind codex  --pane <pane-id> -- -m <model> -c model_reasoning_effort="<effort>"
+
+# claude — concrete example, argv echo verified 2026-09-03:
+herdr agent start m1-rocksec --kind claude --pane w1J:p17 -- --model sonnet --effort high
 
 # Required on every spawn. One JSON object per line, appended to the ledger.
 mkdir -p /tmp/office
@@ -76,6 +83,7 @@ print(json.dumps({
   "role":       "<executor|reviewer|scout|verifier|...>",
   "session_id": (a.get("agent_session") or {}).get("value"),
   "worktree":   a["cwd"],
+  "argv":       a.get("argv"),
   "spawned_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
 }))' >> /tmp/office/panes.jsonl
 ```
@@ -85,6 +93,12 @@ reports. Capture it here. If it is not populated yet, append the line without it
 `herdr agent get` once the agent is live. `role` is recorded for readability; no behavior branches
 on it.
 
+**Assert the launched `argv`, in the same step, before treating the spawn as done.** `herdr agent
+start` (and `herdr agent get`) echo the actual `argv` the pane launched with. Read it back and
+confirm it contains the model and effort you intended — the same way `session_id` capture is
+treated as part of spawning rather than bookkeeping. A pane that launched at the wrong tier is
+caught here, not by a human noticing the pane header later.
+
 **Know your own name, separately from the names you spawn.** `herdr agent prompt <name>` addresses
 whichever agent owns `<name>` in Herdr's flat namespace, including yourself if your own name is
 passed by mistake. Observed: a planner with no stated identity ran `herdr agent prompt
@@ -93,9 +107,21 @@ itself instead — deadlocking on its own pause. Every brief for an agent that w
 commands states its own agent name up front (`You are herdr agent <name>. That name is YOU — never
 target it with agent prompt/get/wait.`), so self and other are never resolved from context.
 
-Use the model and effort required by the office's routing table as native arguments after `--`
-when that agent kind supports them. The pane direction is the topology rule; it does not change
-the agent's role, worktree, scope, or authority.
+**Brand alone is never a sufficient spawn.** A `herdr agent start` that omits an explicit model
+and effort is a defect, not a shorthand: it silently inherits whatever tier the harness defaults
+to, not the tier the office priced for that role. Both values come from the dispatching office's
+routing table — never the harness default, never the agent's own judgement — passed as native
+arguments after `--`. `--model`/`--effort` are verified for the `claude` kind. For `codex`, effort
+is a config key, not a flag: `-c model_reasoning_effort="<effort>"` (see
+`codex-office/skills/codex-cli`), and a dispatch missing it falls back to whatever
+`~/.codex/config.toml` says. For `agy`, only `--model` is verified in `agy-office/skills/agy-cli`;
+no effort flag is confirmed there, so this skill does not assert one. The pane direction is the
+topology rule; it does not change the agent's role, worktree, scope, or authority.
+
+**Observed 2026-09-03:** a planner dispatched `herdr agent start m1-rocksec --kind claude --pane
+w1J:p17` with no model or effort. The pane launched at the harness default (opus, medium) for a
+role the routing table priced at claude `sonnet` `high`; nothing in the run surfaced the mismatch
+until a human read the pane header and corrected it by hand.
 
 ## Rearranging an existing layout
 
@@ -244,9 +270,12 @@ after `--`, then re-record the new pane id in the ledger:
 
 ```bash
 herdr pane split --current --direction right --cwd "<worktree>" --no-focus
-herdr agent start <name>-r2 --kind claude --pane <new-pane-id> -- --resume <session_id>   # claude
-herdr agent start <name>-r2 --kind codex  --pane <new-pane-id> -- resume <session_id>     # codex
+herdr agent start <name>-r2 --kind claude --pane <new-pane-id> -- --model <model> --effort <effort> --resume <session_id>   # claude
+herdr agent start <name>-r2 --kind codex  --pane <new-pane-id> -- -m <model> -c model_reasoning_effort="<effort>" resume <session_id>     # codex
 ```
+
+A resume still needs model and effort: a resumed session inherits its prior context, not its prior
+tier, so a resume that omits them is the same brand-only defect as the first spawn.
 
 ## The ledger
 
