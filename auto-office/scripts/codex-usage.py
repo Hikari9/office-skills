@@ -117,7 +117,7 @@ def summarize(data):
 
     info = {
         "account": data.get("email"),
-        "plan": str(data.get("plan_type") or "").upper(),
+        "tier": str(data.get("plan_type") or "").upper(),
         "session_used_percent": session["used_percent"] if session else None,
         "session_remaining_percent": session["remaining_percent"] if session else None,
         "session_resets_in_seconds": session["resets_in_seconds"] if session else None,
@@ -150,7 +150,7 @@ def main(argv):
     else:
         print("=== Codex / ChatGPT quota ===")
         print(f"Account: {info['account']}")
-        print(f"Plan:    {info['plan']}")
+        print(f"Tier:    {info['tier']}")
         if info["session_used_percent"] is not None:
             print(f"5-Hour:  {info['session_used_percent']}% used, {info['session_remaining_percent']}% left (resets in {info['session_resets_in']})")
         if info["weekly_used_percent"] is not None:

@@ -239,6 +239,20 @@ actual model **and** effort back before reporting a dispatch, exactly as you wou
 live-system write — for codex that is the launch banner's `model:` / `reasoning effort:` lines,
 which echo an unrecognised value rather than rejecting it.
 
+### Probe headroom immediately before every CLI launch
+
+**A fit-test reading is not current by the time task 3 dispatches.** Immediately before each
+executor or reviewer launch, run that one brand's probe again — bare invocation, one HTTP call
+([quota-probe.md](../../references/quota-probe.md)):
+
+```bash
+python3 auto-office/scripts/<brand>-usage.py
+```
+
+If the number moved enough to change the earlier reasoning (a window reset, a sibling run spent it,
+it crossed into UNKNOWN), say so and re-decide before launching — don't launch on the fit-test
+number by default.
+
 ### Anything with a blocking wait goes to a background process, or you keep it
 
 An in-session Agent-tool subagent **returns to its caller every time it stops having live children**.
@@ -289,11 +303,14 @@ planner tokens on **every** task, and the code reviewer is the safety net either
 3-consecutive-task cap is already spent, or if the task is a long chain. A tiebreak that ignores a
 cap is how a cap gets broken by accident.
 
-## Headroom is a cost, not a gate — probed always during fit-test
+## Headroom is a cost, not a gate — probed at fit-test and before every dispatch
 
-**CLI headroom is ALWAYS probed during fit-test** ([quota-probe.md](../../references/quota-probe.md))
-before planning or routing begins. It gives the planner live measurements across codex, claude, and
-agy before committing to a route.
+**CLI headroom is ALWAYS probed at fit-test, and again immediately before every executor or
+reviewer dispatch** ([quota-probe.md](../../references/quota-probe.md)). Fit-test probes all three
+brands, before planning or routing begins; a pre-dispatch probe checks only the brand about to
+launch. Each is one cheap HTTP call — there is no cost excuse to skip the second checkpoint, and a
+fit-test reading is not valid evidence for a dispatch that happens after other tasks already spent
+that window.
 
 **There is no hardcoded threshold, and there will not be one.** Even though headroom is always probed,
 this is a case-by-case trade-off the planner discerns and states; it is not delegated to a number. The
@@ -314,11 +331,17 @@ If the answer is no, spend the scarce headroom. Read the number, then reason abo
   said other work is coming.
 - **Is there a cheap split?** Often the answer is neither "use it" nor "don't" — route the
   expensive tool at the two tasks that need it and hand the rest to a cheaper one.
+- **What tier is the account on?** `claude-usage.py`/`codex-usage.py` report a `tier` field
+  (`Max`/`Pro`/`Team`/…) next to the percent. The percent is already tier-normalized — the vendor
+  computes `utilization` against that account's own limit, so 56% left means the same thing to
+  reason about on any tier — but state the tier in the kickoff line anyway: it's the fact that
+  explains why two runs on two accounts behave differently at the same reading.
 
 Then **say the numbers and the reasoning out loud** in the kickoff line, e.g.
-`codex 14% weekly (resets 9h; plan is 2 backend tasks — spending it, agy fallback if it stalls)`.
-Report **each window with its reset time**, never a single-number delta: a probe that returns the
-tightest of two windows will appear to *gain* headroom when the short window resets mid-run.
+`codex TEAM 14% weekly (resets 9h; task plan is 2 backend tasks — spending it, agy fallback if it
+stalls)`. Report **each window with its reset time**, never a single-number delta: a probe that
+returns the tightest of two windows will appear to *gain* headroom when the short window resets
+mid-run.
 
 If a run drains the tool it is depending on mid-flight, that is a reroute, not a failure — but it
 is a reroute you should have predicted, so predict it: name the fallback at plan time.

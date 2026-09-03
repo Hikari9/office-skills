@@ -45,10 +45,18 @@ review, let an executor review itself, drop a floor, remove a phase, or widen bl
 
 ## Fit test — first, and it picks a gear
 
-Before interviewing or planning, price the run. **Always probe CLI headroom during fit-test**
-([quota-probe.md](references/quota-probe.md)). Ask: (1) irreversible, production-facing, or
-externally visible? (2) real volume or parallel breadth? (3) needs an interview? (4) would an
-adversarial reader plausibly catch something?
+Before interviewing or planning, price the run. **Probe CLI headroom now, and again immediately
+before every executor/reviewer dispatch** — one cheap, tier-aware call per brand, never skipped
+([quota-probe.md](references/quota-probe.md)):
+
+```bash
+python3 auto-office/scripts/codex-usage.py
+python3 auto-office/scripts/claude-usage.py
+python3 auto-office/scripts/agy-usage.py
+```
+
+Ask: (1) irreversible, production-facing, or externally visible? (2) real volume or parallel
+breadth? (3) needs an interview? (4) would an adversarial reader plausibly catch something?
 
 | Answers | Gear | What runs |
 |---|---|---|
@@ -153,7 +161,7 @@ one. Protocol amnesia past Phase 2 is the observed failure; a re-read is the che
 | Phase 2+ — goal loop, milestone landing, caps, stops, drift checks | [auto-loop](skills/auto-loop/SKILL.md) |
 | Every dispatch — sibling spoke to load, forced-invocation path | [delegation-map.md](references/delegation-map.md) |
 | Milestone landing and final closeout (unless `skip cleanup`) | [auto-closeout](skills/auto-closeout/SKILL.md) |
-| Headroom, probed during fit-test | [quota-probe.md](references/quota-probe.md) |
+| Headroom, probed at fit-test and before every dispatch | [quota-probe.md](references/quota-probe.md) |
 | Doubt about core — the plan/evidence/verdict floor | `office-core/protocol/*` |
 
 auto-office owns **routing, the loop, and the claude route**; codex and agy mechanics load from the

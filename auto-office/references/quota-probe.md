@@ -1,17 +1,39 @@
 # Usage headroom — how to measure it
 
-auto-office ALWAYS probes CLI headroom during the fit-test, before interviewing or planning.
-Routing must never guess whether a tool has quota left. Measure all three, then reason about the
-numbers ([auto-routing](../skills/auto-routing/SKILL.md) — headroom is a cost, not a gate).
+auto-office probes CLI headroom at **two mandatory checkpoints**: the fit-test, before interviewing
+or planning, and again immediately before every executor or reviewer dispatch. Routing must never
+guess whether a tool has quota left, and a fit-test reading is not valid evidence for a dispatch
+that happens after other tasks already spent that window. Each probe is one stdlib HTTP call —
+cheap enough that skipping the second checkpoint saves nothing.
+
+**Fit-test — probe all three, bare (no flag):**
 
 ```bash
-python3 auto-office/scripts/codex-usage.py  --percent
-python3 auto-office/scripts/claude-usage.py --percent
-python3 auto-office/scripts/agy-usage.py    --percent
+python3 auto-office/scripts/codex-usage.py
+python3 auto-office/scripts/claude-usage.py
+python3 auto-office/scripts/agy-usage.py
 ```
 
-All three share the same contract: `--percent` for a bare remaining number, `--json` for the full
-record, no flag for human-readable, exit `0` on a successful read and exit `2` for UNKNOWN.
+**Before dispatch — probe only the brand about to launch**, same bare invocation, run immediately
+before that launch command:
+
+```bash
+python3 auto-office/scripts/<brand>-usage.py
+```
+
+All three share the same contract: bare for human-readable (tier + every window + reset times —
+the default for both checkpoints above), `--percent` for a bare remaining number (routing math only
+— it drops tier and reset, so don't use it for either checkpoint above), `--json` for the full
+record (reporting or diffing across two reads), exit `0` on a successful read and exit `2` for
+UNKNOWN.
+
+**Quota depends on the account's tier, not just usage.** Claude (Pro/Max/Team) and Codex
+(Plus/Pro/Team/Enterprise) carry different absolute limits per tier. `claude-usage.py` and
+`codex-usage.py` read the vendor API's own `utilization`, which the vendor already computes against
+*that account's* limit — so `remaining_percent` is already tier-normalized: 56% left means the same
+thing to reason about on any tier. Both scripts still report a `tier` field (bare and `--json`) so
+the kickoff line carries it for context. `agy-usage.py` has no account-tier field to report — the
+CloudCode quota endpoint doesn't expose one.
 
 ## The three probes
 
@@ -46,6 +68,10 @@ number so a route can be decided in one glance.
 Claude and Codex both have two windows on different clocks (5-hour and 7-day). agy's per-model
 breakdown produces Gemini numbers by default and never Claude numbers; a single tightest number hides
 which model's quota is actually thin.
+
+`claude-usage.py` and `codex-usage.py` also carry a `tier` field (e.g. `Max`, `TEAM`) in both bare
+and `--json` output — report it alongside the percent, since it explains *why* two accounts can
+behave differently at the same reading. `agy-usage.py` has no tier field.
 
 That collapse makes `--percent` useless for measuring change:
 
@@ -103,10 +129,11 @@ and worse problem than knowingly spending a thin quota window.
 
 ## What this is not
 
-Not a per-run budget meter. Each probe is one window number, sampled before routing. If a long run
-crosses a plan boundary or the loop reroutes after several tasks on one tool, re-probe — do not
-carry a stale percentage through an entire multi-hour run, and especially do not carry one you
-already reasoned was thin.
+Not a one-shot budget meter. Each probe is one window number, sampled fresh at fit-test **and**
+again immediately before every dispatch — never carried forward between the two. If a window resets
+mid-run or the loop reroutes after several tasks on one tool, probe that brand once more before
+deciding — do not carry a stale percentage through an entire multi-hour run, and especially do not
+carry one you already reasoned was thin.
 
 ## Adding or fixing a probe
 
