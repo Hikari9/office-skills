@@ -1,5 +1,31 @@
 # Changelog — auto-office
 
+## 17.3.0 — 2026-09-03
+
+**Headroom probing tightened: two mandatory checkpoints, tier-aware, no more `--percent`-only
+fit-test.** Quota checking previously ran once at fit-test using `--percent`, which silently
+dropped tier and reset-time context, and nothing forced a re-check before a later dispatch reasoned
+from a now-stale reading.
+
+- **Two checkpoints, not one.** Fit-test still probes all three brands; `auto-routing` gains
+  `### Probe headroom immediately before every CLI launch`, requiring a re-probe of just the brand
+  about to launch, immediately before every executor/reviewer dispatch. Each probe is one stdlib
+  HTTP call, so there is no cost excuse to skip the second check.
+- **`plan` renamed to `tier` in `claude-usage.py`/`codex-usage.py`.** The old field name collided
+  with "plan" already meaning the task plan everywhere in these docs. `tier` (`Max`, `TEAM`, …) now
+  rides along in bare and `--json` output; the vendor APIs already compute `utilization` against
+  that account's own limit, so the reported percent is tier-normalized already — tier is reported
+  for context, not to adjust the math.
+- **Fit-test and pre-dispatch commands now run bare, not `--percent`,** so tier and both windows'
+  reset times are always available without a second call. `--percent` is reserved for routing math,
+  `--json` for reporting or diffing two reads.
+- **The fit-test commands are inlined into `auto-office/SKILL.md`**, not just linked from
+  `quota-probe.md` — a planner reading the fit-test section no longer has to follow a doc hop to
+  find the actual commands.
+- Fixed "plan boundary" → "window boundary" wording drift in `quota-probe.md`'s re-probe guidance —
+  a 5-hour/7-day reset, not a task-plan boundary, which was the same overload this change removes
+  elsewhere.
+
 ## 17.2.0 — 2026-09-03
 
 Core `17.3.0`.

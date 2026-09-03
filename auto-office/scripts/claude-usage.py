@@ -92,7 +92,7 @@ def fetch_profile(token):
     return {
         "account": data.get("account", {}).get("email"),
         "organization": data.get("organization", {}).get("name"),
-        "plan": data.get("organization", {}).get("rate_limit_tier"),
+        "tier": data.get("organization", {}).get("rate_limit_tier"),
     }
 
 
@@ -119,7 +119,7 @@ def summarize(data, profile):
     info = {
         "account": profile.get("account"),
         "organization": profile.get("organization"),
-        "plan": profile.get("plan"),
+        "tier": profile.get("tier"),
         "session_used_percent": session and session["used_percent"],
         "session_remaining_percent": session and session["remaining_percent"],
         "session_resets_at": session and session["resets_at"],
@@ -151,7 +151,7 @@ def main(argv):
         print("=== Claude Code subscription quota ===")
         print(f"Account: {info['account']}")
         print(f"Org:     {info['organization']}")
-        print(f"Plan:    {info['plan']}")
+        print(f"Tier:    {info['tier']}")
         print(
             f"Session: {info['session_used_percent']}% used, "
             f"{info['session_remaining_percent']}% left "
