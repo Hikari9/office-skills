@@ -16,16 +16,16 @@ the real output *and* confirm it ran against `HEAD`.
 
 ## Recording durable lessons
 
-Core step 4 says to record a durable fact where this office records such things. Here that means:
+Core step 4 loads [`office-learnings`](../office-core/skills/office-learnings/SKILL.md), which
+applies that skill's edit-in-place discipline. This office's routing:
 
 - **Routing lessons** → [fan-out.md](fan-out.md).
 - **Mechanism gotchas** (a flag that misbehaved, a launch that ignored an argument) →
   [`skills/claude-cli/SKILL.md`](../skills/claude-cli/SKILL.md).
-- **A durable project fact, decision, or correction to how you work** → memory.
-- **A shared invariant** → propose it as a change to `office-core/`, never edit a vendored copy.
-
-Sharpen an existing principle rather than appending a scenario. Nothing durable to add is a
-legitimate outcome; say so and stop.
+- **A durable project fact, decision, or correction to how you work** (about the target project,
+  not this office) → memory.
+- **A shared invariant** → propose it in the run report; `office-learnings` never self-edits
+  `office-core/`, vendored or not.
 
 ## Run report
 

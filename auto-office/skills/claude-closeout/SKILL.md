@@ -72,10 +72,8 @@ reset appears to gain headroom it never had.
 
 ## Then make the skill better than you found it — or don't
 
-One pass, and the bar is high: **write a rule or write nothing.** A lesson that cannot be stated as a
-rule changing what a future run *does* is not a lesson, and **nothing durable to add is the expected
-outcome**, not a failure. Prefer sharpening an existing sentence to appending a new one. Route each
-lesson to the spoke that owns it:
+Load [`office-learnings`](../../office-core/skills/office-learnings/SKILL.md) and follow it: write
+a rule or write nothing, no particular planner tier required. This office's routing:
 
 - **Routing feedback** — an escalated tier, a serialized wave, a `NEEDS_CONTEXT` return, or a
   collapsed task that drew a reviewer finding → [`../../references/fan-out.md`](../../references/fan-out.md).
@@ -83,12 +81,9 @@ lesson to the spoke that owns it:
   an argument → [`../claude-cli/SKILL.md`](../claude-cli/SKILL.md) (which points at
   [`../../references/discernment.md`](../../references/discernment.md)).
 - **A shared invariant** — anything that belongs to every office, not just this one — is proposed
-  as a core change (`office-core/protocol/`), never edited locally in this plugin.
+  in the run report; `office-learnings` never self-edits `office-core/`, vendored or not.
 
-Sharpen an existing principle rather than appending a scenario; a list of past situations doesn't
-generalize, a principle does. Nothing durable to add is a legitimate outcome — say so and stop.
-Do not rewrite a rule you merely found inconvenient, and tell the user in one line what you
-changed.
+Tell the user in one line what you changed, or that there was nothing durable to add.
 
 ## See also
 

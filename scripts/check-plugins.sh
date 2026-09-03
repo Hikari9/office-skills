@@ -42,6 +42,16 @@ else
   fail "shared Herdr skill missing, malformed, or lacks HERDR_ENV detection"
 fi
 
+# office-learnings is the shared closeout self-heal surface every office's closeout loads at
+# step 4 — same shared-skill contract as Herdr above, checked the same way.
+LEARNINGS_SKILL="$SRC/skills/office-learnings/SKILL.md"
+if [ -f "$LEARNINGS_SKILL" ] && grep -q '^name: office-learnings$' "$LEARNINGS_SKILL" \
+    && grep -qi 'never self-edit' "$LEARNINGS_SKILL"; then
+  ok "shared office-learnings skill present"
+else
+  fail "shared office-learnings skill missing, malformed, or lacks the shared-invariant safeguard"
+fi
+
 # --- per plugin ---------------------------------------------------------------
 for p in "${PLUGINS[@]}"; do
   echo

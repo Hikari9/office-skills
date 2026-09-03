@@ -1,5 +1,70 @@
 # Changelog — auto-office
 
+## 17.2.0 — 2026-09-03
+
+Core `17.3.0`.
+
+**`office-learnings`: durable-lesson self-heal is now core, and no longer opus-only.** Every
+office's closeout previously duplicated its own "recording durable lessons" prose, and only this
+office's claude route actually edited files in place ("make the skill better than you found it"),
+gated to a claude planner at Opus tier by the `auto-opus-only-self-heal` exception. The shared
+procedure — classify a lesson as plugin-local or a shared invariant, edit the owning file in place
+for the former (sharpen, never append), always propose rather than self-edit the latter — moved to
+`office-core/skills/office-learnings/SKILL.md`, loaded by every closeout (`agy-closeout`,
+`codex-closeout`, `auto-closeout`, `claude-closeout`) with no tier restriction. `auto-closeout`
+gained item 13 for this; item 12 (appending to this office's own `routing-outcomes.md` ledger)
+is unchanged and keeps its Opus-tier restriction — `auto-opus-only-self-heal` now covers only that
+ledger. Each office's `references/closeout.md` keeps its own routing table (which file owns which
+class of plugin-local lesson); only the shared edit-in-place procedure moved to core.
+
+## 17.1.0 — 2026-09-03
+
+Core `17.2.0`.
+
+**Rendered surfaces need a rendered read-back (`office-core/protocol/evidence-and-handoff.md`).**
+New evidence row, plus the rule behind it: "deployed bytes == committed source" only proves the
+deploy transported what you wrote, never what it does — the template engine, query string and
+viewer scope all sit outside the bytes. Two runs on the same repo shipped blocking defects past
+exactly that check (1,194 green tests on 09-02; 1,999 green tests **plus** a byte-identical
+read-back on 09-03). Both 09-03 defects were *two individually-correct changes combining*, so
+neither is visible in a diff, a unit test, or a hash. Requires: fetch rendered output per viewer
+scope, run a one-variable-apart control, search the body for the engine error string, and name
+any scope that could not be exercised rather than letting it read as passed.
+
+**Brief each review round on the previous defect's shape, not its line
+(`office-core/protocol/review-states.md`).** A fixed finding is a sample of a class. Round 2 found
+a blocking defect in a file round 1 had cleared, because its brief named the round-1 mechanism and
+told the reviewer to hunt more instances; round 3, briefed the same way, found a third residue and
+correctly judged it unreachable. One paragraph, cheapest yield in the loop.
+
+**herdr: the prompt text is positional — there is no `--message` flag
+(`office-core/skills/herdr/SKILL.md`).** Passing one prints `unknown option: <the entire message>`
+and sends nothing; piped through `tail` that reads as a successful echo. Three prompts were dropped
+this way and a planner reported an executor that had never been prompted. Never pipe
+`herdr agent prompt` through `tail`/`head`.
+
+**herdr: bound the receipt wait, do not ban it.** `--wait --until working --timeout 20000` sits well
+under the ~120s harness ceiling and returns machine-checkable receipt (herdr requires an observed
+state change within 5s or returns `agent_prompt_stalled`). Supersedes the blanket "send without
+`--wait`" guidance, which pushed callers onto pane-reading — itself unreliable, because a *resumed*
+pane replays the prior transcript.
+
+**herdr: a session exited with `/exit` is not resumable.** `claude --resume` replays the transcript,
+executes the exit and quits, leaving a bare shell at `ctx: 0k`. A quota-killed session resumes with
+its context intact; an exited one cannot. Added the distinguishing table — recover from the
+committed work product instead.
+
+
+## 17.0.0 — 2026-09-03
+
+Core `17.0.0`.
+
+- Herdr: `herdr agent start` now requires an explicit model and effort on every spawn and resume —
+  brand alone silently inherited the harness default tier instead of the routing table's. The
+  recipe block itself carries the flags (`--model`/`--effort` for claude, `-c
+  model_reasoning_effort=` for codex), and the spawn step now asserts the launched `argv` back
+  against what was intended, the same way `session_id` capture is already mandatory.
+
 ## 16.0.0 — 2026-09-02
 
 Core `16.0.0`.

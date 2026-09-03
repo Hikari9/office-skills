@@ -1,7 +1,7 @@
 # Compatibility
 
-- **Plugin version:** `15.0.0` (see `.claude-plugin/plugin.json`)
-- **Supported core range:** `>=16.0.0 <17.0.0`
+- **Plugin version:** `16.2.0` (see `.claude-plugin/plugin.json`)
+- **Supported core range:** `>=17.0.0 <18.0.0`
 - **Vendored snapshot:** `office-core/`, with `office-core/SNAPSHOT.json` recording the exact core
   version and content hash this plugin ships against. The vendored copy is authoritative for an
   installed plugin; `scripts/vendor-core.sh` (run from the repo root) refreshes it from the

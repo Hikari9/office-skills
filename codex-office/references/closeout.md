@@ -21,10 +21,11 @@ plus the observable behavior that motivated the change, never by the writer's ex
 
 ## Recording durable lessons
 
-Core step 4 says to record a durable fact where this office records such things. Here that means
-runtime lessons (a flag that misbehaved, a worktree collision, a launch quirk) go to
-[`skills/codex-cli/SKILL.md`](../skills/codex-cli/SKILL.md), and a shared invariant is proposed as
-a change to `office-core/` rather than edited into a vendored copy.
+Core step 4 loads [`office-learnings`](../office-core/skills/office-learnings/SKILL.md), which
+applies that skill's edit-in-place discipline. Here that means runtime lessons (a flag that
+misbehaved, a worktree collision, a launch quirk) go to
+[`skills/codex-cli/SKILL.md`](../skills/codex-cli/SKILL.md); a shared invariant is proposed in the
+run report, since `office-learnings` never self-edits `office-core/`, vendored or not.
 
 ## Run report
 
