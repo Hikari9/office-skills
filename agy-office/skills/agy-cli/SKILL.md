@@ -45,9 +45,32 @@ Pass the same string to any label flag the brand exposes. The prefix is a displa
   swallowed and you get a greeting.** Any flag between `--print` and the prompt text reproduces
   this. A greeting/banner response with exit 0 is this bug, not a routing signal — fix the
   ordering and relaunch; nothing was done.
+  Newer agy builds catch the common case explicitly rather than greeting you:
+  `Error: --print took "--model" as its prompt, so the intended prompt was left as an argument and
+  ignored.` Same bug, louder. The `=` form (`--prompt="$(cat brief.md)"`, `--prompt` being an
+  alias for `--print`) binds the value to the flag and makes ordering irrelevant — prefer it.
+- `--effort low|medium|high` — **Gemini-only.** Passing it with a Claude slug hard-fails at launch:
+  `Error: invalid model selection (--model "claude-opus-4-6-thinking" --effort "low"): --effort is
+  not supported for model "claude-opus-4-6-thinking"`. The Claude slugs encode their own thinking
+  budget, so there is no effort knob to set. If a house convention names an effort tier for
+  reviewers, that convention simply does not apply to an agy Claude dispatch — say so rather than
+  substituting a tier.
 
 **Stdin piping does not work.** Use the positional argument (`--print "$(cat <file>)"`), never a
 pipe into `agy`'s stdin.
+
+## agy is an outage fallback, not only a Gemini runner
+
+`agy models` lists more than Gemini. As of 2026-09-03 it also offers `claude-opus-4-6-thinking`,
+`claude-sonnet-4-6` and `gpt-oss-120b-medium`. These route through agy's own provider path, so an
+Anthropic-side outage that makes Claude Code subagents die with `API Error: 529 Overloaded` does
+**not** take them down — an agy Claude dispatch is the way to keep a review or a stint moving
+through one. Confirm with `agy models` at dispatch rather than trusting this list; the slugs are
+version-pinned and will age.
+
+`agy-model.sh` resolves **Flash** slugs only. It matches `^gemini-[0-9]+\.[0-9]+-flash-<effort>$`,
+so it cannot return a Pro or Claude slug and will hand back its Flash fallback if you ask it to.
+For a Claude dispatch, read `agy models` and pass the slug literally.
 
 ## Live-system access is agy's own, not the planner's
 
@@ -103,3 +126,28 @@ section describes.
   dispatch ceiling.
 - [`../../references/executor-brief.md`](../../references/executor-brief.md) — what the prompt
   text itself must contain (this file only covers the launch, not the brief).
+
+## Launching agy inside a Herdr pane (learned 2026-09-03)
+
+`herdr agent start --kind agy` is not a thing; agy runs as a plain command in a pane. Three rules:
+
+1. **Never pass the brief inline through `herdr pane run`.** The pane types the command into a
+   live shell, so a multi-line brief with quotes leaves the shell stuck at `quote>` and nothing
+   runs. Write a wrapper script instead and run that:
+   ```bash
+   cat > /abs/work/run.sh <<'EOF2'
+   #!/bin/bash
+   cd /abs/work || exit 1
+   exec agy --dangerously-skip-permissions --print-timeout 10m \
+     --model "$(~/.claude/skills/agy-office/scripts/agy-model.sh high)" \
+     --add-dir /abs/work --print "$(cat /abs/work/brief.md)"
+   EOF2
+   herdr pane run <PANE_ID> bash /abs/work/run.sh
+   ```
+2. **Wait for the shell prompt before `pane run`.** A pane split moments earlier may still be
+   restoring its session; a command typed before the prompt appears is swallowed. Poll
+   `herdr pane read <PANE_ID>` for the prompt line first.
+3. **`--print` shows nothing until the run ends.** A pane that displays only the echoed command
+   is not stuck. Confirm liveness with `pgrep -f "<model slug>"`, then read the pane tail when the
+   process exits. A `quote>` line in the pane, by contrast, IS stuck: close the pane and relaunch
+   (`herdr pane send-keys` key names are limited; closing is faster).

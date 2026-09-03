@@ -12,9 +12,10 @@ The procedure is core: `office-core/protocol/closeout.md`. This office's additio
 [`../../references/closeout.md`](../../references/closeout.md). In order: verify the project's real
 gate (leave the existing draft PR draft on red), confirm the executor bootstrap and first-completion
 comment, remove the tracked plan in a dedicated pre-merge commit, push and verify the deletion, mark
-the PR ready, merge with `Closes #N`, document only what the repo already maintains, sync local
-`main` after a confirmed merge, remove the worktree only if this run's tooling created it, and close
-every open loop.
+the PR ready, merge with `Closes #N`, document only what the repo already maintains — including
+loading [`office-learnings`](../../office-core/skills/office-learnings/SKILL.md) for any durable
+lesson per that reference file's routing — sync local `main` after a confirmed merge, remove the
+worktree only if this run's tooling created it, and close every open loop.
 
 **Skipped only on an explicit `skip cleanup` caller tweak.**
 

@@ -39,25 +39,29 @@ A new shared skill, `office-learnings`, following the exact precedent of the exi
      `references/*.md` or `skills/*/SKILL.md`, per the routing table already declared in
      that office's `references/closeout.md`.
    - **Shared invariant** — applies across offices (a core protocol rule, a role-authority
-     boundary, a closeout/evidence rule). Owning file is always under root `office-core/`,
-     never a vendored copy inside a plugin.
+     boundary, a closeout/evidence rule). Never self-edited — see step 5.
 
-3. **Locate the owning file.** Use the office's own routing table for plugin-local
-   lessons; use `docs/rule-ownership-matrix.md` for shared ones. If no existing file/section
-   plausibly owns the lesson, **do not create one** — surface it as an open item in the run
-   report's "Still open" row instead of guessing at a new home for it.
+3. **Locate the owning file.** Use the office's own routing table for plugin-local lessons.
+   If no existing file/section plausibly owns the lesson, **do not create one** — surface it
+   as an open item in the run report's "Still open" row instead of guessing at a new home
+   for it.
 
-4. **Edit in place.** Sharpen the existing rule's wording to cover the new case. Never
-   append a new scenario row, log line, or bullet restating the same principle a second
-   way — this repeats the exact anti-pattern the corpus already resolved once (`runs/`,
-   per `docs/rule-ownership-matrix.md`'s "Resolved" table). If the lesson contradicts an
-   existing rule, fix the rule; if it's a genuinely new rule, add the smallest single
-   addition that generalizes past this one run.
+4. **Edit in place — plugin-local only.** Sharpen the existing rule's wording to cover the
+   new case. Never append a new scenario row, log line, or bullet restating the same
+   principle a second way — this repeats the exact anti-pattern the corpus already resolved
+   once (`runs/`, per `docs/rule-ownership-matrix.md`'s "Resolved" table). If the lesson
+   contradicts an existing rule, fix the rule; if it's a genuinely new rule, add the
+   smallest single addition that generalizes past this one run.
 
-5. **Re-vendor if core changed.** Any edit under root `office-core/` requires running
-   `./scripts/vendor-core.sh` before the closeout commit, so the commit never leaves a
-   stale/edited-by-hand vendored snapshot behind (`check-plugins.sh` already fails hard on
-   that).
+5. **Shared invariants are always proposed, never self-edited — no exceptions.** A lesson
+   that belongs to every office is stated as a proposal in the run report (the rule and the
+   `office-core/` file that would carry it) and left there. This holds even when
+   `office-core/` happens to be reachable on disk in a local dev install where the plugin
+   path and this source repo are the same checkout: editing it there still means writing to
+   a different, unrelated commit history than the one the current run's diff belongs to, and
+   a vendored copy inside a plugin must never be hand-edited regardless. This is a hard
+   safety rule, not a per-office or per-tier restriction — it replaces the earlier
+   `auto-opus-only-self-heal` tier gate for this general case (see Out of scope).
 
 6. **Record the audit trail.** Add a one-line entry to the `CHANGELOG.md` of every plugin
    whose file changed (already-established mechanism — core closeout step 4 already allows
@@ -86,8 +90,10 @@ A new shared skill, `office-learnings`, following the exact precedent of the exi
   — each gets an explicit line requiring `office-learnings` at the documented step.
 - `office-core/VERSION` and `office-core/protocol/compatibility.md` — bump per the existing
   compatibility policy, since this is a core addition all three plugins must vendor.
-- Each plugin's `.claude-plugin/plugin.json` version and `CHANGELOG.md` — bump per the
-  existing release checklist in `docs/packaging-and-install.md`.
+- Each plugin's `.claude-plugin/plugin.json` version, `COMPATIBILITY.md` version line, and
+  `CHANGELOG.md` — bump per the existing release checklist in `docs/packaging-and-install.md`.
+- `auto-office/COMPATIBILITY.md` — narrow `auto-opus-only-self-heal` to cover only
+  `routing-outcomes.md` ledger appends, since the general case moved to core.
 
 ## Out of scope
 
@@ -97,6 +103,10 @@ A new shared skill, `office-learnings`, following the exact precedent of the exi
 - No new log/journal file. The existing CHANGELOG mechanism is reused as-is.
 - No change to how core step 4 decides *whether* a lesson is durable enough to record —
   only *what happens once one is identified*.
+- `auto-office`'s `auto-opus-only-self-heal` exception is narrowed, not removed: it now
+  covers only that office's own `routing-outcomes.md` ledger append (`auto-closeout` item
+  12), which keeps its Opus-tier restriction as a cost/quality-ledger concern distinct from
+  this skill.
 
 ## Testing / validation
 

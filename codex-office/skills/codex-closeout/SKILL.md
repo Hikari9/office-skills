@@ -10,6 +10,9 @@ Assumes: the Office Kernel is already in the packet.
 
 The procedure itself is core: `office-core/protocol/closeout.md`. This office's additions are in
 [../../references/closeout.md](../../references/closeout.md). This spoke duplicates neither.
+Document (step 4) includes loading
+[`office-learnings`](../../office-core/skills/office-learnings/SKILL.md) for any durable lesson,
+per that reference file's routing.
 
 ## Planner-held actions
 

@@ -142,9 +142,18 @@ client-specific by design. The one shared piece:
 | Claude's gate addition: a real Next.js build, not just lint | claude adapter | `auto-office/references/closeout.md` | `auto-office/skills/claude-closeout/SKILL.md` | Pre-restructure `auto-office/references/closeout.md` step 2 |
 | Agy's gate addition: run the gate yourself, since an agy run does not fire the Stop hook | agy adapter | `agy-office/references/closeout.md` | `agy-office/skills/agy-closeout/SKILL.md` | Pre-restructure `agy-office/references/verification.md` check 5 |
 | Codex's addition: push and PR only if the caller authorized it; reviewer model and round count in the report | codex adapter | `codex-office/references/closeout.md` | `codex-office/skills/codex-closeout/SKILL.md` | Pre-restructure `codex-office/references/closeout.md` |
-| Where a durable lesson gets recorded after a run | per-office adapter | Each `references/closeout.md` | Each closeout spoke | Pre-restructure hubs' "make the skill better than you found it" sections |
+| Where a durable lesson gets recorded after a run | core (since core `17.3.0`) | `office-core/skills/office-learnings/SKILL.md`, routing table per office in each `references/closeout.md` | Each closeout spoke | Pre-`17.3.0`: per-office adapter, no shared procedure; pre-restructure hubs' "make the skill better than you found it" sections |
 | Every open `## Upline` entry is closed at closeout, answered, filed, or explicitly ruled irrelevant | core (procedural echo of Escalation ownership) | `office-core/protocol/roles-and-authority.md` (Escalation ownership) | `auto-office/skills/claude-closeout/SKILL.md`, `agy-office/skills/agy-closeout/SKILL.md`, `codex-office/skills/codex-closeout/SKILL.md` | Each pre-restructure hub's Phase 4 |
 | Deployment/migration closeout requires a live read-back, never a writer's exit status | core | `office-core/protocol/evidence-and-handoff.md` (What is evidence) | `codex-office/skills/codex-closeout/SKILL.md` (fullest restatement), `auto-office/references/closeout.md`, `agy-office/references/closeout.md` | Each pre-restructure hub's Phase 4 / gate step |
+
+**Resolved in core `17.3.0`.** Durable-lesson recording was three near-duplicate "Recording durable
+lessons" sections (one per office adapter), plus a claude-office-only "make the skill better than
+you found it" section gated to Opus-tier planners via `auto-office`'s `auto-opus-only-self-heal`
+exception. The shared procedure — classify, edit the file that owns the rule in place, propose
+rather than self-edit a shared invariant — moved to `office-core/skills/office-learnings/SKILL.md`,
+loaded by every closeout with no tier restriction. Each office keeps only its own routing table
+(which file owns which class of plugin-local lesson). `auto-opus-only-self-heal` narrows to cover
+only `auto-office`'s own `routing-outcomes.md` ledger, which keeps its Opus-tier restriction.
 
 **Resolved in core `1.1.0`.** The audit found `auto-office/references/closeout.md` and
 `agy-office/references/closeout.md` verbatim identical except for one phrase ("the handoff"

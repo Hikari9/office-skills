@@ -115,7 +115,11 @@ comments. Do not invent a new doc file for the occasion. Make sure the PR body i
 placeholder.
 
 If the run surfaced a durable fact worth keeping past the PR (a project decision, a non-obvious
-gotcha, a correction to how you should work), record it where this office records such things.
+gotcha, a correction to how you should work), load `office-core/skills/office-learnings/SKILL.md`
+and follow it: a lesson about this office's own mechanics gets edited directly into the file that
+owns it, in this same commit, per that skill's routing and edit discipline; a shared invariant is
+proposed in the run report, never self-edited. A fact about the target project itself (not about
+this office) still goes to memory or the project's own docs, per this office's routing table.
 Skip anything already derivable from the diff, the commit log, or existing docs.
 
 ## 5. Sync local main, then remove the worktree

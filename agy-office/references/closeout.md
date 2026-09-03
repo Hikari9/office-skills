@@ -46,8 +46,8 @@ say so in the closeout report rather than letting it lapse.
 
 ## Recording durable lessons
 
-Core step 4 says to record a durable fact where this office records such things. Here the lessons
-split three ways:
+Core step 4 loads [`office-learnings`](../office-core/skills/office-learnings/SKILL.md), which
+applies that skill's edit-in-place discipline. Here the lessons split three ways:
 
 - **CLI behavior** (a flag that misbehaved, a `--continue` that lost context, a new model in the
   catalog, a quota symptom, a workspace surprise) → the **`agy` skill**. It is the shared living
@@ -57,10 +57,8 @@ split three ways:
   missing check.
 - **Routing** (a dispatch that should have been INLINE or `claude-office`, a purchase that turned
   out illusory, a quota cost that dominated) → [routing.md](routing.md).
-- **A shared invariant** → propose it as a change to `office-core/`, never edit a vendored copy.
-
-Sharpen an existing principle rather than appending a scenario. Nothing durable to add is a
-legitimate outcome; say so and stop.
+- **A shared invariant** → propose it in the run report; `office-learnings` never self-edits
+  `office-core/`, vendored or not.
 
 ## Run report
 

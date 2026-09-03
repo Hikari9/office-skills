@@ -1,5 +1,13 @@
 # Changelog
 
+## 16.2.0 — 2026-09-03
+
+Core `17.3.0`. Core-only change; see `auto-office/CHANGELOG.md` 17.2.0 for the full rationale.
+
+- **`office-learnings`** — durable-lesson recording at closeout moved to the shared, vendored
+  `office-core/skills/office-learnings/SKILL.md`, replacing this office's own "Recording durable
+  lessons" prose with a pointer plus its routing table. Applies with no planner-tier restriction.
+
 ## 16.1.0 — 2026-09-03
 
 Core `17.2.0`. Core-only change; see `auto-office/CHANGELOG.md` 17.1.0 for the full rationale.

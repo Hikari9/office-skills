@@ -77,4 +77,9 @@ final evidence.
     numbers, the `lesson` cell carries one sentence or "as expected") to
     [routing-outcomes.md](../../references/routing-outcomes.md); write a rule change instead of a row
     if the lesson needs more than that. codex/agy planners propose in the run report and stop. Express
-    runs append nothing.
+    runs append nothing. This is this office's routing ledger specifically, separate from and in
+    addition to step 13.
+13. Load [`office-learnings`](../../office-core/skills/office-learnings/SKILL.md) for any other
+    durable lesson (routing feedback, a mechanism gotcha, a shared invariant) per this office's
+    [routing table](../../references/closeout.md#recording-durable-lessons) — no tier restriction,
+    unlike item 12.

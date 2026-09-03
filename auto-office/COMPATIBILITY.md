@@ -2,9 +2,9 @@
 
 | Line | Value |
 |---|---|
-| Plugin version | `17.1.0` (see `.claude-plugin/plugin.json`) |
+| Plugin version | `17.2.0` (see `.claude-plugin/plugin.json`) |
 | Core protocol supported | `>=17.0.0 <18.0.0` |
-| Core protocol vendored | `17.2.0` (see `office-core/SNAPSHOT.json`) |
+| Core protocol vendored | `17.3.0` (see `office-core/SNAPSHOT.json`) |
 | Vendored snapshot | `office-core/SNAPSHOT.json`, written by `scripts/vendor-core.sh` |
 | Sibling plugins required | `codex-office`, `agy-office` — for the CLI, executor, and closeout mechanics of those two routes. The claude route ships in this plugin as of `4.0.0`. |
 
@@ -91,11 +91,16 @@ exceptions:
   - id: auto-opus-only-self-heal
     owner: auto-office
     reason: >
-      Closeout may sharpen this plugin's own skill files only when the planner is claude at Opus
-      tier; a codex or agy planner writes a proposal block into the run report and stops. Even
-      permitted, a self-heal may never relax a safety rule, raise a cap, widen a blast radius,
-      downgrade a reviewer, or touch a vendored office-core copy — a shared invariant is a proposed
-      core change. This is a restriction on the maintenance authority every office already has, so
+      Narrowed in core `17.3.0`: general durable-lesson self-heal (a mechanism gotcha, a routing
+      lesson, a shared-invariant proposal) moved to the shared `office-learnings` skill
+      (`office-core/skills/office-learnings/SKILL.md`), loaded by every office's closeout with no
+      tier restriction — see `auto-closeout` item 13. This exception now covers only this office's
+      own routing ledger, `routing-outcomes.md` (`auto-closeout` item 12): appending a cost/quality
+      row there stays restricted to a claude planner at Opus tier, and a codex or agy planner still
+      writes a proposal into the run report and stops instead. Even permitted, neither mechanism may
+      relax a safety rule, raise a cap, widen a blast radius, downgrade a reviewer, or touch a
+      vendored `office-core` copy — a shared invariant is always a proposed core change, never
+      self-edited. This is a restriction on the maintenance authority every office already has, so
       it narrows rather than widens.
     widens_core_authority: false
 ```

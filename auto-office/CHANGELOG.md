@@ -1,5 +1,22 @@
 # Changelog — auto-office
 
+## 17.2.0 — 2026-09-03
+
+Core `17.3.0`.
+
+**`office-learnings`: durable-lesson self-heal is now core, and no longer opus-only.** Every
+office's closeout previously duplicated its own "recording durable lessons" prose, and only this
+office's claude route actually edited files in place ("make the skill better than you found it"),
+gated to a claude planner at Opus tier by the `auto-opus-only-self-heal` exception. The shared
+procedure — classify a lesson as plugin-local or a shared invariant, edit the owning file in place
+for the former (sharpen, never append), always propose rather than self-edit the latter — moved to
+`office-core/skills/office-learnings/SKILL.md`, loaded by every closeout (`agy-closeout`,
+`codex-closeout`, `auto-closeout`, `claude-closeout`) with no tier restriction. `auto-closeout`
+gained item 13 for this; item 12 (appending to this office's own `routing-outcomes.md` ledger)
+is unchanged and keeps its Opus-tier restriction — `auto-opus-only-self-heal` now covers only that
+ledger. Each office's `references/closeout.md` keeps its own routing table (which file owns which
+class of plugin-local lesson); only the shared edit-in-place procedure moved to core.
+
 ## 17.1.0 — 2026-09-03
 
 Core `17.2.0`.
