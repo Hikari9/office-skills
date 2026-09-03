@@ -11,6 +11,20 @@ findings and cannot tell you whether round 2 regressed round 1. If continuity is
 unavailable, carry the previous findings list verbatim and say in the round line that
 continuity was lost.
 
+**After any confirmed defect, brief the next round on its *shape*, not its line.** A fixed finding
+is a sample of a class, and the class usually has other members the first pass walked past. State
+the mechanism in the round brief and instruct the reviewer to hunt more instances of it.
+
+Observed 2026-09-03: round 1 cleared a file that round 2 then found a blocking defect in, because
+round 2's brief named the round-1 defect's shape — *two individually-correct changes combining,
+invisible to a diff because no single line is wrong* — and told the reviewer to look for more of
+it. It found a second instance in a code path the first fix never touched. Round 3, briefed the
+same way, found a third residue of the same shape and correctly judged it unreachable rather than
+reporting it as a defect.
+
+This costs one paragraph in the round brief and is the cheapest yield in the loop. It also tells
+the reviewer what *not* to re-examine, which is how a later round stays inside the cap.
+
 ### Resume vs. fresh — a cost decision, not a default
 
 Resume is the default because it preserves what the reviewer already flagged and accepted. It is

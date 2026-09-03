@@ -26,8 +26,36 @@
 | A test covers the change | The test observed **failing** when the behavior it covers is broken |
 | A verification tool says PASS | A control run against a case that *should* fail, proving the tool can fail at all |
 | Something was written to a live system | A **read-back of the deployed artifact** matching committed source, plus the observable behavior that motivated the change |
+| Something was written to a **rendered** surface (page, template, UI) | The **rendered output**, fetched as a real viewer of each affected scope, showing the behavior that motivated the change — **byte-identity is not sufficient** (see below) |
 | An interface was used correctly | The real signature at `file:line`, read from source |
 | The current state of the working tree | `git status --short`, pasted, run in the same turn as the claim |
+
+**Byte-identity is the weak half of a live read-back, and on a rendered surface it proves almost
+nothing.** "Deployed bytes == committed source" only says the deploy transported what you wrote. It
+cannot say what you wrote *does*, because the template engine, the query string, and the viewer's
+scope are all outside the bytes. Two runs on the same repo have now shipped blocking defects that
+passed exactly this check:
+
+- 2026-09-02: 1,194 green tests plus a matching deploy hid two live-only defects, one of them
+  pinned by a test asserting the buggy line.
+- 2026-09-03: 1,999 green tests plus a byte-identical read-back hid two more. Each was **two
+  individually-correct changes combining** — a hardcoded `'?statusMsg='` concatenated onto a
+  `backLink` that had just gained its own query string, and a guard testing a variable for
+  *emptiness* where the new caller could pass a valid-but-wrong sentinel. Neither is a wrong line;
+  neither is visible in a diff, a unit test, or a hash.
+
+So for any surface a human renders:
+
+1. **Fetch the rendered output**, once per affected viewer scope, not once overall. A scope that
+   nobody fetched is a scope nobody verified.
+2. **Run a control.** A single rendered fetch showing the good state proves nothing without the
+   failing counterpart — assert the difference between the fixed and broken input, one variable
+   apart, and paste both.
+3. **Search the whole body for the engine's error string.** An error pane can be `display:none`; an
+   HTTP 200, a header, or the presence of an expected element is not evidence the page works.
+4. **Say which scopes were not exercised.** Where an environment cannot produce a principal (no
+   scoped session exists, and manufacturing one is an access grant), record the claim as
+   reasoned-from-source and name it in the state doc. Never let it read as exercised.
 
 **Require `git status --short`, pasted, before every status report — not only at the end.** Three
 false state reports happened in one run this way: "no implementation exists" over 130 lines already

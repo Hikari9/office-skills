@@ -1,5 +1,19 @@
 # Changelog
 
+## 16.1.0 — 2026-09-03
+
+Core `17.2.0`. Core-only change; see `auto-office/CHANGELOG.md` 17.1.0 for the full rationale.
+
+- **Rendered surfaces need a rendered read-back** — byte-identity ("deployed == committed source")
+  is not evidence for a page/template/UI. Fetch rendered output per viewer scope, run a
+  one-variable-apart control, search for the engine error string, and name unexercised scopes.
+- **Brief each review round on the previous defect's shape, not its line** — a fixed finding is a
+  sample of a class; round 2 found a blocking defect in a file round 1 had cleared.
+- **herdr** — prompt text is positional (no `--message`; a wrong flag looks like a successful echo
+  under `tail`); bounded `--wait --until working --timeout 20000` is valid machine-checkable
+  receipt; a session exited with `/exit` is not resumable, unlike a quota-killed one.
+
+
 ## 16.0.0 — 2026-09-03
 
 Core `17.0.0`.

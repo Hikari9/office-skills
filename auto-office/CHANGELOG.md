@@ -1,5 +1,43 @@
 # Changelog — auto-office
 
+## 17.1.0 — 2026-09-03
+
+Core `17.2.0`.
+
+**Rendered surfaces need a rendered read-back (`office-core/protocol/evidence-and-handoff.md`).**
+New evidence row, plus the rule behind it: "deployed bytes == committed source" only proves the
+deploy transported what you wrote, never what it does — the template engine, query string and
+viewer scope all sit outside the bytes. Two runs on the same repo shipped blocking defects past
+exactly that check (1,194 green tests on 09-02; 1,999 green tests **plus** a byte-identical
+read-back on 09-03). Both 09-03 defects were *two individually-correct changes combining*, so
+neither is visible in a diff, a unit test, or a hash. Requires: fetch rendered output per viewer
+scope, run a one-variable-apart control, search the body for the engine error string, and name
+any scope that could not be exercised rather than letting it read as passed.
+
+**Brief each review round on the previous defect's shape, not its line
+(`office-core/protocol/review-states.md`).** A fixed finding is a sample of a class. Round 2 found
+a blocking defect in a file round 1 had cleared, because its brief named the round-1 mechanism and
+told the reviewer to hunt more instances; round 3, briefed the same way, found a third residue and
+correctly judged it unreachable. One paragraph, cheapest yield in the loop.
+
+**herdr: the prompt text is positional — there is no `--message` flag
+(`office-core/skills/herdr/SKILL.md`).** Passing one prints `unknown option: <the entire message>`
+and sends nothing; piped through `tail` that reads as a successful echo. Three prompts were dropped
+this way and a planner reported an executor that had never been prompted. Never pipe
+`herdr agent prompt` through `tail`/`head`.
+
+**herdr: bound the receipt wait, do not ban it.** `--wait --until working --timeout 20000` sits well
+under the ~120s harness ceiling and returns machine-checkable receipt (herdr requires an observed
+state change within 5s or returns `agent_prompt_stalled`). Supersedes the blanket "send without
+`--wait`" guidance, which pushed callers onto pane-reading — itself unreliable, because a *resumed*
+pane replays the prior transcript.
+
+**herdr: a session exited with `/exit` is not resumable.** `claude --resume` replays the transcript,
+executes the exit and quits, leaving a bare shell at `ctx: 0k`. A quota-killed session resumes with
+its context intact; an exited one cannot. Added the distinguishing table — recover from the
+committed work product instead.
+
+
 ## 17.0.0 — 2026-09-03
 
 Core `17.0.0`.

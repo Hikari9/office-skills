@@ -21,6 +21,30 @@ existing routing unchanged; its normal CLI or in-session path still applies. A H
 failure while `HERDR_ENV=1` is not permission to use an in-session subagent: diagnose the Herdr
 failure, use an authorized CLI route if one is available, or report the dispatch blocked.
 
+## Who runs herdr
+
+The agent that owns the run owns its herdr commands. Do not hand dispatch to a cheaper
+"mechanical" agent on the theory that these commands are clerical. Every rule in this skill is a
+judgement wearing a command's clothing: model and effort come from the routing table and never
+from the agent's own judgement, `agent_status` is not receipt, `blocked` is a question to surface
+rather than answer, and a queued prompt is not a disobeyed one. The commands themselves are a
+dozen short calls per run — what actually costs is the reading and the deciding attached to them,
+and those are exactly what a cheaper tier gets wrong. Under `HERDR_ENV=1` the substitution is not
+even reachable: a dispatcher agent would itself need a pane, opened by the very commands it was
+meant to take over.
+
+Two forms of offloading are correct, and this skill uses both:
+
+- **To a script, not to a model.** The deterministic half of a spawn — split, start, argv assert,
+  session read, ledger append — is `scripts/office-spawn.sh` in this core (`office-core/scripts/`,
+  vendored into every plugin). It removes the retyping without moving a single decision. The same
+  applies to watching and cleanup: the `Monitor` pattern below and the `Stop` hook are scripts,
+  and a script cannot misread `blocked`.
+- **To a reader pane, verbatim.** A cheap-tier agent may be dispatched to read a long pane or
+  transcript and return the verdict line and any blocking question **verbatim**. It summarises
+  nothing, decides nothing, and issues no herdr command on the caller's behalf. This keeps
+  120-line transcript dumps out of the caller's context, which is the real saving.
+
 ## Put agents in the layout
 
 The calling agent owns the current pane and keeps focus. Direct children are grouped into columns
@@ -58,7 +82,21 @@ This is exactly why the recipe above always opens a column with `right` first �
 creates the sibling to stack under — and never `down`s off the tab's original, still-solo pane.
 
 Read `.result.pane.pane_id` from the JSON response, then start the requested brand in that pane
-**and record it in the ledger in the same step**. The ledger line is not bookkeeping for later; it
+**and record it in the ledger in the same step**.
+
+`scripts/office-spawn.sh` does the whole block below in one call — split, start at an explicit
+tier, argv assert, session read, ledger append — and fails loudly (closing the pane it just made)
+when the launched tier is not the one asked for. Prefer it; the expanded form that follows is what
+it runs and what to fall back to when a kind or flag it does not know is in play:
+
+```bash
+scripts/office-spawn.sh --name m1-rocksec --kind claude --role executor \
+  --model sonnet --effort high --cwd "$PWD"            # opens a new column
+scripts/office-spawn.sh --name m2-rockdocs --kind claude --role executor \
+  --model sonnet --effort high --anchor <last-executor-pane-id>   # stacks in that column
+```
+
+It takes the model, effort, role, and worktree as arguments and chooses none of them. The ledger line is not bookkeeping for later; it
 is part of spawning, because it is both what closes the pane and what resumes the session:
 
 ```bash
@@ -94,10 +132,20 @@ reports. Capture it here. If it is not populated yet, append the line without it
 on it.
 
 **Assert the launched `argv`, in the same step, before treating the spawn as done.** `herdr agent
-start` (and `herdr agent get`) echo the actual `argv` the pane launched with. Read it back and
-confirm it contains the model and effort you intended — the same way `session_id` capture is
-treated as part of spawning rather than bookkeeping. A pane that launched at the wrong tier is
-caught here, not by a human noticing the pane header later.
+start` echoes the actual `argv` the pane launched with, at the top level of its own response
+(`.argv`, a sibling of `.result.agent`, not inside it). Read it back and confirm it contains the
+model and effort you intended — the same way `session_id` capture is treated as part of spawning
+rather than bookkeeping. A pane that launched at the wrong tier is caught here, not by a human
+noticing the pane header later.
+
+**`herdr agent get` does not reliably carry `argv` back.** Observed 2026-09-03: `office-spawn.sh`
+asserts tier by re-reading `argv` from a follow-up `herdr agent get <name>` call (even after a few
+seconds' wait), and that response's `.result.agent` had no `argv` key at all — the assertion failed
+and the script closed a correctly-launched pane (confirmed correct via the `agent start` response
+itself, and via the visible pane transcript showing the right `--model`/`--effort` on its prompt
+line). Assert from the `agent start` response's own `.argv`, captured at spawn time, not from a
+subsequent `get`. If a script only checks `get`, treat a failed assertion as inconclusive rather
+than proof of a bad spawn — cross-check the pane's own visible startup line before closing it.
 
 **Know your own name, separately from the names you spawn.** `herdr agent prompt <name>` addresses
 whichever agent owns `<name>` in Herdr's flat namespace, including yourself if your own name is
@@ -156,19 +204,35 @@ is still doing its own startup work (MCP client init, plugin loading) right afte
 a busy agent has the paste sitting behind its current turn either way. Send a pointer, not the text,
 regardless of which state the agent is in.
 
-Send the prompt **without** `--wait --until working`: that combination blocks synchronously inside
-the tool call and can itself hit the harness's ~120s ceiling if the agent is mid-turn or slow to
-pick the prompt up — the same ceiling that makes a long `herdr agent wait` unusable (see below).
-Send it, then confirm receipt by reading the pane instead:
+**The prompt text is a POSITIONAL argument. There is no `--message` flag.** Passing one makes herdr
+print `unknown option: <your entire message text>` and exit **without sending anything** — and
+because a brief is long, `| tail` shows only its last lines, which reads exactly like a successful
+echo of the prompt you just sent. Observed 2026-09-03: three consecutive prompts were dropped this
+way and the planner reported a dispatched executor that had never received a word. Never pipe
+`herdr agent prompt` through `tail`/`head`, for the same reason it is banned for `gh pr merge` —
+the refusal scrolls away and the chain continues.
 
 ```bash
 herdr agent prompt <unique-name> "Read the file <path-to-brief> in full and execute it end to end."
 ```
 
-**`agent_status` is not receipt.** `working` observed right after `agent start` is frequently that
-startup churn, not the brief being accepted. After every `herdr agent prompt`, confirm the prompt
-actually landed by reading the pane and finding the brief reflected in the transcript — this is
-the completion signal, not the status field:
+**Bound the wait; do not ban it.** An *unbounded* `--wait --until working` blocks synchronously and
+can hit the harness's ~120s ceiling if the agent is mid-turn — the same ceiling that makes a long
+`herdr agent wait` unusable (see below). But `--wait --until working --timeout 20000` sits well
+under it and returns the agent object with `"agent_status":"working"`, which is **machine-checkable
+receipt**: herdr requires an observed state change within 5s of an accepted submission, or returns
+`agent_prompt_stalled`. Prefer it for the receipt check, and read the returned status rather than
+the echoed text:
+
+```bash
+herdr agent prompt <unique-name> "$(cat <path-to-brief>)" --wait --until working --timeout 20000
+```
+
+**`agent_status` read on its own is not receipt.** `working` observed right after `agent start` is
+frequently startup churn, not the brief being accepted — that is why the bounded `--wait --until
+working` above is stronger than a bare `herdr agent get`: it asserts a state *change* caused by
+your submission, not a status sampled at an arbitrary moment. When you did not use it, confirm the
+prompt landed by reading the pane and finding the brief reflected in the transcript:
 
 ```bash
 herdr agent get <unique-name>
@@ -205,6 +269,7 @@ happen instead of requiring a poll-and-reissue loop:
 - **Claude**: `~/.claude/projects/<project-slug>/<session-id>.jsonl`.
 - **Codex**: `~/.codex/sessions/<yyyy>/<mm>/<dd>/rollout-*-<session-id>.jsonl` — find it with
   `find ~/.codex/sessions -iname "*<session-id>*"` using the `session_id` from the ledger line.
+- **Agy**: there is **no JSONL** — the recipe below does not apply. See *Watching an agy agent*.
 
 Both are JSONL, appended to live. Tail and filter to the events that actually matter — task/turn
 boundaries and the agent's own narration — not every tool call, which is too frequent to be a
@@ -243,6 +308,63 @@ auto-stop; task boundaries and assistant text carry the actual signal. `herdr ag
 correct for its original, short-lived purpose (confirming a prompt landed after `agent prompt`);
 this Monitor pattern replaces it only for open-ended "tell me when this task/round finishes."
 
+### Watching an agy agent: query its SQLite conversation, never its status
+
+**Agy stores no JSONL transcript**, so the `tail -f` recipe above has nothing to tail. It keeps a
+per-conversation **SQLite** database at
+`~/.gemini/antigravity-cli/conversations/<uuid>.db` (plus `-wal`/`-shm`). The newest `.db` by
+mtime is the live conversation; the ledger's `session_id` is empty for `--kind agy`, so mtime is
+the only handle.
+
+The database is **readable while agy holds it open** (WAL mode) provided you open it read-only.
+Its `steps` table gains a row per step, so the row count is a live progress counter:
+
+```bash
+DB=$(ls -t ~/.gemini/antigravity-cli/conversations/*.db | head -1)
+sqlite3 "file:$DB?mode=ro" 'SELECT COUNT(*) FROM steps;'
+```
+
+Verified 2026-09-03 against a working agy executor: `157 → 164 → 167` across 40s. Open it
+**`mode=ro`** — a read-write open contends with the live writer. Do not read `steps`' other
+columns in a shell pipeline: `metadata`/`step_payload` are protobuf BLOBs and will make `cut`,
+`awk`, and friends die on an illegal byte sequence. `step_type`/`status` are undocumented integer
+enums — do not infer completion from them.
+
+So for agy, poll that count on a long interval and treat **"count has not advanced across N
+checks"** as the stall signal.
+
+**Two signals that look right and are not.** Both produced false stalls in one run on 2026-09-03,
+each interrupting a healthy executor mid-task:
+
+- **`agent_status` is not a liveness signal for agy.** It flaps to `idle`/`done` *between turns*,
+  so any "idle for N consecutive polls" rule fires on a perfectly healthy agent that is merely
+  thinking. This is a stronger statement than *`agent_status` is not receipt* above: for agy it is
+  not progress either. It remains valid for detecting a **destroyed pane** — `herdr agent get`
+  failing outright is real, and panes do die mid-task.
+- **Source-tree file mtimes are not a liveness signal.** A `find -newermt '-N minutes'` liveness
+  probe read as quiet while the agent was demonstrably editing files in that tree. Do not build a
+  stall rule on it.
+
+**Prefer the terminal condition over any stall heuristic.** Watch for what *done* actually looks
+like — the handoff file existing **and** the expected commit present — plus genuine pane loss, and
+let the Monitor's own `timeout_ms` catch a true hang. A heuristic that cries wolf costs more than
+the hang it was meant to catch, because each false alarm spends a real turn confirming the agent
+is fine:
+
+```bash
+while true; do
+  if [ -f "$HANDOFF" ] && git -C "$WT" log --oneline "$BASE"..HEAD | grep -qi "$LAST_TASK"; then
+    echo "COMPLETE"; exit 0
+  fi
+  herdr agent get "$NAME" >/dev/null 2>&1 || { echo "PANE GONE"; exit 0; }
+  sleep 60
+done
+```
+
+**Have the agent commit after every task, and write its handoff incrementally.** Agy panes were
+destroyed mid-task three times in that run; a commit is what survives, and a handoff written only
+at the end is a record you lose entirely.
+
 ## No in-session dispatch while Herdr is detected
 
 With `HERDR_ENV=1`, `herdr` is the dispatch form for every delegated agent, including same-brand
@@ -265,6 +387,21 @@ per dispatch until the user notices and asks.
 lives in the session id and in the agent's written report, never in a pane left open in case another
 round arrives. That is why there is no "keep it open just in case" case.
 
+**Not every session is resumable, and the unresumable ones fail silently.** `claude --resume
+<session_id>` replays the transcript; if that transcript **ends in `/exit`**, the resumed session
+executes it and quits immediately, leaving a bare shell at the pane with `ctx: 0k`. Distinguish the
+two ways a session stops before you plan a recovery around it:
+
+| How it stopped | Resumable | Tell |
+|---|---|---|
+| Killed by a quota/usage limit mid-turn | **yes** — keeps its full context | pane shows `You've hit your session limit · resets <time>` |
+| Exited by the user or the agent (`/exit`) | **no** — replay hits the exit and quits | pane shows the exit and `Catch you later!` |
+
+Observed 2026-09-03: a planner resumed an exited session to recover ~269k of context, read the
+replayed transcript as a live agent, and prompted it three times into a dead shell. When a session
+is not resumable, start fresh against the **committed work product** — that is what the branch is
+for — rather than trying to recover context that is gone.
+
 To pick a session back up, split a fresh pane and start the same brand with its own resume argument
 after `--`, then re-record the new pane id in the ledger:
 
@@ -274,7 +411,7 @@ herdr agent start <name>-r2 --kind claude --pane <new-pane-id> -- --model <model
 herdr agent start <name>-r2 --kind codex  --pane <new-pane-id> -- -m <model> -c model_reasoning_effort="<effort>" resume <session_id>     # codex
 ```
 
-A resume still needs model and effort: a resumed session inherits its prior context, not its prior
+`scripts/office-spawn.sh ... --resume <session_id>` does this same block. A resume still needs model and effort: a resumed session inherits its prior context, not its prior
 tier, so a resume that omits them is the same brand-only defect as the first spawn.
 
 ## The ledger
