@@ -74,43 +74,68 @@ PANE_ID="$(printf '%s' "$SPLIT_JSON" | python3 -c 'import json,sys; print(json.l
 
 # Native arguments after `--` differ per kind. Effort is a flag for claude, a config key
 # for codex, and unverified for agy.
+# Conditional appends use if/fi rather than `[ ... ] && arr+=(...)`: the &&-list form leaves the
+# branch's exit status at 1 whenever RESUME is empty, which is harmless here but breaks the moment
+# this block is moved into a function or made the script's last statement.
 case "$KIND" in
   claude) NATIVE=(--model "$MODEL" --effort "$EFFORT")
-          [ -n "$RESUME" ] && NATIVE+=(--resume "$RESUME") ;;
+          if [ -n "$RESUME" ]; then NATIVE+=(--resume "$RESUME"); fi ;;
   codex)  NATIVE=(-m "$MODEL" -c "model_reasoning_effort=\"$EFFORT\"")
-          [ -n "$RESUME" ] && NATIVE+=(resume "$RESUME") ;;
+          if [ -n "$RESUME" ]; then NATIVE+=(resume "$RESUME"); fi ;;
   agy)    NATIVE=(--model "$MODEL")
-          [ -n "$RESUME" ] && NATIVE+=(--resume "$RESUME") ;;
+          if [ -n "$RESUME" ]; then NATIVE+=(--resume "$RESUME"); fi ;;
 esac
 
-herdr agent start "$NAME" --kind "$KIND" --pane "$PANE_ID" -- "${NATIVE[@]}" >/dev/null
-
-# Assert the launched argv, in the same step, before treating the spawn as done.
+# Assert the launched argv from the `agent start` response itself, in the same step, before
+# treating the spawn as done. `agent start` echoes argv at the TOP level (`.argv`, a sibling of
+# `.result.agent`); a follow-up `agent get` does not reliably carry argv at all, and asserting
+# from `get` has already closed a correctly-launched pane. See ../skills/herdr/SKILL.md.
+START_JSON_FILE="$(mktemp -t office-spawn)"
 AGENT_JSON_FILE="$(mktemp -t office-spawn)"
-trap 'rm -f "$AGENT_JSON_FILE"' EXIT
-herdr agent get "$NAME" > "$AGENT_JSON_FILE"
-if ! python3 - "$AGENT_JSON_FILE" "$MODEL" "$EFFORT" <<'PY'
+trap 'rm -f "$START_JSON_FILE" "$AGENT_JSON_FILE"' EXIT
+herdr agent start "$NAME" --kind "$KIND" --pane "$PANE_ID" -- "${NATIVE[@]}" > "$START_JSON_FILE"
+
+set +e
+python3 - "$START_JSON_FILE" "$MODEL" "$EFFORT" <<'PY'
 import json, sys
 path, model, effort = sys.argv[1], sys.argv[2], sys.argv[3]
-argv = json.load(open(path))["result"]["agent"].get("argv") or []
+doc = json.load(open(path))
+argv = doc.get("argv")
+if argv is None:
+    argv = (doc.get("result") or {}).get("argv")
+if argv is None:
+    sys.exit(2)          # inconclusive: no argv echoed, do NOT condemn the pane
 argv = " ".join(argv) if isinstance(argv, list) else str(argv)
 missing = [v for v in (model, effort) if v and v not in argv]
 if missing:
     print("launched argv is missing %s: %s" % (", ".join(missing), argv), file=sys.stderr)
     sys.exit(1)
 PY
-then
-  echo "office-spawn: tier assertion failed for $NAME; closing $PANE_ID" >&2
-  herdr pane close "$PANE_ID" >/dev/null 2>&1 || true
-  exit 1
-fi
+ASSERT_RC=$?
+set -e
+
+case "$ASSERT_RC" in
+  0) ;;
+  2) echo "office-spawn: warning: 'agent start' echoed no argv for $NAME; tier assertion inconclusive." >&2
+     echo "office-spawn: check the pane's own startup line for --model/--effort before trusting $PANE_ID" >&2 ;;
+  *) echo "office-spawn: tier assertion failed for $NAME; closing $PANE_ID" >&2
+     herdr pane close "$PANE_ID" >/dev/null 2>&1 || true
+     exit 1 ;;
+esac
+
+herdr agent get "$NAME" > "$AGENT_JSON_FILE"
 
 # Ledger line. session_id is the resume handle and the reason a pane can be closed on report;
 # it is readable only while the agent lives.
 mkdir -p "$(dirname "$LEDGER")"
-python3 - "$AGENT_JSON_FILE" "$ROLE" >> "$LEDGER" <<'PY'
+python3 - "$AGENT_JSON_FILE" "$ROLE" "$START_JSON_FILE" >> "$LEDGER" <<'PY'
 import json, sys, datetime
 a = json.load(open(sys.argv[1]))["result"]["agent"]
+# argv comes from the `agent start` response's top-level `.argv`; `agent get` does not carry it.
+start = json.load(open(sys.argv[3]))
+argv = start.get("argv")
+if argv is None:
+    argv = (start.get("result") or {}).get("argv")
 print(json.dumps({
   "pane_id":    a["pane_id"],
   "agent":      a.get("name"),
@@ -118,7 +143,7 @@ print(json.dumps({
   "role":       sys.argv[2],
   "session_id": (a.get("agent_session") or {}).get("value"),
   "worktree":   a["cwd"],
-  "argv":       a.get("argv"),
+  "argv":       argv,
   "spawned_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
 }))
 PY
