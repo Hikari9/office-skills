@@ -25,6 +25,9 @@ over `/clear` to keep `PreCompact` and the session id, and group boundaries rath
 
 Core `17.4.0`. Lessons from a five-lane, three-milestone frontend run under Herdr.
 
+- **A UI sweep enumerates states, not selectors** (`auto-loop`, brief clause 2): open every overlay
+  during a touch-target or overflow sweep and include a live control run; three sweeps in one run
+  missed the same class by measuring only the default screen.
 - **Compacting a resumed executor or reviewer** (`auto-loop`): never mid-task; only at a
   written-handoff boundary while idle; only when the pane's live context reading is at or above
   roughly 100k; the next brief opens with a reload instruction. Mechanism in core `herdr` →

@@ -167,6 +167,7 @@ retelling. An essay that adds tokens without changing a decision is a defect in 
 | 08-31 | repo-h | plan-review of a 2-line security amendment | claude | `opus` low | 1 | 49k | 3m | 3 blockers | Rejected the planner's predicate AND its layer; cheapest item in the run → §3 |
 | 09-01 | repo-h | dashboard access + fence + dimensions + names, 3 executors, 2 repos | mixed | `codex-luna` high, `opus` low then `codex-luna` high reviewers | 9 | n/r | ~6h | APPROVED ×3 | Five rounds hardened the *structure* of a generated script and never once executed it; the first real run refused it. A hermetic gate on generated code proves nothing about its contract |
 | 09-01 | repo-h | same run, planner-inline prod work | — | `opus` inline | 2 | n/r | — | 4 claims retracted | cwd silently reset to the default branch; deploys ran from the wrong tree and overwrote correct prod assets. Every conclusion from a tool's own success line was wrong; every one from an independent hash was right. Pin the worktree, verify out-of-band |
+| 09-04 | repo-i (new slug) | issue-driven frontend redesign, 5 lanes, 3 milestones, 1 PR | mixed | `sonnet` high executors ×5, `opus` low reviewers ×3, Fable planner | 3+1+3 | n/r | ~30h | APPROVED, merged, prod deployed | Every touch-target sweep (executor, planner, reviewer) enumerated the default screen; the 44px defect lived in overlays and cost two extra rounds. A UI sweep must enumerate states, not selectors. Delegated `/compact` via herdr worked 5/5 at handoff boundaries |
 
 **Compaction log**
 

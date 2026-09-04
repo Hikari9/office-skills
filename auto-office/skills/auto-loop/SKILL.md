@@ -145,6 +145,10 @@ Beyond the plan path, GOAL block, blast-radius ceiling, and file scope:
 3. **Name the OBSERVABLE OUTCOME, and trace the path to it in the code before writing the brief.** A
    brief that specifies a mechanism is satisfied by fixing that mechanism, which is not the same as
    fixing the symptom.
+   - **A UI sweep enumerates states, not selectors.** Three consecutive sweeps (executor, planner,
+     reviewer) measured every control on the default screen and missed the same defect class inside
+     overlays. When a criterion is unconditional across the UI, the sweep opens every sheet, editor and
+     disclosure in turn and includes a control run that shrinks one element live to prove it reports.
    - **A data path is not automatically a render path.** One run's four briefs each named a function
      feeding a sort key, a dead branch, or a write half while the visible value came from elsewhere;
      each passed review on the thing it named and left the symptom intact. ~6 review rounds.
