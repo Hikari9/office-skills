@@ -173,6 +173,9 @@ BASE commit (the tip before your work): <sha>
   must contain the command you ran and its actual output.
 - Write your handoff report to <scratch dir>/handoff.md in the shape below. Print
   files changed, test results, and commit hashes when you finish.
+- Never block on a tool call that may not return (a browser screenshot capture, a
+  network wait). If it has not returned in about a minute, record that item as
+  measured-not-captured and move on. Nobody can interrupt a --print run for you.
 - Do not stop to ask questions; make reasonable decisions yourself and implement
   the entire brief.
 ```
@@ -237,6 +240,11 @@ summary. Before Phase 3, run the independent verification pass in
 - A **stall after a few narration lines** is the quota symptom, not slowness. Check `git status` /
   `git log`; usually it died before writing anything. Have Claude subagents ready as the fallback
   worker, and confirm quota with the user before a long session.
+- **A ledger row is a claim, not evidence.** Observed 2026-09-03: a `--print` run's ledger recorded
+  its handoff as written while the process spent its remaining 45 minutes re-issuing a browser
+  screenshot call that never returned, then died without writing it. Check the handoff file's
+  existence and mtime and `git log` before believing any ledger row, and put the never-block
+  guardrail above in every brief that drives a browser.
 - A **greeting or banner instead of work** is the swallowed-prompt bug: a flag ended up between
   `--print` and the prompt. Fix the ordering and relaunch; nothing was done.
 - **Handle the `## Upline` section before Phase 3.** Answer everything `[needs-planner]`. Surface every

@@ -1,5 +1,14 @@
 # Changelog — agy-office
 
+## 16.3.0 — 2026-09-04
+
+Core `17.4.0`; see `auto-office/CHANGELOG.md` 17.4.0 for the core rationale.
+
+- `references/executor-brief.md`: the guardrail template tells a `--print` run never to block on a
+  tool call that may not return (a browser screenshot capture), and *Reading the result* records that
+  a ledger row is a claim, not evidence. Observed: a run's ledger said its handoff was written while
+  the process spent 45 minutes on a capture that never returned and died without writing it.
+
 ## 16.2.0 — 2026-09-03
 
 Core `17.3.0`. Core-only change; see `auto-office/CHANGELOG.md` 17.2.0 for the full rationale.

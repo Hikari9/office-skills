@@ -1,5 +1,10 @@
 # Changelog
 
+## 16.3.0 — 2026-09-04
+
+Core `17.4.0`. Core-only change; see `auto-office/CHANGELOG.md` 17.4.0 for the rationale (herdr:
+compacting a resumed agent, agy one-shot dispatch form, briefs restate the no-in-session rule).
+
 ## 16.2.0 — 2026-09-03
 
 Core `17.3.0`. Core-only change; see `auto-office/CHANGELOG.md` 17.2.0 for the full rationale.

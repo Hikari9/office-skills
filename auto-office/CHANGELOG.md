@@ -23,6 +23,26 @@ every tested surface, which makes the hazard `claude-cli-send-message` warns abo
 here — plus the rules that come with it: idle boundaries only, directed and never bare, `/compact`
 over `/clear` to keep `PreCompact` and the session id, and group boundaries rather than every task.
 
+Core `17.4.0`. Lessons from a five-lane, three-milestone frontend run under Herdr.
+
+- **A UI sweep enumerates states, not selectors** (`auto-loop`, brief clause 2): open every overlay
+  during a touch-target or overflow sweep and include a live control run; three sweeps in one run
+  missed the same class by measuring only the default screen.
+- **Compacting a resumed executor or reviewer** (`auto-loop`): never mid-task; only at a
+  written-handoff boundary while idle; only when the pane's live context reading is at or above
+  roughly 100k; the next brief opens with a reload instruction. Mechanism in core `herdr` →
+  *Compacting a resumed agent's context* (`agent prompt <name> "/compact"` works, is best-effort,
+  and is confirmed from the pane, not from `agent wait --until idle`).
+- **The author's mutation proves the instance, not the class** (`auto-loop` brief clause 2): the
+  planner's verification mutates a different spelling of the same defect. A clock-scrape guard that
+  went red on the literal historical regex stayed green on `querySelectorAll` and on the env read.
+- **Briefs restate "no in-session subagents" verbatim** (`auto-loop` brief clause 5, core `herdr`):
+  an executor that was not told forked in-session under `HERDR_ENV=1` and the fork committed
+  against instruction.
+- Core `herdr`: `agent start --kind agy` is for interactive sessions only; a one-shot `agy --print`
+  script is `pane split` + `pane run`, and the failed form leaves a dead mis-tagged pane.
+  `--direction` accepts exactly `right` and `down`.
+
 ## 17.3.0 — 2026-09-03
 
 **Headroom probing tightened: two mandatory checkpoints, tier-aware, no more `--percent`-only

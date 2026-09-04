@@ -145,6 +145,10 @@ Beyond the plan path, GOAL block, blast-radius ceiling, and file scope:
 3. **Name the OBSERVABLE OUTCOME, and trace the path to it in the code before writing the brief.** A
    brief that specifies a mechanism is satisfied by fixing that mechanism, which is not the same as
    fixing the symptom.
+   - **A UI sweep enumerates states, not selectors.** Three consecutive sweeps (executor, planner,
+     reviewer) measured every control on the default screen and missed the same defect class inside
+     overlays. When a criterion is unconditional across the UI, the sweep opens every sheet, editor and
+     disclosure in turn and includes a control run that shrinks one element live to prove it reports.
    - **A data path is not automatically a render path.** One run's four briefs each named a function
      feeding a sort key, a dead branch, or a write half while the visible value came from elsewhere;
      each passed review on the thing it named and left the symptom intact. ~6 review rounds.
@@ -439,6 +443,25 @@ re-reads what you just dropped, compacting is a net loss by the arithmetic above
 past ~70% of the window — auto-compaction at the ceiling fires mid-task, with no chance to refresh
 state first.
 
+
+### Compacting a resumed executor or reviewer, not just yourself
+
+The recommendation above is about the planner's own session. A resumed Herdr executor or reviewer
+(mechanism: [herdr](../../office-core/skills/herdr/SKILL.md) → *Compacting a resumed agent's
+context*) accumulates its own context across fix and review rounds, and the same
+reload-across-a-boundary discipline applies to it, driven by the planner:
+
+- **Never mid-task or mid-fix-wave.** The agent holds per-item edit state that exists only in its
+  context until its handoff is written; compacting there costs more re-derivation than it saves.
+- **Only at a boundary: handoff or verdict written, agent idle, next brief not yet sent.** The
+  handoff, `EXECUTOR-STATE.md`, and `git log` then carry everything the next brief needs.
+- **Only when the pane's live context reading is at or above roughly 100k tokens.** Below that the
+  summarization pass costs about what it saves and loses nuance for nothing. Read the pane's own
+  status line, not a token total from a compacted summary, and check it before every round's brief
+  to a resumed reviewer, not just at first spawn.
+- **The next brief after a compaction opens with a reload instruction** ("re-read the plan's section
+  2 and your `EXECUTOR-STATE.md`"), for the same reason the planner reloads the hub and spoke: a
+  compacted agent keeps the summary of what happened, not the constraints it was following.
 
 ### Brief sizing is the same problem, one level down
 
