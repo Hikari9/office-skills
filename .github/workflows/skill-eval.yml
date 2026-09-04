@@ -1,11 +1,8 @@
 name: Skill Eval
 
+# Pull-request runs are disabled while GitHub Actions billing is unavailable.
+# Keep manual dispatch available so the gate can be run after billing is restored.
 on:
-  pull_request:
-    paths:
-      - '*-office/**'
-      - 'office-core/**'
-      - 'eval/**'
   workflow_dispatch:
 
 jobs:

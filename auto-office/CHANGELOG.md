@@ -1,5 +1,28 @@
 # Changelog — auto-office
 
+## 17.4.0 — 2026-09-04
+
+**The compaction advisor stopped taking "a path was mentioned" as proof of state on disk, and
+compacting a delegate is now documented as the planner's job.** The `Stop` hook's safety test was a
+regex for any `.md`/`.json` path in the last assistant message. It passed on a path that did not
+exist ("I'll write `continuity.md` next" reads as state written down), and it passed on a file that
+existed but was stale — in the run that prompted this, the continuity file named the previous commit
+as HEAD at the moment it was about to become the session's only memory, and the hook would have
+green-lit that compaction.
+
+Now the path must exist, and an `.md` state file that cites commit shas must cite HEAD. A file
+citing no shas yields no opinion rather than a false pass, and a non-git cwd degrades silently. Paths
+are tokenized rather than regexed: `\b` cannot match before a leading dot, so the old pattern
+truncated `.office/x/continuity.md` to `office/x/continuity.md` — harmless while the result was only
+a boolean, fatal once the path is stat'd.
+
+Also fills a gap the skills never stated: **a pane agent cannot compact itself**, so `compact: yes`
+prints to the one party unable to act on it. `auto-loop` now documents the planner driving it via
+`herdr agent prompt <name> "/compact …"` — a leading `/` is intercepted as a real slash command on
+every tested surface, which makes the hazard `claude-cli-send-message` warns about the mechanism
+here — plus the rules that come with it: idle boundaries only, directed and never bare, `/compact`
+over `/clear` to keep `PreCompact` and the session id, and group boundaries rather than every task.
+
 ## 17.3.0 — 2026-09-03
 
 **Headroom probing tightened: two mandatory checkpoints, tier-aware, no more `--percent`-only

@@ -403,12 +403,42 @@ Two things still need you:
 - **A `no` reading "nothing points at a file" is a defect report, not a wait instruction.** Something
   real exists only in this window. Write it down, and the answer becomes `yes`. A `PreCompact` hook
   snapshots what it can, but it cannot write down what was never stated.
+- **A `no` reading "it cites commits and not HEAD" means the state file is stale.** It exists, so the
+  first check passes, but it was written for an earlier commit and is about to become the session's
+  only memory. Refresh it against `git log -1`, then compact.
 
 **A compaction is a protocol boundary, so reload across it.** The first act after any compaction —
 and on entering any phase — is to re-read the [auto-office hub](../../SKILL.md) and this phase's
 spoke before acting. Compaction at a task boundary is the main way a run loses the protocol while
 keeping the run state, and a survivor that remembers the GOAL but not the gates is the exact shape of
 the failure. Same agent or fresh agent makes no difference; whoever holds the phase re-reads.
+
+### Compacting a delegate is the planner's job, not the delegate's
+
+**A pane agent cannot compact itself.** No tool invokes a slash command in-session, so `compact: yes`
+prints to the one party unable to act on it. The planner drives it from outside:
+
+```
+herdr agent prompt <name> "/compact Keep <what the next task needs>. Drop <what it does not>.
+First action after this: re-read <brief>, <continuity>, <plan>, then git log --oneline -5."
+```
+
+A leading `/` is intercepted as a real slash command on every tested surface, and args pass through —
+the hazard [claude-cli-send-message](../claude-cli-send-message/SKILL.md) warns about is the mechanism
+here. Two rules:
+
+- **Only at an idle boundary.** Submitted mid-task it queues and fires inside the next turn.
+- **Directed, never bare.** Bare `/compact` carries no instruction to reload, and the paragraph above
+  is the rule it would drop.
+
+Prefer `/compact` over `/clear` despite `/clear` being cheaper: it fires `PreCompact` and keeps the
+session id that herdr addressing and run telemetry depend on.
+
+**Compact at group boundaries, not every task.** Group tasks by the files they share; if the next task
+re-reads what you just dropped, compacting is a net loss by the arithmetic above. Override the grouping
+past ~70% of the window — auto-compaction at the ceiling fires mid-task, with no chance to refresh
+state first.
+
 
 ### Brief sizing is the same problem, one level down
 

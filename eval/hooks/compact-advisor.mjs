@@ -15,8 +15,10 @@
  *
  * Never blocks. Always exits 0.
  */
-import { createReadStream, existsSync } from "node:fs";
+import { createReadStream, existsSync, readFileSync, statSync } from "node:fs";
 import { createInterface } from "node:readline";
+import { execFileSync } from "node:child_process";
+import { isAbsolute, join } from "node:path";
 
 // Tier multiplier on the re-read side. The same re-read costs several times more
 // on an Opus planner than a Sonnet one, so a heavy planner compacts earlier.
@@ -74,7 +76,56 @@ try {
 
   // "Safe" needs state on disk. A handoff or plan path in the recent output is
   // the observable proxy for it: what comes next is a file, not a memory.
-  const stateOnDisk = /\b[\w./-]+\.(md|json|patch|diff)\b/.test(lastText);
+  //
+  // Two ways that proxy lied, both observed in the issue-35 run:
+  //   1. The path was only *mentioned* ("I'll write continuity.md next") and did
+  //      not exist. A regex cannot tell an intention from a file.
+  //   2. The file existed but was stale: it named the previous commit as HEAD at
+  //      the moment it was about to become the session's only memory.
+  // So require the path to exist, and — when we can read git cheaply — that it
+  // is not visibly behind HEAD.
+  const root = input.cwd || process.cwd();
+  // Tokenize rather than regex the path out of prose: `\b` cannot match before a
+  // leading dot, so a bare pattern silently truncates `.office/x/continuity.md`
+  // to `office/x/continuity.md` — a path that does not exist. Harmless when the
+  // result was only a boolean; fatal once we stat it.
+  const mentioned = lastText
+    .split(/[\s,;:!?()[\]{}<>"'`]+/)
+    .map((t) => t.replace(/[.,;:)\]}>"'`]+$/, ""))
+    .filter((t) => /\.(?:md|json|patch|diff)$/.test(t));
+  const present = mentioned.filter((p) => {
+    try {
+      return statSync(isAbsolute(p) ? p : join(root, p)).isFile();
+    } catch {
+      return false;
+    }
+  });
+  const stateOnDisk = present.length > 0;
+
+  // Staleness: a state file that cites commit shas but not HEAD's was written
+  // for an earlier commit. Only decidable when the file actually cites shas, so
+  // silence here means "no opinion", never "fine".
+  let staleFile = null;
+  try {
+    const head = execFileSync("git", ["rev-parse", "--short", "HEAD"], {
+      cwd: root,
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .toString()
+      .trim();
+    if (head) {
+      for (const p of present.filter((f) => f.endsWith(".md"))) {
+        const body = readFileSync(isAbsolute(p) ? p : join(root, p), "utf8");
+        const citesSha = /\b[0-9a-f]{7,40}\b/.test(body);
+        if (citesSha && !body.includes(head)) {
+          staleFile = p;
+          break;
+        }
+      }
+    }
+  } catch {
+    // No git, no HEAD, or an unreadable file: no opinion on staleness.
+  }
 
   // Cost of compacting now, in tokens: the summary plus what gets re-read at
   // this tier. Saving assumes a conservative 6 further turns at this context.
@@ -87,7 +138,10 @@ try {
     driver = `${Math.round(held / 1000)}k held (${pct}% of window) — too small to repay the re-read`;
   } else if (!stateOnDisk) {
     verdict = "no";
-    driver = `${Math.round(held / 1000)}k held but nothing recent points at a file — write the run state down first, then this becomes yes`;
+    driver = `${Math.round(held / 1000)}k held but nothing recent points at a file that exists — write the run state down first, then this becomes yes`;
+  } else if (staleFile) {
+    verdict = "no";
+    driver = `${Math.round(held / 1000)}k held and ${staleFile} is the state file, but it cites commits and not HEAD — refresh it first, then this becomes yes`;
   } else if (saving > cost) {
     verdict = "yes";
     driver = `${Math.round(held / 1000)}k held (${pct}% of window), ${turnsSinceCompact} turns / ${toolsSinceCompact} tool calls since the last boundary, next step is a file path`;
@@ -97,7 +151,7 @@ try {
   }
 
   say(`compact: ${verdict} — ${driver}`);
-  if (verdict === "no" && driver.includes("write the run state")) {
+  if (verdict === "no" && /write the run state|refresh it first/.test(driver)) {
     say("  (a `no` is a defect report, not a wait instruction: something real exists only in this window)");
   }
 } catch {
