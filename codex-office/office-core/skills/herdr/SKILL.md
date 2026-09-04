@@ -73,7 +73,8 @@ herdr pane split --current --direction down --cwd "$PWD" --no-focus
 
 Track the most recently spawned pane id per role. The first executor/worker and the first reviewer
 each open their own column with `right`; every later same-role pane joins that column with `down`
-aimed at the last same-role pane via `--pane`, not `--current`. Splitting `right` again for a role
+aimed at the last same-role pane via `--pane`, not `--current`. `--direction` accepts exactly `right`
+and `down`; `below`, `left`, and `up` are rejected with `invalid split direction`. Splitting `right` again for a role
 that already has a column opens a stray third column instead of grouping into the one that exists.
 
 **`down` from a tab's only pane does not make a column.** It makes the root split a down-split
@@ -165,6 +166,15 @@ is a config key, not a flag: `-c model_reasoning_effort="<effort>"` (see
 `~/.codex/config.toml` says. For `agy`, only `--model` is verified in `agy-office/skills/agy-cli`;
 no effort flag is confirmed there, so this skill does not assert one. The pane direction is the
 topology rule; it does not change the agent's role, worktree, scope, or authority.
+
+**`agent start --kind agy` is for an *interactive* agy session only.** For a one-shot `agy --print`
+script, skip `agent start`: split the pane, then `herdr pane run <pane-id> <absolute-script-path>`
+against the plain shell. `agent start --kind agy -- <script>` hands the trailing arguments to the
+`agy` binary as literal CLI flags, so a script path lands as an unexpected positional argument and
+errors, and the failed call still tags the pane as an idle `agy` agent that silently stops accepting
+`pane run` / `send-keys` input (text lands, Enter does nothing, `pgrep` shows no process). Recovery is
+`herdr pane close <id>` and a fresh split, never a retry into the same pane. Observed 2026-09-03 on
+four lane workers; nothing was lost because the retry happened before any output existed.
 
 **Observed 2026-09-03:** a planner dispatched `herdr agent start m1-rocksec --kind claude --pane
 w1J:p17` with no model or effort. The pane launched at the harness default (opus, medium) for a
@@ -308,6 +318,20 @@ auto-stop; task boundaries and assistant text carry the actual signal. `herdr ag
 correct for its original, short-lived purpose (confirming a prompt landed after `agent prompt`);
 this Monitor pattern replaces it only for open-ended "tell me when this task/round finishes."
 
+### Compacting a resumed agent's context
+
+`herdr agent prompt <name> "/compact"` reaches an interactive Claude Code pane like any other prompt
+and runs the harness's own `/compact`; no special delivery is needed. Confirm it happened by reading
+the pane for the compaction sequence itself ("Compacting conversation…", the `PreCompact` hook lines,
+then the status line's context reading dropping to near `0k`), never by `agent wait --until idle`: an
+agent that was already idle reports idle again immediately whether or not compaction ran. Verified
+2026-09-03 on an executor at 182k (about 60s to `0k`).
+
+Treat it as best-effort. `/compact` can fail on a transient server error (observed `API Error: 529
+Overloaded`, unrelated to Herdr), and the agent simply continues at its prior context. Do not stall
+the run on it; proceed and retry at the next boundary. When to compact a delegated agent at all is
+the dispatching office's call (auto-office: auto-loop → *Compacting a resumed executor or reviewer*).
+
 ### Watching an agy agent: query its SQLite conversation, never its status
 
 **Agy stores no JSONL transcript**, so the `tail -f` recipe above has nothing to tail. It keeps a
@@ -374,6 +398,12 @@ delegation is hosted. Record the dispatch form as `herdr` in plans and telemetry
 
 The rule applies recursively: a Herdr-managed worker that needs a further subagent uses a pane
 below itself and the same prompt/read/wait contract. It never returns to an in-session child path.
+
+**Every executor brief restates this rule in its own words.** A delegated executor never loads this
+skill; it knows only its brief. Observed 2026-09-04: a claude sonnet executor under `HERDR_ENV=1`,
+whose brief did not say so, forked an in-session subagent for a QA sweep. The fork committed against
+an explicit "do not commit" and reported a background status it did not have. One line in the brief
+prevents it: `Do not use in-session Agent/Task subagents; a further child gets a pane below yours.`
 
 ## Close created panes
 
