@@ -14,18 +14,21 @@
 # Usage:
 #   office-spawn.sh --name <n> --kind claude|codex|agy --role <role> \
 #                   --model <model> [--effort <effort>] [--cwd <dir>] \
-#                   [--anchor <pane-id>] [--direction right|down] [--resume <session-id>]
+#                   [--anchor <pane-id>] [--direction right|down] [--resume <session-id>] \
+#                   [--label <text>]
 #
 #   --anchor  stack under an existing same-role pane (defaults to direction "down").
 #             Omit it to open a new column off the current pane (direction "right").
 #   --resume  reattach an existing session in the fresh pane. Model and effort are still
 #             required: a resumed session inherits its context, not its tier.
+#   --label   pane title, e.g. "claude executor feature-update". Renamed onto the pane after
+#             a successful start; omit to leave the pane untitled.
 #
 # Prints the pane id on stdout. Exits non-zero, after closing the pane it just made, if the
 # launched argv does not carry the tier that was asked for.
 set -euo pipefail
 
-NAME=""; KIND=""; ROLE=""; MODEL=""; EFFORT=""; CWD="$PWD"; ANCHOR=""; DIRECTION=""; RESUME=""
+NAME=""; KIND=""; ROLE=""; MODEL=""; EFFORT=""; CWD="$PWD"; ANCHOR=""; DIRECTION=""; RESUME=""; LABEL=""
 LEDGER="${OFFICE_PANE_LEDGER:-/tmp/office/panes.jsonl}"
 
 die() { echo "office-spawn: $*" >&2; exit 2; }
@@ -41,6 +44,7 @@ while [ $# -gt 0 ]; do
     --anchor)    ANCHOR="$2"; shift 2;;
     --direction) DIRECTION="$2"; shift 2;;
     --resume)    RESUME="$2"; shift 2;;
+    --label)     LABEL="$2"; shift 2;;
     -h|--help)   sed -n '2,30p' "$0"; exit 0;;
     *)           die "unknown argument: $1";;
   esac
@@ -124,6 +128,11 @@ case "$ASSERT_RC" in
 esac
 
 herdr agent get "$NAME" > "$AGENT_JSON_FILE"
+
+if [ -n "$LABEL" ]; then
+  herdr pane rename "$PANE_ID" "$LABEL" >/dev/null 2>&1 || \
+    echo "office-spawn: warning: pane rename failed for $PANE_ID (label: $LABEL)" >&2
+fi
 
 # Ledger line. session_id is the resume handle and the reason a pane can be closed on report;
 # it is readable only while the agent lives.

@@ -82,19 +82,47 @@ spanning the full tab width, so the two panes stack as full-width rows, not side
 This is exactly why the recipe above always opens a column with `right` first — splitting `right`
 creates the sibling to stack under — and never `down`s off the tab's original, still-solo pane.
 
+**Cap a tab's grid at 3 columns by 3 rows.** A tab holds at most 3 role columns and at most 3
+panes stacked in any one column — 9 visible panes is the ceiling before a human glancing at the
+tab loses track of which pane is whose. The calling agent is the orchestrator for its own layout
+and decides where each new spawn goes by counting rows and columns already recorded in
+`/tmp/office/panes.jsonl` (the same ledger every spawn appends to below), not by splitting until
+something fails:
+
+- While a role's column has fewer than 3 panes, the next same-role spawn joins it with `down`, as
+  above.
+- A role's 4th pane does not stack past the 3rd. Open a new tab for the overflow and start a fresh
+  column there instead:
+
+  ```bash
+  herdr tab create --cwd "$PWD" --label "<role> overflow" --no-focus
+  # then split --current in that tab with --direction right to open its first column, exactly
+  # as the first executor/reviewer pane does in "Put agents in the layout" above
+  ```
+
+  Row counting restarts at 1 in the new tab; it does not carry over.
+- A 4th role does not become a 4th column in an already-3-column tab, even if every existing
+  column has room. It gets its own tab the same way — 3 columns is a per-tab ceiling, not an
+  average.
+- This bounds what is visible at once, not what a run may dispatch. A run needing more than 9
+  concurrent panes spans multiple tabs before it ever stacks a 4th pane in one column or opens a
+  4th column in one tab.
+
 Read `.result.pane.pane_id` from the JSON response, then start the requested brand in that pane
 **and record it in the ledger in the same step**.
 
 `scripts/office-spawn.sh` does the whole block below in one call — split, start at an explicit
-tier, argv assert, session read, ledger append — and fails loudly (closing the pane it just made)
-when the launched tier is not the one asked for. Prefer it; the expanded form that follows is what
-it runs and what to fall back to when a kind or flag it does not know is in play:
+tier, argv assert, session read, ledger append, pane title — and fails loudly (closing the pane it
+just made) when the launched tier is not the one asked for. Prefer it; the expanded form that
+follows is what it runs and what to fall back to when a kind or flag it does not know is in play:
 
 ```bash
 scripts/office-spawn.sh --name m1-rocksec --kind claude --role executor \
-  --model sonnet --effort high --cwd "$PWD"            # opens a new column
+  --model sonnet --effort high --cwd "$PWD" \
+  --label "claude executor rock-security-audit"        # opens a new column
 scripts/office-spawn.sh --name m2-rockdocs --kind claude --role executor \
-  --model sonnet --effort high --anchor <last-executor-pane-id>   # stacks in that column
+  --model sonnet --effort high --anchor <last-executor-pane-id> \
+  --label "claude executor rock-docs-cleanup"          # stacks in that column
 ```
 
 It takes the model, effort, role, and worktree as arguments and chooses none of them. The ledger line is not bookkeeping for later; it
@@ -132,12 +160,35 @@ reports. Capture it here. If it is not populated yet, append the line without it
 `herdr agent get` once the agent is live. `role` is recorded for readability; no behavior branches
 on it.
 
+**Title the pane with kind, role, and what it's for, in the same step.** A grid of unlabeled panes
+reads as identical boxes; `herdr pane rename` is the only thing that turns "which one was
+`m2-rockdocs`" into a glance:
+
+```bash
+herdr pane rename <pane-id> "<kind> <role> <short-work-slug>"
+# e.g.
+herdr pane rename w1J:p17 "claude executor feature-update"
+```
+
+Use the same short slug the brief and ledger already use for the work, not a restatement of the
+kind or role that's already visible from the column it sits in — the slug is the only new
+information the title adds. Re-run it if the agent resumes onto a different task later in the run;
+a stale title is worse than no title, because it reads as current.
+
 **Assert the launched `argv`, in the same step, before treating the spawn as done.** `herdr agent
 start` echoes the actual `argv` the pane launched with, at the top level of its own response
 (`.argv`, a sibling of `.result.agent`, not inside it). Read it back and confirm it contains the
 model and effort you intended — the same way `session_id` capture is treated as part of spawning
 rather than bookkeeping. A pane that launched at the wrong tier is caught here, not by a human
 noticing the pane header later.
+
+**`agent start` may return `argv: null` too — then the pane's own status line is the assertion.**
+Observed 2026-09-06 across three spawns (two `--kind claude`, one `--kind codex`): the `agent
+start` response's top-level `.argv` was `null` every time, so the recipe's primary assertion had
+nothing to read. All three had in fact launched at the requested tier. The cheap cross-check is
+the pane itself — `herdr agent read <name> --source recent-unwrapped --lines 40` — whose footer
+prints the live model and effort (e.g. `gpt-5.6-luna high · 5h 20% left`). Treat a null `argv` as
+**inconclusive, never as a bad spawn**, and confirm from the pane before doing anything drastic.
 
 **`herdr agent get` does not reliably carry `argv` back.** Observed 2026-09-03: `office-spawn.sh`
 asserts tier by re-reading `argv` from a follow-up `herdr agent get <name>` call (even after a few
@@ -279,6 +330,23 @@ happen instead of requiring a poll-and-reissue loop:
 - **Claude**: `~/.claude/projects/<project-slug>/<session-id>.jsonl`.
 - **Codex**: `~/.codex/sessions/<yyyy>/<mm>/<dd>/rollout-*-<session-id>.jsonl` — find it with
   `find ~/.codex/sessions -iname "*<session-id>*"` using the `session_id` from the ledger line.
+
+  **When `session_id` is null, do NOT fall back to newest-by-mtime — match on content.**
+  Observed 2026-09-06: `herdr agent start --kind codex` returned `session_id: null` (and
+  `argv: null`), so the documented lookup had nothing to key on. `ls -t | head -1` then selected a
+  **different run's** rollout — three codex sessions had started within 31 seconds — and the
+  Monitor streamed a stranger's narration attributed to this run's executor. The planner only
+  caught it because the events described work that was not in the plan. Key on a string unique to
+  your run instead:
+
+  ```bash
+  for f in $(ls -t ~/.codex/sessions/<yyyy>/<mm>/<dd>/rollout-*.jsonl | head -8); do
+    echo "$(grep -c '<worktree-name>\|<issue-number>' "$f")  $f"
+  done   # take the file with a non-zero count
+  ```
+
+  A monitor on the wrong transcript is worse than no monitor: it reports confidently about
+  someone else's agent, and every event invites you to act on work you are not doing.
 - **Agy**: there is **no JSONL** — the recipe below does not apply. See *Watching an agy agent*.
 
 Both are JSONL, appended to live. Tail and filter to the events that actually matter — task/turn
