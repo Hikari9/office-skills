@@ -1,5 +1,13 @@
 # Changelog — auto-office
 
+## 17.5.0 — 2026-09-07
+
+**Executor liveness is now a checkpoint, not a streaming subscription.** After
+the planner verifies the launch banner/worktree and one liveness signal, it
+leaves the executor unattended. The planner reads executor state only for a
+genuine blocker, stale/silent liveness, or the final handoff and gate evidence;
+intermediate narration and individual command output are not evidence.
+
 ## 17.4.0 — 2026-09-04
 
 **The compaction advisor stopped taking "a path was mentioned" as proof of state on disk, and
