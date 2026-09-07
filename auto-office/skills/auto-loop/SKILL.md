@@ -64,6 +64,13 @@ the harness's completion notification, a growing log, or a handoff file whose mt
 producing nothing is not a dispatch that is thinking. (One run lost 1h38m of wall clock and zero
 tokens to an unwatched dispatch; wall clock is a first-class cost.)
 
+**Do not wait for an executor line by line.** Once the launch banner/worktree and one liveness signal
+are verified, let the executor run unattended. The planner does not stream or repeatedly read the
+executor's rollout, intermediate narration, or individual command output. Read the executor's state
+only when a genuine blocker needs diagnosis, when liveness has gone silent or stale, or at the end for
+the complete handoff and gate evidence. Intermediate progress is not evidence and line-by-line
+monitoring spends planner context without buying a safety property.
+
 For a Herdr-managed dispatch, **the observable is the brief appearing in the agent's transcript,
 not a `working` status.** `agent_status: working` right after `agent start` is frequently the
 agent's own startup churn (MCP client init, plugin loading), not proof the prompt landed — an
