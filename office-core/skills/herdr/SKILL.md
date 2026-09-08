@@ -289,6 +289,14 @@ the echoed text:
 herdr agent prompt <unique-name> "$(cat <path-to-brief>)" --wait --until working --timeout 20000
 ```
 
+**The brief is a positional argument.** `herdr agent prompt <TARGET> <TEXT>` — there is no
+`--text` flag, and passing one is the silent-failure case this receipt check exists to catch:
+the CLI echoes the brief back to stdout so the call *looks* like it worked, while the agent sits
+idle at 0k context having received nothing. `send-keys` is positional too
+(`herdr agent send-keys <TARGET> <KEY>...`; `--key`/`--text` are rejected outright, which is
+louder and therefore safer than the `prompt` case). Reading the returned `agent_status` — not the
+echoed text — is what distinguishes the two.
+
 **`agent_status` read on its own is not receipt.** `working` observed right after `agent start` is
 frequently startup churn, not the brief being accepted — that is why the bounded `--wait --until
 working` above is stronger than a bare `herdr agent get`: it asserts a state *change* caused by

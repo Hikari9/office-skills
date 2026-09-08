@@ -1,5 +1,13 @@
 # Changelog — auto-office
 
+## Unreleased
+
+- **herdr `agent prompt` takes the brief as a positional argument, not `--text`.** Documented in
+  `office-core/skills/herdr/SKILL.md` alongside the existing receipt check: passing `--text` makes
+  the CLI echo the brief to stdout so the call looks successful while the agent sits idle at 0k
+  context, having received nothing. Cost one wasted dispatch cycle on 2026-09-07. `send-keys` is
+  positional too, but rejects the flag outright rather than failing silently.
+
 ## 17.5.0 — 2026-09-07
 
 **Executor liveness is now a checkpoint, not a streaming subscription.** After
