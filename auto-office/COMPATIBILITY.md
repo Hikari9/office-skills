@@ -2,7 +2,7 @@
 
 | Line | Value |
 |---|---|
-| Plugin version | `17.4.0` (see `.claude-plugin/plugin.json`) |
+| Plugin version | `17.6.0` (see `.claude-plugin/plugin.json`) |
 | Core protocol supported | `>=17.0.0 <18.0.0` |
 | Core protocol vendored | `17.4.0` (see `office-core/SNAPSHOT.json`) |
 | Vendored snapshot | `office-core/SNAPSHOT.json`, written by `scripts/vendor-core.sh` |
@@ -79,9 +79,10 @@ exceptions:
   - id: auto-mandated-executor-tier
     owner: auto-office
     reason: >
-      Every executor runs at its brand's fixed default tier, regardless of task difficulty: sonnet
-      high for claude, `gpt-5.6-luna` high for codex, Flash latest high for agy. No self-escalation and no model
-      substitution without an explicit caller override. A worker's brand and tier are assigned by
+      Claude Sonnet high is the standing executor default. Every executor still runs at its
+      brand's fixed default tier when another brand is selected: `gpt-5.6-luna` high for codex,
+      Flash latest high for agy. No self-escalation and no model substitution without an explicit
+      caller override. A worker's brand and tier are assigned by
       the planner in the plan and may exceed the executor's tier — which core's delegation test
       anticipates, since a delegation is allowed to buy tier — but a worker is never promoted at run
       time. This narrows core rather than widening it: core sets no model policy, and every path

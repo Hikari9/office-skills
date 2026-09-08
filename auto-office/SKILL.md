@@ -74,8 +74,8 @@ Never downgrade for quota; that is a routing problem. Full rule:
 
 ## Routing, in one screen
 
-Brand by fit — **codex** backend/data/infra/long-horizon (preferred default), **agy** frontend,
-recon, bulk breadth, **claude** cross-cutting ambiguity. Rubric:
+Brand by fit — **claude** cross-cutting ambiguity (preferred default), **codex** backend/data/infra/long-horizon,
+**agy** frontend, recon, and bulk breadth. Rubric:
 [auto-routing](skills/auto-routing/SKILL.md).
 
 **Dispatch form is derived, not priced** — with `HERDR_ENV=1`, real children use [Herdr](office-core/skills/herdr/SKILL.md)
