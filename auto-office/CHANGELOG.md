@@ -52,6 +52,17 @@ the default brand, not the per-brand executor settings or reviewer gates.
   context, having received nothing. Cost one wasted dispatch cycle on 2026-09-07. `send-keys` is
   positional too, but rejects the flag outright rather than failing silently.
 
+- **`agy-usage.py`'s model list is quota coverage, not a catalog.** The probe's "Model Breakdown"
+  only lists models the CloudCode quota endpoint returned a bucket for — models with recorded usage
+  or an assigned quota bucket on this account — not every valid agy model. `gemini-3.8-flash-low`
+  spawns and runs (`interactive_ready: true`) but never appeared in any `agy-usage.py` reading (18
+  buckets, none named 3.8), which made a valid model look non-existent to a pre-dispatch check. The
+  script's docstring, bare output header, and `--json` `note` field now say this explicitly, and
+  `references/quota-probe.md` documents it with the 3.8 case as the concrete example. Nothing was
+  added to any model list — an allowlist read from a quota probe was always going to miss the next
+  slug too; the fix is to stop reading the probe as one and point at `agy models` /
+  `agy-office/scripts/agy-model.sh` instead.
+
 ## 17.5.0 — 2026-09-07
 
 **Executor liveness is now a checkpoint, not a streaming subscription.** After
