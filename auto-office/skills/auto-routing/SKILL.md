@@ -71,8 +71,8 @@ best-fit brand, ignoring quota:
 then weigh headroom on that brand (see below), and either commit or shift.
 ```
 
-The operator's stated preference is **codex in general**, with agy or claude when codex has no juice
-left. That is a preference to honor, not a rule to apply blindly against fit.
+The operator's stated preference is **Claude Sonnet in general**, with codex or agy when the fit test
+calls for them. That is a preference to honor, not a rule to apply blindly against fit.
 
 ## Model + effort per role
 
@@ -90,21 +90,20 @@ Not derived from the benchmark table, and a leaderboard movement does not change
 document the planner just wrote; same-brand is an advantage there, not the conflict of interest it
 would be on a diff. Executor and worker brand *is* routed by fit.
 
-**The executor is sonnet-tier, high effort — with one standing per-brand default set by the user.**
+**The executor is sonnet-tier, high effort — Claude Sonnet is the standing default, and the other
+brands remain fit-selected alternatives.**
 
 | Executor brand | Model + effort | Status |
 |---|---|---|
-| claude | `sonnet` high | office default |
-| agy | **Flash latest** `high` | office default; resolve with `agy-office/scripts/agy-model.sh` |
-| **codex** | **`gpt-5.6-luna` `high`** | **standing user default, set 2026-08-26** |
+| **claude** | **`sonnet` high** | **standing office default, set 2026-09-08** |
+| agy | **Flash latest** `high` | fit-selected alternative; resolve with `agy-office/scripts/agy-model.sh` |
+| codex | **`gpt-5.6-luna` `high`** | fit-selected alternative or caller override |
 
-**Effort goes to the gates, not to the implementation** (standing user decision, 2026-08-26). The
-codex executor sits at `high` while the codex **plan**-review gate sits at `xhigh` — the inverse of
-where this office started. The reasoning is the one already on record below: a bigger executor does
-not fix a wrong brief, it implements it more convincingly, so effort buys more at the gate that
-catches the wrong brief than at the process producing it. Codex **code** review keeps `xhigh` as its
-default for the same reason, but since 2026-08-29 its floor is `high` and the leg's blast radius
-picks between them (*Reviewer selection*).
+**Effort goes to the gates, not to the implementation.** The default executor stays at Claude
+Sonnet high because a bigger executor does not fix a wrong brief; it implements it more
+convincingly. Codex remains at Luna high when its backend/data/infra fit selects it, while the
+Codex **plan**-review gate remains at `xhigh` and the Codex **code**-review effort is still priced
+by blast radius (*Reviewer selection*).
 
 Read the index before treating either number as a ranking. Luna is **52 / 50 / 47** across
 max / xhigh / high, so the executor gives up 3 points and the plan reviewer gains 3. A code review
@@ -291,9 +290,9 @@ If two brands are the same tier and both fit, spend **at most one line**. Tiebre
 first:
 
 1. **Live headroom** — who has room, per window.
-2. **The operator's standing preference for codex.**
+2. **The operator's standing preference for claude.**
 3. **Spread across brands**, so one window is not drained by a run that did not need to.
-4. **Still tied? Take codex.** A ladder with no terminal rung is an invitation to deliberate, which
+4. **Still tied? Take claude.** A ladder with no terminal rung is an invitation to deliberate, which
    is the exact cost this section exists to refuse.
 
 Then commit. A suboptimal-but-fitting brand costs at most one extra review round; deliberation costs
