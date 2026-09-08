@@ -53,6 +53,17 @@ local transcripts carry no usage windows — don't go looking there.
 and posts to `https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuota`. It returns model-by-model
 `remainingFraction` values and reset timestamps for Gemini models by default, and never produces Claude numbers.
 
+**`agy-usage.py`'s model list is quota coverage, not a catalog — never use it to decide whether a
+model exists.** The endpoint only returns a bucket for a model that already has recorded usage or
+an assigned quota bucket on this account; a real, working slug can be completely absent. Confirmed
+2026-09-08: `gemini-3.8-flash-low` launches and runs fine (`interactive_ready: true` via
+`office-core/scripts/office-spawn.sh`), yet is missing from every `agy-usage.py` reading — 18
+buckets, none named 3.8. If a planner (or a fit-test doing a pre-dispatch check) needs to know
+whether a slug is real, ask `agy models` directly, or resolve one programmatically via
+`agy-office/scripts/agy-model.sh` — never infer non-existence from this probe's silence. The
+script's own docstring and `--json` output (`note` field) carry this same caveat so it travels with
+the data.
+
 ## `--percent` is a routing convenience. It is not valid for deltas
 
 **Use `--json` whenever you are reporting, comparing, or subtracting.** `--json` carries **every
