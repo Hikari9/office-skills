@@ -296,6 +296,13 @@ Before any hand-off, re-read your own plan hunting for:
   gate that can no longer be reached, a budget you asserted instead of measuring;
 - **anything you hand-waved** — every "should be fine", "roughly", and "pays for itself".
 
+**One pass is the first pass, not the gate.** When the plan is large, or the operator asks for
+another round, run [`self-review-loop`](../../office-core/skills/self-review-loop/SKILL.md): review,
+fix, review the fix, until a pass finds nothing, executing every verify command at `BASE` rather
+than trusting it. Measured on the run that produced it — the passes *after* self-review and the
+fresh gate had both run found 22 further defects, three of them introduced by applying the gate's
+own findings.
+
 You are cache-warm on this document, so the pass is nearly free. **It is not a substitute for step 7.5
 and may not be used to skip it.** Measured: self-review found 10 findings, the fresh gate 12,
 overlapping on only 4. Self-review finds what the author knows it hand-waved; the fresh gate finds what

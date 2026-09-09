@@ -8,6 +8,14 @@ the default brand, not the per-brand executor settings or reviewer gates.
 
 ## Unreleased
 
+- **New core skill: `self-review-loop`.** One self-review pass is the first pass, not the gate.
+  Review, fix, review the fix, until a pass finds nothing, executing every verify command at `BASE`
+  rather than trusting it. Six detectors, the defect classes ranked by what they cost, and observed
+  pass yields. Measured on the run that produced it: after self-review (8) and a fresh adversarial
+  gate (12) had both run, the following passes found **33 more defects, three of them introduced by
+  applying the gate's own findings** — including three criteria that could never have gone green.
+  Referenced from `auto-planning` step 7.4. Core 17.5.0 -> 17.6.0.
+
 - **herdr `agent prompt` takes the brief as a positional argument, not `--text`.** Documented in
   `office-core/skills/herdr/SKILL.md` alongside the existing receipt check: passing `--text` makes
   the CLI echo the brief to stdout so the call looks successful while the agent sits idle at 0k
