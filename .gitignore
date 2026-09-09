@@ -17,3 +17,13 @@ eval/out/
 # Python cache
 __pycache__/
 *.pyc
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
+
+# Local agent tooling configuration.
+/.claude/
+/.ignore
+/.mcp.json
+/AGENTS.md
+/opencode.json

@@ -93,10 +93,11 @@ The selected dispatch form is recorded as `herdr` in plans and telemetry.
 2. A dispatched worker or reviewer is **not** the planner. If a brief and a hub disagree about
    the reader's role, the brief wins for that reader.
 3. Caller overrides after the invocation are honored, echoed back in the kickoff line, and
-   change nothing else. Only a caller may change a default.
-4. **No caller override may** skip an independent review, reuse the executor as its own
-   reviewer, downgrade the reviewer below the office's stated floor, remove a structural phase,
-   or widen the blast-radius ceiling implicitly.
+   change nothing else. Only a caller may change a default. A caller may name a declared gear
+   (`express`, `direct`, `full`) outright, even for production-facing work.
+4. **No caller override may** reuse the executor as its own reviewer, downgrade the reviewer
+   below the office's stated floor, or widen the blast-radius ceiling implicitly. (A declared gear
+   selects that gear's phase set; floors within that gear still bind.)
 
 ## Approval
 
@@ -216,8 +217,10 @@ It is worth paying when it buys something, and it is pure overhead when it does 
 
 Ask, in one pass over the request as stated:
 
-1. **Risk.** Is anything here irreversible, production-facing, or externally visible? Would a wrong
-   result be expensive or hard to notice?
+1. **Risk.** Is anything here truly irreversible or catastrophic blast radius (e.g. destructive
+   data deletion, unrecoverable migration, external send with no recall)? *(Production-facing or
+   externally visible work alone does NOT force full — express and direct are permitted when risk is
+   bounded.)*
 2. **Size and shape.** Is there real implementation volume, or parallelizable breadth, or a
    genuinely uncertain design — versus a known, bounded edit?
 3. **Ambiguity.** Does the request need an interview to reach 95% clarity, or is the target already
@@ -229,9 +232,9 @@ The answers select one of **three gears**:
 
 | Answers | Gear | What runs |
 |---|---|---|
-| Any yes to **(1)** | **full** | Every phase the office declares. One-way door — never downgraded. |
-| No to (1), **two or more** yeses across (2)–(4) | **express** | The express phase set below |
-| No to (1), **one or none** | **direct** | No office. Do the work under normal working rules. |
+| Yes to **(1)** | **full** | Every phase the office declares. Irreversible risk warrants full machinery. |
+| No to (1), **two or more** yeses across (2)–(4) | **express** | The express phase set below (permitted even if production-facing). |
+| No to (1), **one or none** | **direct** | No office. Do the work under normal working rules (permitted even if production-facing). |
 
 **Express promotes to full** — before dispatch, not mid-flight — if the run turns out to need more
 than one executor, more than one repo, or more than roughly three tasks. Size is what makes a
@@ -274,15 +277,16 @@ planner-held rules above.
 It chooses **only** among the three declared gears. It may not invent a fourth shape: a run that
 proceeds in a gear runs every phase that gear declares.
 
-It may **never** downgrade a run that is irreversible, production-facing, or externally visible —
-question (1) is a one-way door, and it selects **full**, never express. Nor may it downgrade
-because quota is short, an executor brand is unavailable, or the office feels slow; those are
-routing and scheduling problems, and the answer to them is the routing table, not less review.
+It may not downgrade a run that has truly irreversible or catastrophic blast radius without
+caller override. Production-facing or externally visible work does NOT automatically force full:
+express and direct are permitted whenever risk is bounded. Nor may it downgrade because quota is
+short, an executor brand is unavailable, or the office feels slow; those are routing and
+scheduling problems, and the answer to them is the routing table, not less review.
 
 An explicit caller override outranks the fit test in every direction: `plan approved: <path>` or a
 named executor means the user has already decided the office runs, `express` and `full` name a gear
-outright, and `just do it directly` means they have already decided against an office. A caller may
-name a gear; a caller may not name express for a run that answered yes to (1).
+outright, and `direct` or `just do it directly` means they have already decided against an office.
+A caller may name express or direct even for production-facing work.
 
 Direct work is not unreviewed work. It follows the same non-bypassable rules — no unverified
 external mutation, read-backs over exit codes, planner-held actions still planner-held — it simply

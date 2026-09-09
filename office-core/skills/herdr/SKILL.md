@@ -16,8 +16,9 @@ Run this check before any Herdr control command:
 test "${HERDR_ENV:-}" = 1
 ```
 
-When it passes, use the `herdr` CLI for every delegated agent. When it fails, leave the office's
-existing routing unchanged; its normal CLI or in-session path still applies. A Herdr command
+When it passes, use the `herdr` CLI for every delegated agent and use `herdr agent wait` as the
+default completion monitor described below. When it fails, leave the office's existing routing
+unchanged; its normal CLI or in-session path still applies. A Herdr command
 failure while `HERDR_ENV=1` is not permission to use an in-session subagent: diagnose the Herdr
 failure, use an authorized CLI route if one is available, or report the dispatch blocked.
 
@@ -38,8 +39,8 @@ Two forms of offloading are correct, and this skill uses both:
 - **To a script, not to a model.** The deterministic half of a spawn — split, start, argv assert,
   session read, ledger append — is `scripts/office-spawn.sh` in this core (`office-core/scripts/`,
   vendored into every plugin). It removes the retyping without moving a single decision. The same
-  applies to watching and cleanup: the `Monitor` pattern below and the `Stop` hook are scripts,
-  and a script cannot misread `blocked`.
+  applies to watching and cleanup: the bounded `agent wait` recipe below and the `Stop` hook are
+deterministic, and a script cannot misread `blocked`.
 - **To a reader pane, verbatim.** A cheap-tier agent may be dispatched to read a long pane or
   transcript and return the verdict line and any blocking question **verbatim**. It summarises
   nothing, decides nothing, and issues no herdr command on the caller's behalf. This keeps
@@ -277,13 +278,12 @@ the refusal scrolls away and the chain continues.
 herdr agent prompt <unique-name> "Read the file <path-to-brief> in full and execute it end to end."
 ```
 
-**Bound the wait; do not ban it.** An *unbounded* `--wait --until working` blocks synchronously and
-can hit the harness's ~120s ceiling if the agent is mid-turn — the same ceiling that makes a long
-`herdr agent wait` unusable (see below). But `--wait --until working --timeout 20000` sits well
-under it and returns the agent object with `"agent_status":"working"`, which is **machine-checkable
-receipt**: herdr requires an observed state change within 5s of an accepted submission, or returns
-`agent_prompt_stalled`. Prefer it for the receipt check, and read the returned status rather than
-the echoed text:
+**Bound the receipt wait; do not ban it.** An *unbounded* `--wait --until working` blocks
+synchronously and can hit the harness's ~120s ceiling if the agent is mid-turn. But
+`--wait --until working --timeout 20000` sits well under it and returns the agent object with
+`"agent_status":"working"`, which is **machine-checkable receipt**: herdr requires an observed
+state change within 5s of an accepted submission, or returns `agent_prompt_stalled`. Prefer it for
+the receipt check, and read the returned status rather than the echoed text:
 
 ```bash
 herdr agent prompt <unique-name> "$(cat <path-to-brief>)" --wait --until working --timeout 20000
@@ -320,20 +320,42 @@ Wait for the office's actual completion condition, such as `report-exists OR sta
 bare process exit. If Herdr reports `blocked`, inspect the agent and its output before sending
 keys; surface a genuinely user-owned question instead of answering it by inference.
 
-### Waiting on a long-running agent: use Monitor, not repeated `herdr agent wait --timeout`
+### Waiting on a long-running agent: use `herdr agent wait` by default
 
-`herdr agent wait <name> --until <status> --timeout <ms>` is a **one-shot** poll — correct for
-confirming a prompt landed (a few seconds), wrong for watching a multi-minute task through to a
-task boundary. The harness backgrounds any Bash call past ~120s regardless of the `--timeout`
-you passed it, so a long `herdr agent wait` produces a stream of "failed with exit code 1"
-task-completion notifications (a **timeout**, not a real failure — `herdr agent get` right after
-each one shows the agent still `working`) with nothing useful in between, and each one still
-costs a manual re-check. Observed 2026-09-02: six consecutive `herdr agent wait ... --timeout
-150000` calls against one codex executor each timed out at the harness's ~120s ceiling and had to
-be individually re-issued, for no signal beyond "still running."
+After the prompt receipt is confirmed, `herdr agent wait` is the default monitoring primitive for
+a Herdr-managed task. It waits for a state transition without spending the caller's context on
+intermediate narration or individual tool calls. Use explicit terminal states so an ordinary
+`idle` transition is not mistaken for completion:
 
-**Prefer a `Monitor` tailing the agent's own session transcript**, which pushes events as they
-happen instead of requiring a poll-and-reissue loop:
+```bash
+herdr agent wait <unique-name> \
+  --until done --until blocked --until unknown \
+  --timeout 90000
+```
+
+The CLI waits indefinitely when `--timeout` is omitted, but the harness backgrounds a Bash call
+around ~120s. Keep each wait below that ceiling; if it exits because the timeout elapsed, reissue
+the same wait. A timeout means **not finished yet**, not task failure. Do not replace this with a
+bare `herdr agent get` poll or a transcript stream.
+
+When the wait returns:
+
+- `done`: verify the handoff and the office's actual completion condition, such as
+  `report-exists OR state=done`; status alone is not evidence.
+- `blocked`: inspect the agent and its output, then surface a genuinely user-owned question
+  instead of answering by inference.
+- `unknown` or `agent_not_found`: diagnose pane/session loss before considering a re-dispatch.
+
+**Agy is the explicit exception.** Agy's `agent_status` flaps to `idle`/`done` between turns, so
+`agent wait` is not a progress signal for an agy task. For agy, use the handoff-plus-commit
+terminal condition and the SQLite step-count check below; use `agent wait` only when you already
+have a terminal condition that makes the returned state meaningful.
+
+### Transcript monitoring is a diagnostic fallback
+
+Use a `Monitor` tailing the agent's own session transcript only when the wait result needs
+diagnosis or the run specifically needs the agent's narration. It is not the default completion
+monitor:
 
 - **Claude**: `~/.claude/projects/<project-slug>/<session-id>.jsonl`.
 - **Codex**: `~/.codex/sessions/<yyyy>/<mm>/<dd>/rollout-*-<session-id>.jsonl` — find it with
