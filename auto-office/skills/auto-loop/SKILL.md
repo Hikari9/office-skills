@@ -143,6 +143,17 @@ Beyond the plan path, GOAL block, blast-radius ceiling, and file scope:
      — right file (authored, not generated), anchor existed, injected code runs in the scope the gate
      inspects — *then* read the verdict. A broken mutation and a blind gate produce identical output,
      and the broken mutation is the likelier of the two.
+   - **Run the unmutated baseline first and require it GREEN.** The rule above covers a mutation that
+     stays green; a mutation that goes *red* off a broken baseline is the same defect wearing the
+     answer you wanted, and it is more persuasive because it agrees with you. Evidence
+     (2026-09-08): a planner symlinked `node_modules` into a throwaway verification worktree, `pnpm
+     exec` aborted with `ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY`, and all three mutations
+     "failed" without any test running. Run a real install in the throwaway — never symlink or copy
+     `node_modules` across worktrees, and never clear that error with `confirmModulesPurge=false`,
+     which deletes the live tree's `node_modules` through the symlink.
+   - **Mutate the negative control too.** A test whose negative case passes because the code path
+     always rejects has no control in it. Point the control at the input the positive case uses and
+     require red; that is what separates "rejects a bad subject" from "rejects everything".
    - **State the wrong-but-passing implementation the test must exclude.** A test observing a
      consequence reachable by more than one path certifies nothing; naming the failure mode in the
      brief has repeatedly turned multi-round waves into single-round ones.

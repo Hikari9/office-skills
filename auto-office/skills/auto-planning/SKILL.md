@@ -165,7 +165,7 @@ parallel, and where the barriers are. One glance should answer "how wide does th
 ```
 PLANNER (opus, this session)
   │
-  ├─▶ EXECUTOR  gpt-5.6-luna high   ·  wt-retry-queue  ·  tasks 1-5 end to end
+  ├─▶ EXECUTOR  sonnet high         ·  wt-retry-queue  ·  tasks 1-5 end to end
   │     │
   │     ├─ T1 ──┬─▶ worker agy (cli)   scan handlers/     ┐
   │     │       ├─▶ worker agy (cli)   scan jobs/         ├ parallel, barrier before T2

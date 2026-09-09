@@ -86,17 +86,17 @@ commands — weight it above LiveCodeBench-style scores when judging executor fi
   **low** — a review gate's yield comes from independence and a pointed brief, and the index gap
   between Opus low (51) and Opus high (59) has not been the thing that catches findings.
 - **Codex leads agentic coding** (80 vs a 77 field average) at roughly a third of Opus's per-token
-  cost — the preferred implementation route while quota holds. Its constraint is the weekly window,
-  not capability.
+  cost — a strong fit-selected alternative for backend and data work. Its constraint is the weekly
+  window, not capability.
 - **Gemini 3.7 Flash changed the flash tier's argument.** At **56** it is ~6× Opus's output speed
   (340 vs 54 tok/s) at half the cost and only 3 points below Opus high — where 3.6 Flash sat 9 points
   back. It still does not own *decisions* (56 vs 61 is a real gap on arbitration and ambiguity), but
   "flash is for speed, not smarts" is no longer true and should not be repeated in a brief.
 - **Luna is the price play, not the capability play.** xhigh at **50** for **$0.17/M** is a sixth of
-  Terra's cost; it is the standing codex executor default because an executor implements an
-  already-reviewed plan, which is the task least sensitive to the top of the index. If a run's
-  difficulty lives in the *implementation* rather than the plan, that default is the first thing to
-  question — with the user, since it is theirs.
+  Terra's cost; it remains the Codex executor's fit-selected default because an executor implements
+  an already-reviewed plan, which is the task least sensitive to the top of the index. Claude Sonnet
+  high is the office's standing executor default; if a run's difficulty lives in the *implementation*
+  rather than the plan, changing that default is a user decision.
 - **Speed is a real axis, not a tiebreak.** On read-heavy fan-out, N parallel Flash scouts finish
   before one Opus pass starts producing. On a single long ambiguous chain, that advantage inverts
   completely.

@@ -50,15 +50,15 @@ permitted tier still qualifies for the Codex in-session path. Record the selecte
 
 ## Fit test — first, before anything, and it picks a gear
 
-Before scoping or planning, price the run. Ask: (1) irreversible, production-facing, or externally
-visible? (2) real volume or parallel breadth? (3) needs an interview? (4) would an adversarial reader
-plausibly catch something?
+Before scoping or planning, price the run. Ask: (1) irreversible or catastrophic blast radius?
+(Production-facing alone does not force full — express and direct are permitted.) (2) real volume
+or parallel breadth? (3) needs an interview? (4) would an adversarial reader plausibly catch something?
 
 | Answers | Gear | What runs |
 |---|---|---|
-| Any yes to **(1)** | **full** | All four phases. One-way door — never downgraded. |
-| No to (1), **2+** yeses across (2)–(4) | **express** | Short plan → execute → **one** adversarial review → land it. **Cap 2 review rounds**; a second `CHANGES REQUIRED` forces a planner disposition and promotes to full only if the planner elects to continue. |
-| No to (1), **≤1** yes | **direct** | No office. Do the work under the normal safety rules, then stop. |
+| Yes to **(1)** | **full** | All four phases. Irreversible risk warrants full machinery. |
+| No to (1), **2+** yeses across (2)–(4) | **express** | Short plan → execute → **one** adversarial review → land it. Allowed even for prod-facing. **Cap 2 review rounds**; a second `CHANGES REQUIRED` forces a planner disposition and promotes to full only if the planner elects to continue. |
+| No to (1), **≤1** yes | **direct** | No office. Do the work under the normal safety rules, then stop. Allowed even for prod-facing. |
 
 Express promotes to full before dispatch if the run needs more than one executor, more than one
 repo, or more than roughly three tasks. It drops **phases, never floors** — no self-approval, the

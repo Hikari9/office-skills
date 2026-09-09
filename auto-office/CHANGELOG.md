@@ -1,5 +1,11 @@
 # Changelog — auto-office
 
+## 17.6.0 — 2026-09-08
+
+**Claude Sonnet high is now the standing default executor.** The router still selects Codex Luna
+for work whose fit calls for Codex, or when the caller explicitly overrides the default; this changes
+the default brand, not the per-brand executor settings or reviewer gates.
+
 ## Unreleased
 
 - **herdr `agent prompt` takes the brief as a positional argument, not `--text`.** Documented in

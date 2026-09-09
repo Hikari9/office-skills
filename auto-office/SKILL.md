@@ -39,9 +39,10 @@ planner is invoked with `/auto-office` **plus this plugin directory's absolute p
 ([delegation-map.md](references/delegation-map.md)).
 
 Anything after `/auto-office` overrides discernment and is echoed in the kickoff line: `use codex`,
-`express`, `full`, `no loop`, `skip cleanup`, `plan approved: <path>`. A caller override is the
-**only** thing that may change a default, executor tier included — and none may skip independent
-review, let an executor review itself, drop a floor, remove a phase, or widen blast radius.
+`express`, `full`, `direct`, `no loop`, `skip cleanup`, `plan approved: <path>`. A caller override is the
+**only** thing that may change a default, executor tier and gear included (`express` and `direct`
+are permitted even for prod-facing work) — and none may let an executor review itself, drop a floor,
+or widen blast radius.
 
 ## Fit test — first, and it picks a gear
 
@@ -55,14 +56,15 @@ python3 auto-office/scripts/claude-usage.py
 python3 auto-office/scripts/agy-usage.py
 ```
 
-Ask: (1) irreversible, production-facing, or externally visible? (2) real volume or parallel
-breadth? (3) needs an interview? (4) would an adversarial reader plausibly catch something?
+Ask: (1) irreversible or catastrophic blast radius? (Production-facing alone does not force
+full — express and direct are permitted.) (2) real volume or parallel breadth? (3) needs an
+interview? (4) would an adversarial reader plausibly catch something?
 
 | Answers | Gear | What runs |
 |---|---|---|
-| Any yes to **(1)** | **full** | Everything below. One-way door — never downgraded. |
-| No to (1), **2+** across (2)–(4) | **express** | Short plan → bootstrap → implement → Opus review → closeout. **Cap 2 rounds**; 2nd `CHANGES REQUIRED` requires planner disposition, then full only if continuing. |
-| No to (1), **≤1** yes | **direct** | No office. Work under the normal safety rules, then stop. |
+| Yes to **(1)** | **full** | Everything below. Irreversible risk warrants full machinery. |
+| No to (1), **2+** across (2)–(4) | **express** | Short plan → bootstrap → implement → Opus review → closeout. Allowed even for prod-facing. **Cap 2 rounds**; 2nd `CHANGES REQUIRED` requires planner disposition, then full only if continuing. |
+| No to (1), **≤1** yes | **direct** | No office. Work under the normal safety rules, then stop. Allowed even for prod-facing. |
 
 **Express promotes to full before dispatch** if the run needs >1 executor, >1 repo, or more than ~3
 tasks — size makes one review round defensible. Drops **phases, never floors**: rules under
@@ -74,8 +76,8 @@ Never downgrade for quota; that is a routing problem. Full rule:
 
 ## Routing, in one screen
 
-Brand by fit — **codex** backend/data/infra/long-horizon (preferred default), **agy** frontend,
-recon, bulk breadth, **claude** cross-cutting ambiguity. Rubric:
+Brand by fit — **claude** cross-cutting ambiguity (preferred default), **codex** backend/data/infra/long-horizon,
+**agy** frontend, recon, and bulk breadth. Rubric:
 [auto-routing](skills/auto-routing/SKILL.md).
 
 **Dispatch form is derived, not priced** — with `HERDR_ENV=1`, real children use [Herdr](office-core/skills/herdr/SKILL.md)

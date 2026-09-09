@@ -51,15 +51,15 @@ skip it, downgrade/bypass the reviewer, remove a phase, or widen the blast-radiu
 
 ## Fit test — first, before anything, and it picks a gear
 
-Before interviewing or planning, price the run. Ask: (1) irreversible, production-facing, or
-externally visible? (2) real volume or parallel breadth? (3) needs an interview? (4) would an
-adversarial reader plausibly catch something?
+Before interviewing or planning, price the run. Ask: (1) irreversible or catastrophic blast radius?
+(Production-facing alone does not force full — express and direct are permitted.) (2) real volume
+or parallel breadth? (3) needs an interview? (4) would an adversarial reader plausibly catch something?
 
 | Answers | Gear | What runs |
 |---|---|---|
-| Any yes to **(1)** | **full** | All five phases. One-way door — never downgraded. |
-| No to (1), **2+** yeses across (2)–(4) | **express** | Short plan → execute → **Phase 2b** → **one** review → land it. **Cap 2 review rounds**; a second `CHANGES REQUIRED` forces a planner disposition and promotes to full only if the planner elects to continue. |
-| No to (1), **≤1** yes | **direct** | No office. Do the work under the normal safety rules, then stop. |
+| Yes to **(1)** | **full** | All five phases. Irreversible risk warrants full machinery. |
+| No to (1), **2+** yeses across (2)–(4) | **express** | Short plan → execute → **Phase 2b** → **one** review → land it. Allowed even for prod-facing. **Cap 2 review rounds**; a second `CHANGES REQUIRED` forces a planner disposition and promotes to full only if the planner elects to continue. |
+| No to (1), **≤1** yes | **direct** | No office. Do the work under the normal safety rules, then stop. Allowed even for prod-facing. |
 
 **Phase 2b survives express.** It is not a review phase, it is the reason an agy executor's report is
 believable at all — exit 0 here means nothing. Express drops **phases, never floors**, and 2b is a
