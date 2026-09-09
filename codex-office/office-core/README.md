@@ -34,6 +34,10 @@ office-core/
     └── run-event.schema.json        # telemetry shape; the SessionEnd hook fills it from the transcript
 ```
 
+`scripts/compact-police.sh` is the Herdr-only delivery helper. It asks an idle planner to run
+`/compact-monitor`, or sends a directed `/compact` immediately before a planner-declared reuse of
+a Claude/Codex pane. It has no context-size threshold and ignores Agy panes.
+
 ## Source of truth and vendoring
 
 This directory is the **development source**. Each plugin carries a **vendored snapshot** at

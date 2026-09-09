@@ -456,8 +456,8 @@ the failure. Same agent or fresh agent makes no difference; whoever holds the ph
 
 ### Compacting a delegate is the planner's job, not the delegate's
 
-**A pane agent cannot compact itself.** No tool invokes a slash command in-session, so `compact: yes`
-prints to the one party unable to act on it. The planner drives it from outside:
+**A pane agent cannot compact itself from inside a skill.** The planner drives delegate compaction
+from outside, and the Herdr compact-police helper can prompt the planner's own pane externally:
 
 ```
 herdr agent prompt <name> "/compact Keep <what the next task needs>. Drop <what it does not>.
@@ -492,10 +492,10 @@ reload-across-a-boundary discipline applies to it, driven by the planner:
   context until its handoff is written; compacting there costs more re-derivation than it saves.
 - **Only at a boundary: handoff or verdict written, agent idle, next brief not yet sent.** The
   handoff, `EXECUTOR-STATE.md`, and `git log` then carry everything the next brief needs.
-- **Only when the pane's live context reading is at or above roughly 100k tokens.** Below that the
-  summarization pass costs about what it saves and loses nuance for nothing. Read the pane's own
-  status line, not a token total from a compacted summary, and check it before every round's brief
-  to a resumed reviewer, not just at first spawn.
+- **Use the pane's qualitative `/compact-monitor` verdict, not a numeric context threshold.** The
+  monitor checks for a written boundary, stale material, and live reasoning that would be lost;
+  context size alone is not a compaction decision. Check it before every round's brief to a resumed
+  reviewer, not just at first spawn.
 - **The next brief after a compaction opens with a reload instruction** ("re-read the plan's section
   2 and your `EXECUTOR-STATE.md`"), for the same reason the planner reloads the hub and spoke: a
   compacted agent keeps the summary of what happened, not the constraints it was following.

@@ -1,5 +1,10 @@
 # Changelog — agy-office
 
+## Unreleased
+
+- Core `17.7.0`: vendored `compact-monitor` and the Herdr compact-police helper. Agy sessions are
+  intentionally not targeted because they have no interactive `/compact` command.
+
 ## 16.3.0 — 2026-09-04
 
 Core `17.4.0`; see `auto-office/CHANGELOG.md` 17.4.0 for the core rationale.

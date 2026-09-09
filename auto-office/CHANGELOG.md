@@ -38,6 +38,10 @@ the default brand, not the per-brand executor settings or reviewer gates.
   orchestrator chooses Codex `gpt-5.6-luna` at medium or Claude `haiku`/`sonnet` at low. Scouts may
   not inherit planner settings or run at high effort or above.
 
+- **Compact monitor:** Herdr-backed runs can ask an idle planner to run the qualitative
+  `/compact-monitor` check and can compact a completed Claude/Codex pane immediately before an
+  explicit reuse. No token threshold is used; Agy panes are skipped.
+
 - **New core skill: `self-review-loop`.** One self-review pass is the first pass, not the gate.
   Review, fix, review the fix, until a pass finds nothing, executing every verify command at `BASE`
   rather than trusting it. Six detectors, the defect classes ranked by what they cost, and observed

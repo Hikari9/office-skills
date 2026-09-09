@@ -430,6 +430,34 @@ Overloaded`, unrelated to Herdr), and the agent simply continues at its prior co
 the run on it; proceed and retry at the next boundary. When to compact a delegated agent at all is
 the dispatching office's call (auto-office: auto-loop → *Compacting a resumed executor or reviewer*).
 
+### Compact police: planner checks and explicit pane reuse
+
+For a Herdr-backed run, start the helper after planning is approved and the first executors are
+launched:
+
+```bash
+office-core/scripts/compact-police.sh watch --planner <planner-name> > /tmp/office/compact-police.log 2>&1 &
+```
+
+The watcher uses lifecycle state only. At a planner-ready boundary it sends `/compact-monitor` to
+the planner's own pane; the pane runs the qualitative check and decides whether compaction is worth
+doing. It never estimates compactability from a token count. A planner name must be explicit: the
+planner's model process must not issue a Herdr prompt to its own name inline, but this detached
+helper is an external driver and may address the planner pane.
+
+When the planner has a completed Claude or Codex executor/reviewer handoff and intends to reuse that
+session, compact it before sending the next brief:
+
+```bash
+office-core/scripts/compact-police.sh reuse <agent-name> \
+  --keep "the approved plan section 2, the handoff, EXECUTOR-STATE.md, and the next fix brief"
+```
+
+`reuse` refuses working or blocked panes, sends no command to Agy, and accepts no implicit reuse
+decision. The planner owns that decision. The prompt is directed and tells the resumed agent to
+reload its brief/state after compaction. Confirm success from the pane's compaction sequence and
+reset context display; a `done`/`idle` status alone is not proof.
+
 ### Watching an agy agent: query its SQLite conversation, never its status
 
 **Agy stores no JSONL transcript**, so the `tail -f` recipe above has nothing to tail. It keeps a

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Core `17.7.0`: vendored `compact-monitor` and the Herdr compact-police helper for qualitative
+  planner checks and explicit pre-reuse compaction.
+
 ## 16.3.0 — 2026-09-04
 
 Core `17.4.0`. Core-only change; see `auto-office/CHANGELOG.md` 17.4.0 for the rationale (herdr:
