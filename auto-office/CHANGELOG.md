@@ -42,6 +42,22 @@ the default brand, not the per-brand executor settings or reviewer gates.
   `/compact-monitor` check and can compact a completed Claude/Codex pane immediately before an
   explicit reuse. No token threshold is used; Agy panes are skipped.
 
+- **Compaction is hook-driven per pane.** Two `Stop` hooks replace the polling watcher: the
+  advisor decides from the pane's own transcript at zero token cost, and an `async` courier
+  delivers the directed `/compact` to that pane once Herdr reports it `idle`. Opt-in with
+  `node eval/hooks/install.mjs --with-auto-compact`; it acts only on ledger-recorded `claude`/
+  `codex` panes, never on a human's own session, never on Agy. `compact-police.sh reuse` remains
+  the planner-owned path for a pane about to be reused, and the only path for Codex panes.
+  `compact-police.sh planner` and `watch` are removed — they polled `agent get` every five
+  seconds, inferred boundaries from a phase machine while discarding the `state_change_seq` in the
+  same payload, and spent a full planner turn per boundary on a check the harness does for free.
+
+- **`/compact-monitor` no longer re-derives the arithmetic.** It reads the advisor's verdict and
+  adds the one factor a script cannot see: in-flight reasoning that was never written down.
+
+- **Compactability is now visible.** The advisor emits `systemMessage` on the no→yes edge; every
+  verdict is appended to `compact-advisor.log` in the telemetry sink.
+
 - **New core skill: `self-review-loop`.** One self-review pass is the first pass, not the gate.
   Review, fix, review the fix, until a pass finds nothing, executing every verify command at `BASE`
   rather than trusting it. Six detectors, the defect classes ranked by what they cost, and observed

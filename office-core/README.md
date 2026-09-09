@@ -26,6 +26,10 @@ office-core/
 │   └── compatibility.md             # versioning, adapters, exceptions, release rules
 ├── skills/
 │   └── herdr/SKILL.md                # Herdr-aware dispatch, layout, prompting, and cleanup
+├── hooks/
+│   ├── close-finished-panes.mjs     # Stop: closes the panes of finished delegates (opt-in)
+│   ├── compact-advisor.mjs          # Stop: decides compactability, writes a compact request
+│   └── compact-courier.mjs          # Stop, async: delivers the /compact to this pane (opt-in)
 └── schemas/
     ├── office-kernel.schema.json    # the immutable per-run packet header
     ├── handoff.schema.json          # executor → planner report
@@ -34,9 +38,12 @@ office-core/
     └── run-event.schema.json        # telemetry shape; the SessionEnd hook fills it from the transcript
 ```
 
-`scripts/compact-police.sh` is the Herdr-only delivery helper. It asks an idle planner to run
-`/compact-monitor`, or sends a directed `/compact` immediately before a planner-declared reuse of
-a Claude/Codex pane. It has no context-size threshold and ignores Agy panes.
+Compaction is hook-driven: `hooks/compact-advisor.mjs` decides at every turn boundary for free and
+`hooks/compact-courier.mjs` delivers the directed `/compact` to that pane, for ledger-recorded
+`claude`/`codex` panes only. `scripts/compact-police.sh reuse` remains the planner-owned path for a
+pane about to be reused for a different task, and the only path for Codex panes, which have no
+turn-boundary hook event. Neither uses a context-size threshold as its trigger; neither touches Agy.
+See `skills/herdr/SKILL.md` → *Compact police*.
 
 ## Source of truth and vendoring
 

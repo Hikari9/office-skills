@@ -430,23 +430,47 @@ Overloaded`, unrelated to Herdr), and the agent simply continues at its prior co
 the run on it; proceed and retry at the next boundary. When to compact a delegated agent at all is
 the dispatching office's call (auto-office: auto-loop → *Compacting a resumed executor or reviewer*).
 
-### Compact police: planner checks and explicit pane reuse
+### Compact police: the hook pair, and explicit pane reuse
 
-For a Herdr-backed run, start the helper after planning is approved and the first executors are
-launched:
+**A pane compacts itself through hooks, not through a poller.** Two Stop hooks do it, and they are
+split because one has to run inside the turn and the other cannot:
+
+| Hook | Event | Job |
+|---|---|---|
+| `office-core/hooks/compact-advisor.mjs` | `Stop` | reads the pane's own transcript, decides, writes a request file |
+| `office-core/hooks/compact-courier.mjs` | `Stop`, `async: true` | maps session → pane via the ledger, waits for `idle`/`done`, sends the directed `/compact` |
 
 ```bash
-office-core/scripts/compact-police.sh watch --planner <planner-name> > /tmp/office/compact-police.log 2>&1 &
+node eval/hooks/install.mjs --with-auto-compact    # opt-in, Herdr-only
 ```
 
-The watcher uses lifecycle state only. At a planner-ready boundary it sends `/compact-monitor` to
-the planner's own pane; the pane runs the qualitative check and decides whether compaction is worth
-doing. It never estimates compactability from a token count. A planner name must be explicit: the
-planner's model process must not issue a Herdr prompt to its own name inline, but this detached
-helper is an external driver and may address the planner pane.
+Why this shape and not a watcher:
+
+- **No hook can run a slash command.** The `SlashCommand` tool excludes built-ins like `/compact`,
+  so the command must arrive as pane input. `herdr agent prompt` is the only path, which is why a
+  courier exists at all.
+- **The courier must be `async`.** A pane's Herdr status still reads `working` while its own `Stop`
+  hook runs, so a synchronous courier would wait on the turn it is running inside. Detached, it
+  polls up to `OFFICE_COMPACT_SETTLE_MS` (default 30s) for `idle`/`done` and costs the session
+  nothing.
+- **Addressing its own pane is allowed here.** The rule against prompting your own agent name binds
+  a *model process*. The courier is a detached hook, in the same external-driver position this
+  helper occupies.
+- **The ledger is the authorization.** The courier acts only on a session recorded in
+  `/tmp/office/panes.jsonl` with kind `claude` or `codex`. A human's own session is not in the
+  ledger, so it is never sent anything: it gets the advisor's `systemMessage` and decides for
+  itself. Agy is skipped — no interactive `/compact`.
+- **The verdict is arithmetic, not a vibe, and it costs no tokens.** Held context against the
+  window, tier-weighted re-read cost against turns saved, plus a required state-file-on-disk check
+  and a sha-staleness check. A pane model never spends a turn deciding. The advisor surfaces
+  `compact: yes` as a `systemMessage` on the no→yes edge only; every verdict lands in
+  `compact-advisor.log` in the telemetry sink.
+- **A Codex pane cannot self-compact.** Codex has no turn-boundary hook event and its rollout files
+  are not the transcript format the advisor parses. Codex panes stay on `reuse`, below.
 
 When the planner has a completed Claude or Codex executor/reviewer handoff and intends to reuse that
-session, compact it before sending the next brief:
+session, compact it before sending the next brief. The planner, not the pane, knows what the *next*
+brief needs kept:
 
 ```bash
 office-core/scripts/compact-police.sh reuse <agent-name> \
@@ -456,7 +480,13 @@ office-core/scripts/compact-police.sh reuse <agent-name> \
 `reuse` refuses working or blocked panes, sends no command to Agy, and accepts no implicit reuse
 decision. The planner owns that decision. The prompt is directed and tells the resumed agent to
 reload its brief/state after compaction. Confirm success from the pane's compaction sequence and
-reset context display; a `done`/`idle` status alone is not proof.
+reset context display; a `done`/`idle` status alone is not proof — the same rule applies to a
+courier delivery, whose `systemMessage` reports a send, never a compaction.
+
+`compact-police.sh planner` and `watch` were removed in core `17.7.0`. They polled `agent get` every
+five seconds and inferred turn boundaries from a phase machine while discarding the
+`state_change_seq` in the same payload, and they spent a full planner turn on a qualitative check at
+every boundary. The `Stop` hook is that boundary, exactly, for free.
 
 ### Watching an agy agent: query its SQLite conversation, never its status
 

@@ -1,28 +1,30 @@
 #!/usr/bin/env bash
-# compact-police.sh — Herdr-only compactability driver.
+# compact-police.sh — Herdr-only delivery of a planner-declared pane compaction.
 #
-# This helper deliberately has no token threshold. The pane's own compact-monitor skill makes
-# the qualitative decision; this script only delivers the prompt at a safe boundary.
+# This helper deliberately has no token threshold and no polling loop. Automatic,
+# per-pane compaction is the hook path:
 #
-# Commands:
-#   planner NAME                 Ask an idle planner to run /compact-monitor.
-#   watch --planner NAME         Repeat that check once per planner work cycle.
+#   office-core/hooks/compact-advisor.mjs   Stop hook: decides, writes a request
+#   office-core/hooks/compact-courier.mjs   Stop hook (async): delivers /compact
+#
+# The hooks fire at the pane's own turn boundary, which is the event a poller can
+# only guess at. What they cannot cover is a **Codex** pane (no Stop event) or a
+# pane the planner is about to reuse for a different task, where the planner —
+# not the pane — knows what the next brief needs kept. That is this command:
+#
 #   reuse NAME [--keep TEXT]     Compact a completed Claude/Codex pane before reusing it.
 #
 # Agy is intentionally ignored: its interactive panes do not expose /compact.
 set -euo pipefail
 
-INTERVAL="${COMPACT_POLICE_INTERVAL:-5}"
-
 usage() {
   cat <<'EOF'
 Usage:
-  compact-police.sh planner <planner-name>
-  compact-police.sh watch --planner <planner-name> [--interval <seconds>]
   compact-police.sh reuse <agent-name> [--keep <continuity instructions>]
 
 The helper is a no-op unless HERDR_ENV=1 and herdr is available.
-It uses lifecycle boundaries and explicit reuse intent; it never uses a token threshold.
+It uses explicit reuse intent; it never uses a token threshold.
+Automatic per-pane compaction is office-core/hooks/compact-{advisor,courier}.mjs.
 EOF
 }
 
@@ -80,99 +82,6 @@ read_info() {
 compact_prompt() {
   local keep="$1"
   printf '/compact Keep %s Drop stale tool output. First action after compaction: re-read the current brief, handoff/state files, and plan before acting.' "$keep"
-}
-
-planner_once() {
-  local name="$1" info
-  info="$(herdr_info "$name")"
-  read_info "$name" "$info" || return 0
-
-  case "$STATUS" in
-    idle|done)
-      case "$KIND" in
-        claude|codex)
-          herdr agent prompt "$name" "/compact-monitor" >/dev/null
-          log "asked planner $name to run /compact-monitor at $STATUS boundary"
-          ;;
-        *)
-          log "skipped planner $name: Herdr kind '$KIND' has no supported compact command"
-          ;;
-      esac
-      ;;
-    working|blocked|unknown)
-      log "skipped planner $name: status is $STATUS"
-      ;;
-    *)
-      log "skipped planner $name: unrecognized status '$STATUS'"
-      ;;
-  esac
-}
-
-watch_planner() {
-  local name="$1" info phase=0 ready_seen=0
-  trap 'log "stopped planner watch"; exit 0' INT TERM
-
-  while :; do
-    info="$(herdr_info "$name")"
-    if ! read_info "$name" "$info"; then
-      [[ "$STATUS" == gone ]] && return 0
-      sleep "$INTERVAL"
-      continue
-    fi
-
-    case "$STATUS" in
-      working)
-        # phase 1 is the monitor's prompt in flight. If it was already ready once,
-        # this working turn belongs to the planner's next piece of work; otherwise
-        # it is the monitor prompt itself.
-        if [[ "$phase" == 1 && "$ready_seen" == 0 ]]; then
-          phase=2
-        elif [[ "$phase" == 1 && "$ready_seen" == 1 ]]; then
-          phase=3
-        fi
-        ;;
-      idle|done)
-        # phase 0 is the initial/next ready boundary. phase 2 is the monitor's
-        # check returning to ready. phase 3 is a new planner turn; its completion
-        # is the next boundary eligible for another check.
-        if [[ "$phase" == 0 || "$phase" == 3 ]]; then
-          case "$KIND" in
-            claude|codex)
-              if herdr agent prompt "$name" "/compact-monitor" >/dev/null; then
-                log "asked planner $name to run /compact-monitor at $STATUS boundary"
-              else
-                log "could not ask planner $name to run /compact-monitor"
-              fi
-              # Do not retry while the pane remains ready. The prompt may be accepted even
-              # when Herdr's status transition is too brief for a poll to observe.
-              phase=1
-              ready_seen=0
-              ;;
-            *)
-              log "skipped planner $name: Herdr kind '$KIND' has no supported compact command"
-              phase=1
-              ready_seen=0
-              ;;
-          esac
-        elif [[ "$phase" == 2 ]]; then
-          # The planner returned from the monitor's own check. Stay armed until a
-          # later working state proves that new planner work has started.
-          phase=1
-          ready_seen=1
-        elif [[ "$phase" == 1 ]]; then
-          # The prompt may have gone ready without a poll catching its working state.
-          ready_seen=1
-        fi
-        ;;
-      blocked|unknown)
-        log "planner $name is $STATUS; no prompt sent"
-        ;;
-      *)
-        log "planner $name is $STATUS; no prompt sent"
-        ;;
-    esac
-    sleep "$INTERVAL"
-  done
 }
 
 reuse_agent() {
@@ -233,43 +142,17 @@ main() {
   [[ $# -gt 0 ]] || { usage; return 2; }
 
   case "$1" in
-    planner)
-      [[ $# -eq 2 ]] || { usage; return 2; }
-      planner_once "$2"
-      ;;
-    watch)
-      local planner=""
-      shift
-      while [[ $# -gt 0 ]]; do
-        case "$1" in
-          --planner)
-            [[ $# -ge 2 ]] || { echo "compact-police: --planner needs a name" >&2; return 2; }
-            planner="$2"
-            shift 2
-            ;;
-          --interval)
-            [[ $# -ge 2 ]] || { echo "compact-police: --interval needs seconds" >&2; return 2; }
-            INTERVAL="$2"
-            shift 2
-            ;;
-          -h|--help)
-            usage
-            return 0
-            ;;
-          *)
-            echo "compact-police: unknown watch argument: $1" >&2
-            return 2
-            ;;
-        esac
-      done
-      [[ -n "$planner" ]] || { echo "compact-police: watch requires --planner" >&2; return 2; }
-      watch_planner "$planner"
-      ;;
     reuse)
       [[ $# -ge 2 ]] || { usage; return 2; }
       name="$2"
       shift 2
       reuse_agent "$name" "$@"
+      ;;
+    planner|watch)
+      echo "compact-police: '$1' was removed in core 17.7.0; per-pane compaction is now the" >&2
+      echo "compact-advisor/compact-courier Stop hook pair (install.mjs --with-auto-compact)." >&2
+      echo "Use 'reuse' for a planner-declared reuse of a Claude or Codex pane." >&2
+      return 2
       ;;
     -h|--help)
       usage

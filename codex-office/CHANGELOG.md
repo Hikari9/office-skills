@@ -2,8 +2,10 @@
 
 ## Unreleased
 
-- Core `17.7.0`: vendored `compact-monitor` and the Herdr compact-police helper for qualitative
-  planner checks and explicit pre-reuse compaction.
+- Core `17.7.0`: vendored `compact-monitor`, the `compact-advisor`/`compact-courier` `Stop` hook
+  pair, and `compact-police.sh reuse`. A Codex pane cannot self-compact — Codex fires no
+  turn-boundary hook event and its rollout files are not the transcript format the advisor parses —
+  so Codex panes stay on the planner-driven `reuse` path.
 
 ## 16.3.0 — 2026-09-04
 

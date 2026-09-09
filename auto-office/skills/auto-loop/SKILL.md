@@ -454,10 +454,17 @@ spoke before acting. Compaction at a task boundary is the main way a run loses t
 keeping the run state, and a survivor that remembers the GOAL but not the gates is the exact shape of
 the failure. Same agent or fresh agent makes no difference; whoever holds the phase re-reads.
 
-### Compacting a delegate is the planner's job, not the delegate's
+### Compacting a delegate: the hooks do it, the planner covers what they can't
 
-**A pane agent cannot compact itself from inside a skill.** The planner drives delegate compaction
-from outside, and the Herdr compact-police helper can prompt the planner's own pane externally:
+**No pane agent can compact itself from inside a skill** — no tool invokes a built-in slash command.
+With `install.mjs --with-auto-compact`, a Claude pane's own `Stop` hooks do it instead: the advisor
+decides from the transcript for free, and the async courier delivers the directed `/compact` once
+the pane is `idle`. Mechanism and scope: [herdr](../../office-core/skills/herdr/SKILL.md) →
+*Compact police*.
+
+Two cases the hooks do not cover, and the planner owns both: a **Codex pane** (no turn-boundary hook
+event) and a pane being **reused for a different task**, where the next brief — not the finished
+one — defines what to keep. Drive those from outside:
 
 ```
 herdr agent prompt <name> "/compact Keep <what the next task needs>. Drop <what it does not>.
@@ -492,10 +499,12 @@ reload-across-a-boundary discipline applies to it, driven by the planner:
   context until its handoff is written; compacting there costs more re-derivation than it saves.
 - **Only at a boundary: handoff or verdict written, agent idle, next brief not yet sent.** The
   handoff, `EXECUTOR-STATE.md`, and `git log` then carry everything the next brief needs.
-- **Use the pane's qualitative `/compact-monitor` verdict, not a numeric context threshold.** The
-  monitor checks for a written boundary, stale material, and live reasoning that would be lost;
-  context size alone is not a compaction decision. Check it before every round's brief to a resumed
-  reviewer, not just at first spawn.
+- **Take the verdict from the advisor hook, not from a threshold you carry in your head.** It reads
+  the pane's real held context, weights the re-read by that pane's model tier, and requires a state
+  file that exists and is not behind `HEAD`. Its `no` for a missing or stale state file is a defect
+  report, not a wait instruction. On a Codex pane, where the advisor cannot read the transcript,
+  judge the boundary qualitatively before every round's brief — a written handoff, an idle agent, no
+  live per-item edit state — not from a token count.
 - **The next brief after a compaction opens with a reload instruction** ("re-read the plan's section
   2 and your `EXECUTOR-STATE.md`"), for the same reason the planner reloads the hub and spoke: a
   compacted agent keeps the summary of what happened, not the constraints it was following.

@@ -2,8 +2,9 @@
 
 ## Unreleased
 
-- Core `17.7.0`: vendored `compact-monitor` and the Herdr compact-police helper. Agy sessions are
-  intentionally not targeted because they have no interactive `/compact` command.
+- Core `17.7.0`: vendored `compact-monitor`, the `compact-advisor`/`compact-courier` `Stop` hook
+  pair, and `compact-police.sh reuse`. Agy panes are intentionally not targeted by any of them
+  because they have no interactive `/compact` command.
 
 ## 16.3.0 — 2026-09-04
 
