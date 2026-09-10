@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 16.6.0 — 2026-09-10
+
+Core `17.9.0`.
+
+- Core `17.9.0`: the in-session review resume path (`SendMessage` to a backgrounded reviewer's
+  recorded agent id) had no equivalent to the Herdr skill's `agent wait` discipline; see
+  `auto-office/CHANGELOG.md` 17.11.0 for the full rationale. codex-office's own reviewer resume
+  goes through the codex CLI's existing `run_in_background`/notification wait pattern, not
+  `SendMessage`, so this mainly documents the shared `review-states.md` rule.
+
 ## 16.5.0 — 2026-09-10
 
 Core `17.8.0`.

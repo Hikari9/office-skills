@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 16.6.0 — 2026-09-10
+
+Core `17.9.0`.
+
+- Core `17.9.0`: the in-session review resume path (`SendMessage` to a backgrounded reviewer's
+  recorded agent id) had no equivalent to the Herdr skill's `agent wait` discipline; see
+  `auto-office/CHANGELOG.md` 17.11.0 for the full rationale.
+
 ## 16.5.0 — 2026-09-10
 
 Core `17.8.0`.
