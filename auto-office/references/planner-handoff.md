@@ -38,9 +38,8 @@ that the drafter holds the Planner role.
 
 ```yaml
 planner_mode: auto              # auto, dedicated, or inline
-planner_default: claude/opus-5@medium       # used unless the conditional below picks the other
-planner_conditional_default: codex/gpt-6-astra@low  # used when orchestrator=claude and codex headroom is generous
-planner_fallback: codex/gpt-6-astra@low
+planner_default: claude/opus-5@medium       # flat — no orchestrator- or headroom-conditional variant
+planner_fallback: codex/gpt-6-astra@low     # used only when the default is unavailable
 planner_candidates:
   - claude/opus-5@medium
   - claude/claude-fable-5.1@low
@@ -51,14 +50,12 @@ planner_candidates:
 planner_isolation: allow-reuse  # or required
 ```
 
-**`planner_default` is conditional, not a fixed value** (see rule 4 below): when the orchestrator's
-harness is `claude` and codex headroom is comfortably available, the default attempt is
-`planner_conditional_default` (`codex/gpt-6-astra@low`) instead of `planner_default`. When the
-orchestrator is not `claude`, or codex headroom is not comfortably available, `planner_default`
-(`claude/opus-5@medium`) applies as before. This keeps a claude orchestrator from spending its own
-account's rate on a redundant Opus call when codex has room to spare, without ever leaving the
-resolution undefined — whichever of the two is not chosen as the default is still the required
-fallback if the default is unavailable.
+**`planner_default` is flat: `claude/opus-5@medium`, always.** The earlier conditional default
+(`codex/gpt-6-astra@low` when the orchestrator's harness was `claude` and codex headroom was
+generous) is **revoked, 2026-09-10, by maintainer decision** — a claude orchestrator no longer
+diverts the plan draft to Astra. Astra Low is now only the **fallback**, taken when
+`claude/opus-5@medium` is unavailable (not installed, unauthenticated, out of quota, or the launch
+fails). Codex headroom is still probed for cost reporting; it no longer selects the drafter.
 
 The harness prefix is part of the triple. See *Canonical model identity*
 below before comparing any two triples for equality. These are explicit v2
@@ -78,10 +75,8 @@ is needed:
 - If the triple is unsupported or unknown, use `AskUserQuestion` before
   planning — **unless `planner_isolation=required` was also given explicitly**,
   in which case skip straight to dedicated resolution below with no prompt
-  (see rule 3). When the prompt does run, recommend the conditional default
-  from rule 4 first — **Opus Medium**, or **Astra Low** when the orchestrator's
-  harness is `claude` and codex headroom is comfortably available — with the
-  other of the two named as the fallback, then offer **Fable 5.1**, **GPT-6
+  (see rule 3). When the prompt does run, recommend **Opus Medium** first,
+  with **Astra Low** named as the fallback, then offer **Fable 5.1**, **GPT-6
   Astra**, or **inline with this orchestrator**. A Fable/Astra choice is followed by an
   effort choice from the declared candidates for that family. `inline`
   resolves to the compatibility `planner_mode=inline` path; silence is not
@@ -113,25 +108,18 @@ selected drafter, never at "no drafter selected":
    caller reaches by setting `planner_mode=dedicated` outright, so it is
    never undefined.
 4. Dedicated mode (reached directly, or via rule 3) resolves to the explicit
-   planner choice when one was supplied. When none was supplied, resolve the
-   **conditional default** first: if the orchestrator's harness is `claude`
-   *and* codex headroom is comfortably available (the same fit-test/
-   pre-dispatch probe used everywhere else in this office —
-   [quota-probe.md](quota-probe.md); no hardcoded threshold, a case-by-case
-   call, never a gate), the default attempt is `codex/gpt-6-astra@low`;
-   otherwise the default attempt is `claude/opus-5@medium`. **Check this
-   resolved triple against the orchestrator's canonicalized triple before
-   launching anything**: if they match and `planner_isolation` is not
-   `required`, reuse the orchestrator's own planning step (record
-   `reused_from_orchestrator: true`) and make no call; otherwise try it as a
-   live dedicated call.
+   planner choice when one was supplied. When none was supplied, the default
+   attempt is `claude/opus-5@medium` — unconditionally, whatever the
+   orchestrator's harness is and however much codex headroom the probe
+   reports. **Check this resolved triple against the orchestrator's
+   canonicalized triple before launching anything**: if they match and
+   `planner_isolation` is not `required`, reuse the orchestrator's own
+   planning step (record `reused_from_orchestrator: true`) and make no call;
+   otherwise try it as a live dedicated call.
 5. **This rule applies after ANY rule-4 attempt fails — an explicit caller
-   choice exactly as much as the default or conditional default.** If the
-   triple just attempted is not already one of `claude/opus-5@medium` /
-   `codex/gpt-6-astra@low`, try whichever of that pair the conditional-default
-   check (rule 4) would have picked first; if the triple just attempted *is*
-   one of the two, try the other one. Either way, exactly one member of the
-   pair gets tried here if it wasn't already the rule-4 attempt — this pair is
+   choice exactly as much as the default.** Try `claude/opus-5@medium` if it
+   was not the attempt that just failed; otherwise try the declared fallback
+   `codex/gpt-6-astra@low`. Exactly one of the pair gets tried here, and it is
    the required dedicated fallback regardless of what rule 4 was.
 6. If the pair from rule 5 is exhausted (both unavailable, or both already
    attempted as the rule-4 choice), try the remaining declared candidates —

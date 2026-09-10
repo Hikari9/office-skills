@@ -10,6 +10,22 @@ names only its control-plane behavior, not a new role). In existing v2 it also d
 directly for compatibility. This ticket adds one narrow plan-drafter-call decision; executor, worker,
 and reviewer routing remain the decisions below and are not changed.
 
+### Orchestrator advice — not a route
+
+The orchestrator is the user's entry pick, so nothing here selects it and no rule below applies to
+it. This is advice for the human choosing where to type, recorded because it is asked repeatedly
+(maintainer preference, 2026-09-10):
+
+| Entry pick | When |
+|---|---|
+| **Gemini 3.7 low** | the standing preference — cheap, fast, and the control plane is dispatch and bookkeeping, not deep reasoning |
+| **Luna xhigh** | a run that will argue with itself: contradictory requirements, gate disputes |
+| **Astra low** | codex has headroom to spare and the run is codex-shaped anyway |
+| **Sonnet high** | a long single-repo session where the orchestrator will also read a lot of code |
+
+Never turn this table into a route. If the office ever *selects* an orchestrator, that is a v3
+decision and this section is not it.
+
 **Three existing decisions, all made at plan time, stay separate:**
 
 1. **Which brand is the executor** — one per repo. Owns the working tree. The only writer. Its
@@ -88,9 +104,9 @@ Not derived from the benchmark table, and a leaderboard movement does not change
 | Planner (compatibility path — invoking session, drafts inline) | `opus` (invoking session) | `codex-luna` | `agy` | fixed for the existing same-call path |
 | **Plan-reviewer** (full gear only) | Existing orchestrator/control-plane Planner's own route at `opus` **low** | `codex-luna` **xhigh** | `agy` **high** | unchanged; a dedicated plan drafter's choice does not override |
 | **Phase 1 scout** | `haiku` or `sonnet` **low** *(orchestrator chooses)* | `gpt-5.6-luna` **medium** *(fallback ceiling)* | `gemini-3.7-flash-low` **low** *(resolve at dispatch)* | **bounded** |
-| Executor | `sonnet` **high** | **`gpt-5.6-luna` `high`** | **Flash latest `high`** | **fixed** |
-| Worker | `sonnet` high *default* | `gpt-5.6-luna` high *default* | Flash latest `high` *default* | **ANY brand/model/effort the Planner declares** |
-| **Reviewer (code)** | `opus` **low** | `codex-luna` **xhigh** default, **`high`** floor *(only when Codex is the orchestrator/control-plane Planner)* | never reviews | claude fixed; **codex priced by blast radius** — see *Reviewer selection* |
+| Executor | `sonnet` **high** *(rung 2)* | **`gpt-5.6-sol` `low`** *(rung 3, last pick)* | **Flash latest `medium`, max 3 tasks** *(rung 1)* | **fixed ladder — see *Executor ladder*** |
+| Worker | `sonnet` high *default* | `gpt-5.6-luna` high *default* | Flash latest `high` *default* | **ANY brand/model/effort the Planner declares**, never above its dispatcher's tier |
+| **Reviewer (code)** | `opus` **low** *(fallback)* | **`codex-luna` `xhigh` default, `high` floor — the standing default holder** | never reviews | **codex first, priced by blast radius; claude fixed at `opus` low** — see *Reviewer selection* |
 
 ## Phase 1 scout policy
 
@@ -127,31 +143,32 @@ drafter candidate, prompt the user with `AskUserQuestion` — unless
 and goes straight to dedicated resolution using the declared default (see
 resolution step 3 below; the gap this closes is detailed in
 [`planner-handoff.md`](../../references/planner-handoff.md)). When the prompt
-runs: recommend the same conditional default described below first (**Opus
-Medium**, or **Astra Low** when the orchestrator's harness is `claude` and
-codex headroom is comfortably available), with the other of the two as the
-stated fallback, then offer **Fable 5.1**, **GPT-6 Astra**, or **inline**.
+runs: recommend **Opus Medium** first, with **Astra Low** as the stated
+fallback, then offer **Fable 5.1**, **GPT-6 Astra**, or **inline**.
 Family choices resolve to an exact declared effort; silence does not select
 inline. No prompt is shown for direct (no-plan) work, a supported exact
 triple, or an explicit caller override.
 
 | Policy value | Harness | Model | Effort |
 |---|---|---|---|
-| Default *(claude orchestrator, codex headroom NOT generous — or orchestrator isn't claude)* | `claude` | `opus-5` (Claude Opus 5) | `medium` |
-| Conditional default *(claude orchestrator, codex headroom generous)* | `codex` | `gpt-6-astra` | `low` |
+| **Default — unconditional** | `claude` | `opus-5` (Claude Opus 5) | `medium` |
+| **Required fallback** *(default unavailable)* | `codex` | `gpt-6-astra` | `low` |
 | Candidate | `claude` | `claude-fable-5.1` (Claude Fable 5.1) | `low` |
 | Candidate | `claude` | `claude-fable-5.1` | `medium` |
 | Candidate | `claude` | `claude-fable-5.1` | `high` |
-| Required fallback *(whichever of the two rows above wasn't the default just tried)* | `codex` or `claude` | `gpt-6-astra` or `opus-5` | `low` or `medium` |
 | Candidate | `codex` | `gpt-6-astra` | `medium` |
 
-**The default is conditional, not fixed**: when the orchestrator's harness is `claude` and codex
-headroom is comfortably available (the standing fit-test/pre-dispatch probe, never a hardcoded
-threshold), the default attempt is `codex/gpt-6-astra@low` instead of `claude/opus-5@medium` — this
-avoids spending the orchestrator's own account on a redundant Opus call when codex has room to
-spare. Whichever of the two is not the default is still the required fallback if the default is
-unavailable, so resolution never leaves a run with no drafter selected. Full rule:
-[`planner-handoff.md`](../../references/planner-handoff.md#v2-selection-policy).
+**The default is flat: Opus 5 medium, always.** The previous conditional default — Astra Low when
+the orchestrator's harness was `claude` and codex headroom was generous — is **revoked, 2026-09-10,
+by maintainer decision.** Do not divert the plan draft to Astra because the orchestrator happens to
+be a Claude model. Astra Low is the **fallback only**, reached when `claude/opus-5@medium` is
+unavailable. Codex headroom is still probed as a cost input; it no longer selects the drafter. Full
+rule: [`planner-handoff.md`](../../references/planner-handoff.md#v2-selection-policy).
+
+**Draft the plan in a separate call whenever the orchestrator is a different model.** Reuse the
+orchestrator's own planning step only when its canonicalized triple already *is* a declared
+candidate and isolation allows it. v3 makes the separate drafter call the standing shape; v2 keeps
+the reuse shortcut for compatibility.
 
 This table mirrors the `planner_candidates` YAML in
 [`planner-handoff.md`](../../references/planner-handoff.md#v2-selection-policy),
@@ -192,20 +209,31 @@ just wrote; same-brand is an advantage there, not the conflict of interest it wo
 Executor and worker brand *is*
 routed by fit, exactly as before.
 
-**The executor is sonnet-tier, high effort — Claude Sonnet is the standing default, and the other
-brands remain fit-selected alternatives.**
+**The executor is an availability ladder, tried in order — first available brand wins, unless the
+fit test or a caller override names one.** Standing office default, set 2026-09-10.
 
-| Executor brand | Model + effort | Status |
-|---|---|---|
-| **claude** | **`sonnet` high** | **standing office default, set 2026-09-08** |
-| agy | **Flash latest** `high` | fit-selected alternative; resolve with `agy-office/scripts/agy-model.sh` |
-| codex | **`gpt-5.6-luna` `high`** | fit-selected alternative or caller override |
+| # | Executor brand | Model + effort | Task cap | Status |
+|---|---|---|---|---|
+| **1** | **agy** | **Flash latest `medium`** — resolve with `agy-office/scripts/agy-model.sh medium` | **3 tasks, hard** | first pick when available and the plan fits in 3 tasks |
+| **2** | **claude** | **`sonnet` high** | any number | the workhorse — take it whenever the plan exceeds 3 tasks |
+| **3** | codex | **`gpt-5.6-sol` `low`** | any number | **last pick, unvalidated in this office** — see the caveat below |
 
-**Effort goes to the gates, not to the implementation.** The default executor stays at Claude
-Sonnet high because a bigger executor does not fix a wrong brief; it implements it more
-convincingly. Codex remains at Luna high when its backend/data/infra fit selects it, while the
-Codex **plan**-review gate remains at `xhigh` and the Codex **code**-review effort is still priced
-by blast radius (*Reviewer selection*).
+**Take rung 2, not rung 1, the moment the approved plan has more than 3 tasks.** Agy's cap is
+observed drift past 3 chained tasks, not an estimate, and a 4-task agy executor is the failure this
+ladder exists to prevent. Splitting a 5-task plan into two agy runs to stay "under the cap" does
+not clear it — the cap is per executor chain, not per launch.
+
+**Rung 3 is a fallback, not a recommendation.** `gpt-5.6-sol` at `low` has **not been run as an
+executor in this office**; it is placed above Luna on the maintainer's read that Luna at executor
+duty has been the weaker performer in practice, and that read is untested. Record the outcome in
+[routing-outcomes.md](../../references/routing-outcomes.md) the first time it runs, and treat a
+first-run failure as evidence about the rung, not about the plan.
+
+**`gpt-5.6-luna` is no longer an executor.** It keeps its reviewer roles (plan review at `xhigh`,
+code review priced by blast radius) and remains available as a *worker* the planner may declare.
+
+**Effort still goes to the gates, not to the implementation.** No rung on this ladder runs above
+`high`; a bigger executor does not fix a wrong brief, it implements it more convincingly.
 
 Read the index before treating either number as a ranking. Luna is **52 / 50 / 47** across
 max / xhigh / high, so the executor gives up 3 points and the plan reviewer gains 3. A code review
@@ -262,9 +290,10 @@ Three conditions on any worker that is not the executor's default, all binding:
 task is hard" produced the last run's silent over-provisioning. "This needs a judgement the executor's
 tier cannot make" is the real distinction, and the plan is where you argue it.
 
-**Two floors, declared separately.** `opus` low is the floor for the **code**-review gate, and
-`opus` low is the floor for the **plan**-review gate. They coincide today but remain two
-declarations: [delegation-map.md](../../references/delegation-map.md)'s "stricter rule wins" clause
+**Two floors, declared separately, and per brand.** On the claude route `opus` low is the floor for
+the **code**-review gate and `opus` low is the floor for the **plan**-review gate. On the codex
+route — now the default holder of the code gate — the code floor is `codex-luna` `high` and the
+plan floor is `codex-luna` `xhigh`. They remain separate declarations: [delegation-map.md](../../references/delegation-map.md)'s "stricter rule wins" clause
 resolves conflicting rules *within* one gate and never promotes one gate to the other's tier. A floor
 binds the gate it was declared for. Reviewer strength comes from independence, freshness, and a
 pointed brief — not from effort tier.
@@ -320,19 +349,20 @@ the process runs medium, and nothing in the output says so.
 
 ```bash
 # claude
---model sonnet --effort high      # executor
---model opus   --effort low       # code reviewer
+--model sonnet --effort high      # executor (ladder rung 2)
+--model opus   --effort low       # code reviewer (fallback holder)
 --model opus   --effort low       # plan reviewer
 --model haiku  --effort low       # Phase 1 scout fallback
 --model sonnet --effort low       # Phase 1 scout fallback, if chosen
 
 # codex — there is NO --effort flag; effort is a config override
--m gpt-5.6-luna -c model_reasoning_effort="high"   # executor
--m gpt-5.6-luna -c model_reasoning_effort="xhigh"    # code reviewer (codex-as-planner); "high" for a low-blast-radius leg
--m gpt-5.6-luna -c model_reasoning_effort="xhigh"    # plan reviewer
+-m gpt-5.6-sol  -c model_reasoning_effort="low"     # executor (ladder rung 3, last pick)
+-m gpt-5.6-luna -c model_reasoning_effort="xhigh"   # code reviewer, standing default; "high" for a low-blast-radius leg
+-m gpt-5.6-luna -c model_reasoning_effort="xhigh"   # plan reviewer
 -m gpt-5.6-luna -c model_reasoning_effort="medium"  # Phase 1 scout fallback
 
-# agy — the low effort is encoded in the resolved slug
+# agy — the effort is encoded in the resolved slug
+--model "$(agy-office/scripts/agy-model.sh medium)"    # executor (ladder rung 1, max 3 tasks)
 --model "$(agy-office/scripts/agy-model.sh low)"       # Phase 1 scout; currently gemini-3.7-flash-low
 ```
 
@@ -374,6 +404,13 @@ watching; the planner re-ran every step itself.
 watcher. Route those to a `--bg` process that owns its own event loop, or hold them yourself. When
 `HERDR_ENV=1`, the Herdr agent pane owns the wait and remains visible until the final result is read;
 do not replace it with an in-session child.
+
+**A sub-agent never outranks its dispatcher: same tier or lower, never higher.** A worker the
+planner declared at `opus` may fan out to `opus` or below; a `sonnet` executor's children top out
+at `sonnet`. Tier is bought at plan time, in the task table, by the planner — a running agent
+buying itself a bigger child is the same self-escalation the ceiling rule forbids, just one level
+down where nobody is looking. If a child genuinely needs more than its parent has, that is a
+`PLAN DEFECT` to surface, not a launch to make.
 
 **Every brand has a built-in in-session sub-agent mechanism**, but it is not used when `HERDR_ENV=1`.
 In that environment the [Herdr skill](../../office-core/skills/herdr/SKILL.md) owns the pane split,
@@ -471,7 +508,7 @@ The default, most cost-efficient shape:
 ```
 agy low-effort scouts (parallel, read-only)  →  planner picks the approach
                                   →  codex or claude implements
-                                  →  fresh Opus reviewer gates
+                                  →  fresh Luna xhigh reviewer gates (Opus low fallback)
 ```
 
 Rules that make this safe:
@@ -522,16 +559,22 @@ The reviewer must explicitly check, with evidence, that agy did not:
 
 ## Reviewer selection
 
-**Code review: fresh Opus, low, by default, always.** The `codex-luna` reviewer path applies only
-when **Codex is the orchestrator/control-plane planner** (a Codex session invoked this workflow),
-not merely when Codex was selected as the dedicated planner. A caller may add a second opinion; a
-caller may not drop below the floor. **agy never holds the code-review gate** — long, adversarial,
-multi-round work against a diff is its documented weakness, and the miss-list is why.
+**Code review: fresh `codex-luna` at `xhigh` by default; fresh `opus` at `low` as the fallback.**
+Standing office default, set 2026-09-10 — Luna at the gate is where this office has consistently
+gotten its money's worth, and it is the same model the executor ladder just dropped precisely
+because reviewing and implementing are different jobs. Take the Opus low fallback when codex is
+unavailable (not installed, unauthenticated, out of quota, launch failure), when the caller names
+claude, or when the reviewer must be a different brand from an executor that was itself codex.
+Whichever brand holds the chair, the reviewer is **fresh** and **independent of whoever wrote the
+diff**. A caller may add a second opinion; a caller may not drop below the holding brand's floor.
+**agy never holds the code-review gate** — long, adversarial, multi-round work against a diff is
+its documented weakness, and the miss-list is why.
 
 ### Review effort is priced per leg, by blast radius
 
 **Standing user decision, 2026-08-29.** Applies to the **code**-review gate on the **codex** route
-only. Measured on the campus-fence run: an executor leg cost ~226k-269k tokens and one `xhigh` code
+— which is, since 2026-09-10, the default route for that gate rather than the Codex-as-planner
+exception. Measured on the campus-fence run: an executor leg cost ~226k-269k tokens and one `xhigh` code
 review of it cost **293k** — the gate outspent the work it gated.
 
 | Blast radius of the leg | Code-review effort |

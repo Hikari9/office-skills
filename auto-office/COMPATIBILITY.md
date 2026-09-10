@@ -53,10 +53,9 @@ exceptions:
   - id: auto-opus-reviewer-floor
     owner: auto-office
     reason: >
-      The code-review floor is a fresh Opus subagent at low regardless of which brand executed.
-      The Codex Luna reviewer path applies only when Codex is the orchestrator/control-plane Planner
-      (a Codex session invoked this workflow), not merely when Codex was selected as the dedicated
-      plan drafter. This is strictly narrower
+      The code-review gate is a fresh reviewer independent of whoever executed: `codex-luna` xhigh by default, a fresh Opus subagent at low as the fallback.
+      The Codex Luna path is no longer conditional on who orchestrated (2026-09-10); it is the
+      standing default holder, and the reviewer is never the agent that wrote the diff. This is strictly narrower
       than core, which permits any independent reviewer. Core 3.0.0 states that a declared floor
       binds the gate it was declared for, so this floor is the code-review gate's alone.
     widens_core_authority: false

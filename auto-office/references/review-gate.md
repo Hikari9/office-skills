@@ -20,7 +20,7 @@ Agent(
 )
 ```
 
-**The code-review floor is `opus` low.** The gate's strength is independence, freshness, and a
+**The code-review gate defaults to `codex-luna` `xhigh` (floor `high`, priced by blast radius); the claude fallback's floor is `opus` low.** The gate's strength is independence, freshness, and a
 pointed brief — not effort tier. In-session dispatch has no `effort` parameter, so the brief still
 carries the rigor as stated instruction: open it with *"Do not stop at the first defect you find."*
 A CLI-launched reviewer passes `--effort low` explicitly, and a missing `--effort` is a dispatch

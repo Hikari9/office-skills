@@ -23,7 +23,7 @@ Read the rows for the phase you are in; the whole table is not a startup cost.
 | "This needs MCP, so I'll keep it" | Delegate it *with* the tools enumerated, production reads included. Withholding access is a dispatch bug. |
 | "CLI was blocked last time" | A past denial is not evidence about now; the dispatch form is an assignment. Attempt it. |
 | "My worker said it'll report back" | That is a *return*. An in-session subagent unwinds once it has no live children. Blocking waits go `--bg`, or you hold them. |
-| "Executor says done" / "agy can review agy" | Nobody gates their own work; the **code** gate is a fresh Opus reviewer. |
+| "Executor says done" / "agy can review agy" | Nobody gates their own work; the **code** gate is a fresh reviewer of another brand — `codex-luna` xhigh by default, `opus` low as fallback. |
 | "Round 6 will converge" | Past the cap the failure is structural. Report the deadlock. |
 | "It touches prod, so it must be full gear" | Fit test allows express or direct even for production-facing work when risk is bounded. Only truly irreversible or catastrophic blast radius forces full. |
 | "Express needs a third round" | A second `CHANGES REQUIRED` forces a planner disposition. Promote to full only when the planner records why another round is worth funding. |

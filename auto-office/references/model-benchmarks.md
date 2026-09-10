@@ -38,10 +38,11 @@ This snapshot does **not** choose the v2 dedicated plan drafter (an added role,
 never the Planner). The maintained policy is conditional on the orchestrator,
 not benchmark-derived — canonical definition, resolution order, and fallback
 semantics: [`planner-handoff.md`](planner-handoff.md#v2-selection-policy). In
-short: Claude Opus 5 medium by default, except GPT-6 Astra low when the
-orchestrator's harness is claude and codex headroom is comfortably available.
-A benchmark refresh may update this evidence file, but it must not silently
-change those drafter defaults or fallbacks.
+short: **Claude Opus 5 medium, unconditionally**, with GPT-6 Astra low as the
+fallback when Opus is unavailable. The former orchestrator/headroom-conditional
+Astra default was revoked 2026-09-10. A benchmark refresh may update this
+evidence file, but it must not silently change those drafter defaults or
+fallbacks.
 
 ## Intelligence Index and output speed
 
@@ -50,20 +51,20 @@ change those drafter defaults or fallbacks.
 | Claude Opus 5 (max) | 61 | 54 | 2.34 | — |
 | Claude Opus 5 (xhigh) | 60 | 52 | 1.80 | — |
 | Claude Fable 5 | 60 | 66 | 3.15 | — |
-| GPT-5.6 Sol (max) | 59 | 63 | 1.86 | — (no longer a routing option) |
+| GPT-5.6 Sol (max) | 59 | 63 | 1.86 | — (`sol` **low** is the codex executor, ladder rung 3; this max row is not a routing option) |
 | **Claude Opus 5 (high)** | **59** | 53 | 1.23 | **planner** |
-| **Gemini 3.7 Flash (high)** | **56** | **340** | 0.58 | **agy executor default — via Flash latest, not this slug** |
+| **Gemini 3.7 Flash (high)** | **56** | **340** | 0.58 | — (superseded as executor: the agy executor is **Flash latest at `medium`**, resolved at dispatch, ladder rung 1) |
 | Claude Opus 5 (medium) | 56 | 53 | 0.72 | — |
 | GPT-5.6 Terra (max) | 55 | 126 | 0.73 | — |
 | Claude Sonnet 5 (max) | 53 | 74 | 1.72 | — |
 | Gemini 3.7 Flash (medium) | 53 | — | — | — |
 | GPT-5.6 Luna (max) | 52 | 172 | 0.07 | — |
-| Claude Opus 5 (low) | 51 | 51 | 0.43 | **plan-review gate; code-review gate** |
+| Claude Opus 5 (low) | 51 | 51 | 0.43 | **plan-review gate (claude route); code-review gate — fallback holder** |
 | Gemini 3.7 Flash (low) | 51 | — | — | bulk mechanical work |
 | Gemini 3.6 Flash (high) | 50 | 217–304 | 0.56 | superseded by 3.7 |
 | Gemini 3.5 Flash | 50 | 171 | 0.69 | — |
-| **GPT-5.6 Luna (xhigh)** | **50** | 140 | **0.17** | **codex plan review; codex code review of a high-blast-radius leg; hard diagnosis** |
-| GPT-5.6 Luna (high) | 47 | — | — | **codex executor; codex code review of a low-blast-radius leg** |
+| **GPT-5.6 Luna (xhigh)** | **50** | 140 | **0.17** | **code-review gate — standing default holder; codex plan review; hard diagnosis** |
+| GPT-5.6 Luna (high) | 47 | — | — | **codex code review of a low-blast-radius leg** — no longer an executor (dropped 2026-09-10) |
 
 **Two orderings in this table are counter-intuitive and are the reason it exists.** Luna **max (52)
 outscores Luna xhigh (50)** — effort labels do not rank monotonically, so read the row rather than
