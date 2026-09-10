@@ -94,8 +94,16 @@ Not derived from the benchmark table, and a leaderboard movement does not change
 
 This is the only new routing surface in this ticket. It selects the planner call,
 not the invoking orchestrator, executor, worker, plan-reviewer, or code-reviewer.
-The full contract and serialized artifact are in
+The full detector, prompt, contract, and serialized artifact are in
 [`planner-handoff.md`](../../references/planner-handoff.md).
+
+`planner_mode=auto` is the default when no planner override is supplied. After
+the fit test, if a plan is needed and the detected orchestrator triple is not a
+planner candidate, prompt the user with `AskUserQuestion`: recommend **Opus
+Medium** (Astra Low fallback), then offer **Fable 5.1**, **GPT-6 Astra**, or
+**inline**. Family choices resolve to an exact declared effort; silence does not
+select inline. No prompt is shown for direct (no-plan) work, a supported exact
+triple, or an explicit caller override.
 
 | Policy value | Harness | Model | Effort |
 |---|---|---|---|
@@ -112,15 +120,19 @@ triple is a caller override and must be echoed.
 
 Resolution order is fixed:
 
-1. `planner_mode=orchestrator` uses the old same-call behavior and makes no
-   dedicated planner call. Record `reused_from_orchestrator: true` and no
-   fallback.
-2. Otherwise try the explicit planner triple, or `claude/opus-5@medium`.
-3. If it is unavailable or fails, try **`codex/gpt-6-astra@low` first**. Do
+1. Explicit `planner_mode=orchestrator`, or `planner_mode=auto` with the user
+   choosing **inline**, uses the old same-call behavior. Record
+   `reused_from_orchestrator: true` and no fallback.
+2. `planner_mode=auto` with a supported exact orchestrator triple reuses that
+   triple when isolation is allowed and makes no duplicate call.
+3. `planner_mode=auto` with an unsupported/unknown triple uses the exact
+   family/effort selected by the user, then follows dedicated resolution.
+4. Otherwise try the explicit planner triple, or `claude/opus-5@medium`.
+5. If it is unavailable or fails, try **`codex/gpt-6-astra@low` first**. Do
    not fall back to the orchestrator before this attempt.
-4. If that fallback is unavailable, try the remaining declared candidates in
+6. If that fallback is unavailable, try the remaining declared candidates in
    their listed order. Only when no dedicated candidate is usable may the
-   existing orchestrator-as-planner path be used as the graceful v2 fallback.
+   existing orchestrator-as-planner path be used as graceful fallback.
 
 Record every failed attempt and its reason (`not-installed`, `unauthenticated`,
 `unsupported-model`, `unsupported-effort`, `quota-unavailable`, `launch-error`,
@@ -133,10 +145,11 @@ not explicitly requested. Record `reused_from_orchestrator: true` and make no
 duplicate call. `planner_isolation=required` always makes a separate call.
 
 The orchestrator kickoff, serialized handoff, run report, and routing outcome
-record state: `planner_mode`, orchestrator triple, planner triple,
-`reused_from_orchestrator`, `fallback_used`, and `fallback_reason`. Use the
-existing telemetry fields `brand`, `model`, `effort`, and `dispatch_form` for
-the actual planner call; do not add executor/reviewer route fields here.
+record the detector verdict, plan-needed flag, orchestrator triple, prompt
+visibility/choice, `planner_mode`, planner triple, `reused_from_orchestrator`,
+`fallback_used`, and `fallback_reason`. Use the existing telemetry fields
+`brand`, `model`, `effort`, and `dispatch_form` for the actual planner call; do
+not add executor/reviewer route fields here.
 
 **The plan-reviewer's brand remains the existing planner/reviewer route** — it is not selected by the
 v2 dedicated-planner policy. It reads one document the planning step just wrote; same-brand is an

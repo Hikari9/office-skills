@@ -1,0 +1,15 @@
+name: auto-detector prompts for an unsupported orchestrator
+prompt: |
+  /auto-office planner_mode=auto Use this deterministic fixture: the invoking orchestrator is
+  claude/sonnet-5@high, which is not one of the declared v2 planner triples. The fit test says a
+  plan is needed. Before any planner call, state the user-facing planner-choice prompt and the
+  metadata that must be recorded.
+expect_skill: true
+criteria:
+  - "Detects and states that the current orchestrator triple is outside the v2 planner candidates"
+  - "Recognizes that a plan is needed before prompting"
+  - "Offers Opus Medium, Fable 5.1, GPT-6 Astra, and inline with the current orchestrator"
+  - "Does not silently launch a planner or silently fall back to the orchestrator before the choice"
+  - "Records prompt_shown, detector verdict, orchestrator triple, and the eventual prompt choice"
+allowed_tools: ["Read", "Grep", "Glob"]
+timeout: 240

@@ -42,9 +42,10 @@ planner is invoked with `/auto-office` **plus this plugin directory's absolute p
 
 Anything after `/auto-office` overrides discernment and is echoed in the kickoff line: `use codex`,
 `express`, `full`, `direct`, `no loop`, `skip cleanup`, `plan approved: <path>`,
-`planner_mode=orchestrator|dedicated`, `planner=<harness/model@effort>`, and
-`planner_isolation=required`. The v2 default is `planner_mode=dedicated` with
-`claude/opus-5@medium`; the dedicated fallback is `codex/gpt-6-astra@low`.
+`planner_mode=auto|dedicated|orchestrator`, `planner=<harness/model@effort>`, and
+`planner_isolation=required`. The v2 default is `planner_mode=auto`: if a plan is needed and the
+orchestrator is not a supported planner triple, ask whether to use Opus Medium, Fable, Astra, or
+inline. Dedicated default/fallback remain `claude/opus-5@medium` → `codex/gpt-6-astra@low`.
 `planner_mode=orchestrator` explicitly preserves the old behavior. A caller override is the
 **only** thing that may change a default, executor tier and gear included (`express` and `direct`
 are permitted even for prod-facing work) — and none may let an executor review itself, drop a floor,
@@ -123,14 +124,16 @@ verify, review/fix, record milestones, then close out. No extra go-aheads except
 unanticipated user-owned decisions.
 
 ```
-resolve planner → serialized handoff → validate → self/plan review → approve
+resolve planner → detect triple/plan need → prompt if needed → serialized handoff → validate
   task: dispatch → verify → review/fix → APPROVED
   finish: final gate → remove plan → ready PR → merge → sync/report
 ```
 
-`planner_mode=orchestrator` makes the handoff an in-session compatibility step. Dedicated mode keeps
-the orchestrator as the sole controller after the planner returns. v3 may deepen the split; this PR
-does not add v3 routing or a new executor/reviewer architecture.
+`planner_mode=auto` detects whether a plan is needed and whether the invoking triple is a supported
+planner; an unsupported triple prompts before planning. `planner_mode=orchestrator` makes the handoff
+an in-session compatibility step. Dedicated mode keeps the orchestrator as the sole controller after
+the planner returns. v3 may deepen the split; this PR does not add v3 routing or a new executor/reviewer
+architecture.
 
 The branch, plan, local run state, and allowed PR comments are the resume record through closeout.
 

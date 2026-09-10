@@ -95,8 +95,12 @@ second telemetry format. Keep the existing columns and append these compact
 fields in the `lesson`/run-note portion:
 
 ```text
-planner_mode=<orchestrator|dedicated>
-orchestrator=<harness/model@effort>
+planner_mode=<auto|orchestrator|dedicated>
+plan_needed=<true|false>
+detector_verdict=<supported|unsupported|unknown|not-needed>
+orchestrator=<harness/model@effort or unknown>
+prompt_shown=<true|false>
+prompt_choice=<opus|fable|astra|inline|null>
 planner=<harness/model@effort>
 reused_from_orchestrator=<true|false>
 fallback_used=<true|false>

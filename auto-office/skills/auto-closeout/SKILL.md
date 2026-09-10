@@ -73,10 +73,10 @@ final evidence.
     ranges), Route, Task ledger, Stops, **Not verified** (never let an unrun check read as passed),
     Still open. Neither of the last two is empty by default — say so explicitly if it genuinely is.
     Express runs emit no report; the PR body is the record. Every non-express report also carries the
-    compact v2 planner line `planner_mode · orchestrator=<harness/model@effort> ·
-    planner=<harness/model@effort> · reused_from_orchestrator=<true|false> ·
-    fallback_used=<true|false> · fallback_reason=<reason|null>`; attempted triples and failure reasons
-    remain in the serialized handoff or run artifact.
+    compact v2 planner line `planner_mode · plan_needed · detector_verdict · orchestrator=<harness/model@effort>
+    · prompt=<shown|not-shown>/<choice|null> · planner=<harness/model@effort> ·
+    reused_from_orchestrator=<true|false> · fallback_used=<true|false> · fallback_reason=<reason|null>`.
+    The serialized handoff or run artifact retains attempted triples and failure reasons.
 12. **If the planner is claude at Opus tier**, append one row (two lines max — the columns carry the
     numbers, the `lesson` cell carries one sentence or "as expected") to
     [routing-outcomes.md](../../references/routing-outcomes.md); write a rule change instead of a row

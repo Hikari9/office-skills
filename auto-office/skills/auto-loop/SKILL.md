@@ -7,8 +7,10 @@ description: Phase 2–3 — the goal-locked autonomous loop that runs draft-PR 
 
 ## v2 planner boundary
 
-In `planner_mode=dedicated`, the orchestrator has already invoked the planner
-and accepted its serialized handoff before this loop begins. The dedicated
+In `planner_mode=auto`, the detector and any user planner-choice prompt have
+already resolved before this loop begins; the loop receives the resulting
+serialized handoff. In `planner_mode=dedicated`, the orchestrator has already
+invoked the planner and accepted its serialized handoff before this loop begins.
 planner call has no lifecycle, dispatch, approval, reviewer, or closeout state;
 it returns the artifact and exits. The orchestrator is the control-plane owner
 for every step below, including planner-held actions and executor/reviewer

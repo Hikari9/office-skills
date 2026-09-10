@@ -6,7 +6,9 @@
 The invoking model remains the orchestrator. Dedicated planning defaults to Claude Opus 5 medium,
 falls back to GPT-6 Astra low before any compatibility fallback, and accepts the explicit Fable 5.1
 and Astra candidates. The planner returns a serialized handoff; the orchestrator validates it and
-continues the existing lifecycle. `planner_mode=orchestrator` preserves the old same-call behavior,
+continues the existing lifecycle. `planner_mode=auto` detects whether a plan is needed and whether the
+invoking triple is supported; unsupported orchestrators get an explicit choice of Opus Medium, Fable,
+Astra, or inline before planning. `planner_mode=orchestrator` preserves the old same-call behavior,
 and identical triples may reuse the orchestrator step unless isolation is required. Planner mode,
 triples, reuse, fallback, and reasons are recorded in the handoff, run report, and routing ledger.
 

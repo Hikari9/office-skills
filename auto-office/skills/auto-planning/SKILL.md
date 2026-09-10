@@ -29,7 +29,7 @@ Announce before doing anything else:
 auto-office · gear: <express|full> (<the fit-test reason, one clause>)
 executors: <n> (<brand(s)>, <fit reason>) · milestones: <n>
 reviewer: opus low · plan-reviewer: <brand> <model> low   [full only]
-planner: <orchestrator-as-planner|dedicated <harness/model@effort>> · reuse: <yes|no> · fallback: <none|reason→triple>
+planner: <auto→prompt|orchestrator-as-planner|dedicated <harness/model@effort>> · reuse: <yes|no> · fallback: <none|reason→triple>
 headroom: <per window, with reset times, UNKNOWN where a probe failed>
 loop: on · overrides: <none|…>
 ```
@@ -41,7 +41,10 @@ all headroom windows with reset times; a single-number delta is not evidence.
 
 The invoking session is the orchestrator. It runs the fit test and user
 interview, resolves `planner_mode`, and dispatches a dedicated planner when
-selected. The dedicated planner receives the clarified request and repository
+selected. In `planner_mode=auto`, it detects whether a plan is needed and
+compares the actual orchestrator triple with the declared planner candidates;
+unsupported or unknown triples trigger the user planner-choice prompt before
+planning. The dedicated planner receives the clarified request and repository
 facts, produces the plan plus the serialized
 [`planner-handoff.md`](../../references/planner-handoff.md), and returns; it
 cannot ask the user, dispatch executors, or own later lifecycle state.
@@ -77,10 +80,11 @@ planning authority; no v3 routing architecture is introduced.
    failure: a scout with no such line skipped straight to implementation, wrote 130 lines of
    unapproved code, and reported that none existed.
    Verify their claims cheaply before building on them. A scout claim you cannot verify is dropped.
-4.5. **Resolve the planner before writing the plan.** Apply the v2 planner policy from
-   [auto-routing](../auto-routing/SKILL.md): default to dedicated Opus Medium, try Astra Low first
-   on failure, then the remaining declared candidates, and use orchestrator-as-planner only under
-   its compatibility rule. Record the mode, actual triple, reuse decision, fallback flag, and reason.
+4.5. **Resolve the planner before writing the plan.** Apply the v2 detector/policy from
+   [auto-routing](../auto-routing/SKILL.md): if `auto` sees a supported exact triple, reuse it;
+   otherwise ask the user to choose Opus Medium, Fable, Astra, or inline before calling a planner.
+   Dedicated choices use Astra Low as the first fallback. Record detection, prompt choice, actual
+   triple, reuse, fallback, and reason.
 5. **Route, fully** ([auto-routing](../auto-routing/SKILL.md)) — **every task's brand**, and how many
    executors the run needs. Model and effort are fixed by role, so they are filled in, not decided.
    Do not leave routing "to be decided during execution"; an unassigned task is an unreviewable cost.

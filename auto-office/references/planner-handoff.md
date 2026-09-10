@@ -25,7 +25,7 @@ The current invoking model is always the orchestrator; v2 never auto-routes it.
 The planner policy is the only new routing decision:
 
 ```yaml
-planner_mode: dedicated        # or orchestrator
+planner_mode: auto              # auto, dedicated, or orchestrator
 planner_default: claude/opus-5@medium
 planner_fallback: codex/gpt-6-astra@low
 planner_candidates:
@@ -41,21 +41,49 @@ planner_isolation: allow-reuse  # or required
 The harness prefix is part of the triple. These are explicit v2 policy values,
 not benchmark-derived defaults. A benchmark refresh must not rewrite them.
 
+### Auto-detector and planner prompt
+
+`planner_mode=auto` is the default when the caller supplies no planner override.
+The detector runs after the fit test, once it knows whether a plan is needed:
+
+- If no plan is needed (`direct` gear), it does not prompt and does not start a
+  planner call.
+- If the detected orchestrator triple exactly matches a declared planner
+  candidate, reuse it when isolation is allowed; do not prompt.
+- If the triple is unsupported or unknown, use `AskUserQuestion` before
+  planning. Recommend **Opus Medium** first (with Astra Low fallback), then
+  offer **Fable 5.1**, **GPT-6 Astra**, or **inline with this orchestrator**.
+  A Fable/Astra choice is followed by an effort choice from the declared
+  candidates for that family. `inline` resolves to the compatibility
+  `planner_mode=orchestrator` path; silence is not permission to choose it.
+- An explicit `planner_mode`, `planner=<triple>`, or
+  `planner_isolation=required` is a caller decision and suppresses this prompt.
+
+Unknown detection is never treated as a supported triple. The detector records
+`plan_needed`, the actual orchestrator triple (or `unknown`), its verdict,
+`prompt_shown`, and the user's `prompt_choice` in the handoff. This is a small
+v2 preflight decision, not dynamic v3 capability scoring or orchestrator routing.
+
 Resolution is deterministic:
 
-1. `planner_mode=orchestrator` uses the existing same-call behavior and makes no
+1. Explicit `planner_mode=orchestrator`, or `planner_mode=auto` with the user
+   choosing **inline**, uses the existing same-call behavior and makes no
    dedicated planner call. Record `reused_from_orchestrator: true`, with no
    fallback.
-2. Dedicated mode tries the explicit planner choice, or
+2. `planner_mode=auto` with a supported orchestrator triple reuses that triple
+   when isolation is allowed and makes no duplicate call.
+3. `planner_mode=auto` with an unsupported/unknown triple uses the exact family
+   and effort selected by the user, then follows dedicated resolution.
+4. Dedicated mode tries the explicit planner choice, or
    `claude/opus-5@medium` when no choice was supplied.
-3. If that choice is unavailable, try the required dedicated fallback
+5. If that choice is unavailable, try the required dedicated fallback
    `codex/gpt-6-astra@low` before trying any other candidate.
-4. If the fallback is also unavailable, try the remaining declared candidates
+6. If the fallback is also unavailable, try the remaining declared candidates
    in list order. Record every attempted triple and its reason.
-5. Use orchestrator-as-planner only when it was explicitly selected, or after
-   every dedicated candidate is unusable and the v2 run needs a graceful
-   compatibility fallback. Never silently substitute the orchestrator merely
-   because the preferred planner failed.
+7. Use orchestrator-as-planner only when it was explicitly selected, the auto
+   prompt chose inline, or after every dedicated candidate is unusable and the
+   v2 run needs a graceful compatibility fallback. Never silently substitute
+   the orchestrator merely because the preferred planner failed.
 
 Unavailable means the harness/model/effort cannot actually be launched for
 this run: not installed, unauthenticated, model or effort unsupported, quota
@@ -87,6 +115,12 @@ orchestrator:
   harness: <claude|codex|agy>
   model: <model>
   effort: <effort>
+detection:
+  plan_needed: <true|false>
+  orchestrator_triple: <harness/model@effort or unknown>
+  verdict: <supported|unsupported|unknown|not-needed>
+  prompt_shown: <true|false>
+  prompt_choice: <opus|fable|astra|inline|null>
 planner:
   mode: <orchestrator|dedicated>
   harness: <harness>
@@ -121,11 +155,12 @@ handoff; conversation state is not.
 ## Observability
 
 The run report and any `routing-outcomes.md` row carry these planner fields:
-`planner_mode`, `orchestrator` triple, `planner` triple,
-`reused_from_orchestrator`, `fallback_used`, and `fallback_reason`. A dedicated
-planner's attempts are included when a fallback or failure occurs. Use the
-existing `brand`, `model`, `effort`, and `dispatch_form` telemetry fields for
-the actual call; do not invent a second executor/reviewer route record.
+`planner_mode`, detection verdict, whether a plan was needed, the orchestrator
+triple, prompt visibility/choice, planner triple, `reused_from_orchestrator`,
+`fallback_used`, and `fallback_reason`. A dedicated planner's attempts are
+included when a fallback or failure occurs. Use the existing `brand`, `model`,
+`effort`, and `dispatch_form` telemetry fields for the actual call; do not
+invent a second executor/reviewer route record.
 
 ## v3 boundary
 
