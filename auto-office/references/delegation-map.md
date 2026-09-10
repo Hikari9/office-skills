@@ -19,13 +19,14 @@ because it holds no authority of its own. **Plan-reviewer** is an added role, le
 `office-core/protocol/roles-and-authority.md` because it *adds* a gate rather than absorbing one; it
 runs in the **full** gear only.
 
-**The v2 orchestrator is the invoking model, never an auto-routed model.** The existing planner label
-continues to mean the invoking session in compatibility mode. In dedicated mode the orchestrator
-invokes the planner policy from `auto-routing`; that planner call produces a serialized artifact and
-holds no executor, reviewer, approval, or closeout authority. After the handoff, the orchestrator is
-the control-plane planner for the existing lifecycle. See [`planner-handoff.md`](planner-handoff.md).
+**The v2 orchestrator is the invoking model — the core Planner — never an auto-routed model.** It
+drafts the plan itself in compatibility mode, same as before v2. In dedicated mode it invokes the
+plan-drafter policy from `auto-routing`; that dedicated call is an **added role**, produces a
+serialized draft artifact, and holds no executor, reviewer, approval, or closeout authority. After
+the handoff, the invoking session remains the sole control-plane Planner for the existing lifecycle.
+See [`planner-handoff.md`](planner-handoff.md).
 
-There is no PM. At ≥2 executors the orchestrator distributes and monitors.
+There is no PM. At ≥2 executors the Planner (orchestrator) distributes and monitors.
 
 Keep emitting `executor` as the role id in schema fields (`office-kernel`, `run-event`,
 `capability-manifest`), and keep the sibling spoke names (`codex-executor`, `claude-executor`,

@@ -8,8 +8,8 @@ prompt: |
 expect_skill: true
 criteria:
   - "Records the Fable planner failure and Astra Low quota-unavailable reason"
-  - "Tries the dedicated fallback policy before considering orchestrator-as-planner"
-  - "Selects a usable declared dedicated planner candidate rather than silently changing to the orchestrator"
+  - "Tries the dedicated fallback policy before considering orchestrator-as-drafter"
+  - "Selects a usable declared dedicated plan drafter candidate rather than silently changing to the orchestrator"
   - "Leaves the approved executor route at claude/sonnet@high"
   - "Leaves the approved reviewer route at claude/opus@low"
   - "States that planner failure changes only planner selection metadata and the serialized handoff"

@@ -5,9 +5,10 @@ description: The discernment engine — which brand is the executor, which brand
 
 # Auto Routing
 
-**The invoking model is the orchestrator; it is never auto-routed.** In existing v2 it also performs
-planning for compatibility. This ticket adds one narrow planner-call decision; executor, worker, and
-reviewer routing remain the decisions below and are not changed.
+**The invoking model holds the core Planner role and is never auto-routed** ("orchestrator" below
+names only its control-plane behavior, not a new role). In existing v2 it also drafts the plan
+directly for compatibility. This ticket adds one narrow plan-drafter-call decision; executor, worker,
+and reviewer routing remain the decisions below and are not changed.
 
 **Three existing decisions, all made at plan time, stay separate:**
 
@@ -84,26 +85,30 @@ Not derived from the benchmark table, and a leaderboard movement does not change
 
 | Role | claude | codex | agy | Fixed? |
 |---|---|---|---|---|
-| Planner (compatibility path) | `opus` (invoking session) | `codex-luna` | `agy` | fixed for the existing same-call path |
-| **Plan-reviewer** (full gear only) | Existing orchestrator/control-plane planner route at `opus` **low** | `codex-luna` **xhigh** | `agy` **high** | unchanged; dedicated planner choice does not override |
+| Planner (compatibility path — invoking session, drafts inline) | `opus` (invoking session) | `codex-luna` | `agy` | fixed for the existing same-call path |
+| **Plan-reviewer** (full gear only) | Existing orchestrator/control-plane Planner's own route at `opus` **low** | `codex-luna` **xhigh** | `agy` **high** | unchanged; a dedicated plan drafter's choice does not override |
 | Executor | `sonnet` **high** | **`gpt-5.6-luna` `high`** | **Flash latest `high`** | **fixed** |
-| Worker | `sonnet` high *default* | `gpt-5.6-luna` high *default* | Flash latest `high` *default* | **ANY brand/model/effort the planner declares** |
-| **Reviewer (code)** | `opus` **low** | `codex-luna` **xhigh** default, **`high`** floor *(only when Codex is the orchestrator/control-plane planner)* | never reviews | claude fixed; **codex priced by blast radius** — see *Reviewer selection* |
+| Worker | `sonnet` high *default* | `gpt-5.6-luna` high *default* | Flash latest `high` *default* | **ANY brand/model/effort the Planner declares** |
+| **Reviewer (code)** | `opus` **low** | `codex-luna` **xhigh** default, **`high`** floor *(only when Codex is the orchestrator/control-plane Planner)* | never reviews | claude fixed; **codex priced by blast radius** — see *Reviewer selection* |
 
-## v2 dedicated planner policy
+## v2 dedicated plan-drafter policy
 
-This is the only new routing surface in this ticket. It selects the planner call,
-not the invoking orchestrator, executor, worker, plan-reviewer, or code-reviewer.
-The full detector, prompt, contract, and serialized artifact are in
-[`planner-handoff.md`](../../references/planner-handoff.md).
+This is the only new routing surface in this ticket. It selects the plan-drafter call —
+an added role, never the Planner itself — not the invoking orchestrator, executor, worker,
+plan-reviewer, or code-reviewer. The full detector, prompt, contract, dispatch mechanics, and
+serialized artifact are in [`planner-handoff.md`](../../references/planner-handoff.md).
 
-`planner_mode=auto` is the default when no planner override is supplied. After
+`planner_mode=auto` is the default when no drafter override is supplied. After
 the fit test, if a plan is needed and the detected orchestrator triple is not a
-planner candidate, prompt the user with `AskUserQuestion`: recommend **Opus
-Medium** (Astra Low fallback), then offer **Fable 5.1**, **GPT-6 Astra**, or
-**inline**. Family choices resolve to an exact declared effort; silence does not
-select inline. No prompt is shown for direct (no-plan) work, a supported exact
-triple, or an explicit caller override.
+drafter candidate, prompt the user with `AskUserQuestion` — unless
+`planner_isolation=required` was also given explicitly, which skips the prompt
+and goes straight to dedicated resolution using the declared default (see
+resolution step 3 below; the gap this closes is detailed in
+[`planner-handoff.md`](../../references/planner-handoff.md)). When the prompt
+runs: recommend **Opus Medium** (Astra Low fallback), then offer **Fable 5.1**,
+**GPT-6 Astra**, or **inline**. Family choices resolve to an exact declared
+effort; silence does not select inline. No prompt is shown for direct (no-plan)
+work, a supported exact triple, or an explicit caller override.
 
 | Policy value | Harness | Model | Effort |
 |---|---|---|---|
@@ -114,46 +119,57 @@ triple, or an explicit caller override.
 | Required fallback | `codex` | `gpt-6-astra` (GPT-6 Astra) | `low` |
 | Candidate | `codex` | `gpt-6-astra` | `medium` |
 
-Use the exact `harness/model@effort` triple. The default and fallback are
-maintainer-owned v2 policy, not a score-based choice. An explicit planner
-triple is a caller override and must be echoed.
+Use the exact, **canonicalized** `harness/model@effort` triple — normalize launch
+aliases and runtime/read-back strings (`opus`, `claude-opus-5` → `opus-5`) before
+any equality check; see *Canonical model identity* in
+[`planner-handoff.md`](../../references/planner-handoff.md). The default and
+fallback are maintainer-owned v2 policy, not a score-based choice. An explicit
+drafter triple is a caller override and must be echoed.
 
-Resolution order is fixed:
+Resolution order is fixed and total — every combination below terminates at a
+selected drafter, never at "none selected":
 
-1. Explicit `planner_mode=orchestrator`, or `planner_mode=auto` with the user
+1. Explicit `planner_mode=inline`, or `planner_mode=auto` with the user
    choosing **inline**, uses the old same-call behavior. Record
    `reused_from_orchestrator: true` and no fallback.
 2. `planner_mode=auto` with a supported exact orchestrator triple reuses that
    triple when isolation is allowed and makes no duplicate call.
-3. `planner_mode=auto` with an unsupported/unknown triple uses the exact
-   family/effort selected by the user, then follows dedicated resolution.
-4. Otherwise try the explicit planner triple, or `claude/opus-5@medium`.
+3. `planner_mode=auto` with an unsupported/unknown triple, and a prompt choice
+   was collected, uses the exact family/effort selected, then follows
+   dedicated resolution (4-6). **If `planner_isolation=required` suppressed
+   the prompt so no choice exists, skip straight to dedicated resolution (4-6)
+   using the declared default** — the same branch reached by
+   `planner_mode=dedicated` outright.
+4. Dedicated mode (reached directly, or via rule 3) tries the explicit
+   drafter triple, or `claude/opus-5@medium` when none was supplied.
 5. If it is unavailable or fails, try **`codex/gpt-6-astra@low` first**. Do
    not fall back to the orchestrator before this attempt.
 6. If that fallback is unavailable, try the remaining declared candidates in
    their listed order. Only when no dedicated candidate is usable may the
-   existing orchestrator-as-planner path be used as graceful fallback.
+   existing orchestrator-as-drafter path be used as graceful fallback.
 
 Record every failed attempt and its reason (`not-installed`, `unauthenticated`,
 `unsupported-model`, `unsupported-effort`, `quota-unavailable`, `launch-error`,
-or `planner-failure`). A preferred planner's failure never changes executor or
+or `planner-failure`). A preferred drafter's failure never changes executor or
 reviewer routing.
 
-If the selected planner triple exactly equals the orchestrator's
-harness/model/effort, reuse the orchestrator planning step when isolation was
-not explicitly requested. Record `reused_from_orchestrator: true` and make no
-duplicate call. `planner_isolation=required` always makes a separate call.
+If the selected drafter triple exactly equals the orchestrator's canonicalized
+harness/model/effort, reuse the orchestrator's own inline drafting step when
+isolation was not explicitly requested. Record `reused_from_orchestrator: true`
+and make no duplicate call. `planner_isolation=required` always makes a
+separate call.
 
 The orchestrator kickoff, serialized handoff, run report, and routing outcome
 record the detector verdict, plan-needed flag, orchestrator triple, prompt
-visibility/choice, `planner_mode`, planner triple, `reused_from_orchestrator`,
+visibility/choice, `planner_mode`, plan-drafter triple, `reused_from_orchestrator`,
 `fallback_used`, and `fallback_reason`. Use the existing telemetry fields
-`brand`, `model`, `effort`, and `dispatch_form` for the actual planner call; do
+`brand`, `model`, `effort`, and `dispatch_form` for the actual drafter call; do
 not add executor/reviewer route fields here.
 
-**The plan-reviewer's brand remains the existing planner/reviewer route** — it is not selected by the
-v2 dedicated-planner policy. It reads one document the planning step just wrote; same-brand is an
-advantage there, not the conflict of interest it would be on a diff. Executor and worker brand *is*
+**The plan-reviewer's brand remains the existing orchestrator/control-plane Planner's own route** —
+it is not selected by the v2 dedicated-plan-drafter policy. It reads one document the drafting step
+just wrote; same-brand is an advantage there, not the conflict of interest it would be on a diff.
+Executor and worker brand *is*
 routed by fit, exactly as before.
 
 **The executor is sonnet-tier, high effort — Claude Sonnet is the standing default, and the other
@@ -258,6 +274,7 @@ Inline work remains inline. When Herdr is absent, the table below is unchanged.
 | Who dispatches whom | Form | What the delegation buys |
 |---|---|---|
 | Any real delegation while `HERDR_ENV=1` | **Herdr pane** | Visible topology, prompt/read/wait control, and no hidden in-session child |
+| Planner → dedicated **plan drafter**, **Phase 1 only, `planner_mode=dedicated`** | **CLI, own worktree scoped to `docs/plans/<slug>.md`** — see *Dispatch mechanics* in [`planner-handoff.md`](../../references/planner-handoff.md) | A different model call producing the draft, with no gate and no write access outside the plan artifact |
 | Planner → executor, **one per repo, whole plan** | **CLI, own worktree** | Isolation, unattended running, and a ~6× cheaper writer that already holds the reviewed plan |
 | Planner → code reviewer | **CLI / fresh agent** | Independence — the executor may never launch its own gate |
 | Planner → read-only scout, **Phase 1 only** | **CLI, `agy` by default**; if agy is unavailable, the planner's own brand at its **lower** tier (`haiku` in-session for claude, `gpt-5.6-luna` for codex) — **never planner tier** | Breadth before a plan or an executor exists |

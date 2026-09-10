@@ -1,11 +1,11 @@
-name: v2 dedicated planner defaults to Opus Medium
+name: v2 dedicated plan drafter defaults to Opus Medium
 prompt: |
   /auto-office planner_mode=dedicated No planner triple was supplied. Resolve the v2 dedicated
   planner using the maintained policy. The orchestrator is claude/orchestrator@high. State the
   selected planner harness, model, effort, and the observable metadata fields.
 expect_skill: true
 criteria:
-  - "Selects Claude Opus 5 at medium effort as the dedicated-planner default"
+  - "Selects Claude Opus 5 at medium effort as the dedicated-plan-drafter default"
   - "Does not infer the planner choice from a moving benchmark score"
   - "Leaves the invoking orchestrator choice unchanged"
   - "Records planner_mode=dedicated and the planner harness/model/effort"

@@ -1,16 +1,16 @@
-name: v2 dedicated planner returns a serialized handoff
+name: v2 dedicated plan drafter returns a serialized handoff
 prompt: |
-  /auto-office planner_mode=dedicated The invoking Claude session is the orchestrator. Use a
-  separate planner call to produce the implementation plan, then continue the v2 lifecycle. Explain
-  the request sent to the planner, the serialized artifact it returns, the read-back validation, and
-  which role owns dispatch and state after the handoff.
+  /auto-office planner_mode=dedicated The invoking Claude session holds the Planner role
+  (orchestrator). Use a separate plan-drafter call to produce the implementation plan, then continue
+  the v2 lifecycle. Explain the request sent to the plan drafter, the serialized artifact it returns,
+  the read-back validation, and which role owns dispatch and state after the handoff.
 expect_skill: true
 criteria:
-  - "Distinguishes the user's invoking model as orchestrator from the dedicated planner"
-  - "Performs a separate planner call rather than relying on hidden planner state"
-  - "Returns a serialized handoff containing the planner metadata, base identity, and complete plan-contract sections"
-  - "Has the orchestrator validate the handoff before plan review, approval, executor dispatch, and closeout"
-  - "States that the dedicated planner cannot ask the user, dispatch the executor, or own later lifecycle state"
+  - "Distinguishes the user's invoking model (the Planner/orchestrator) from the dedicated plan drafter, an added role"
+  - "Performs a separate plan-drafter call rather than relying on hidden state"
+  - "Returns a serialized handoff containing the drafter metadata, base identity, and complete plan-contract sections"
+  - "Has the Planner validate the handoff before plan review, approval, executor dispatch, and closeout — never adopting it unread"
+  - "States that the dedicated plan drafter cannot ask the user, dispatch the executor, or own any lifecycle state or gate"
   - "Continues the existing v2 lifecycle after the handoff"
 allowed_tools: ["Read", "Grep", "Glob"]
 timeout: 260

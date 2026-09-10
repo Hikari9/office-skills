@@ -2,7 +2,7 @@
 
 | Line | Value |
 |---|---|
-| Plugin version | `17.6.0` (see `.claude-plugin/plugin.json`) |
+| Plugin version | `17.7.0` (see `.claude-plugin/plugin.json`) |
 | Core protocol supported | `>=17.0.0 <18.0.0` |
 | Core protocol vendored | `17.4.0` (see `office-core/SNAPSHOT.json`) |
 | Vendored snapshot | `office-core/SNAPSHOT.json`, written by `scripts/vendor-core.sh` |
@@ -20,22 +20,25 @@ exceptions:
   - id: auto-orchestrator-selection
     owner: auto-office
     reason: >
-      The invoking model is the orchestrator and is never selected by auto-office routing. This legacy
-      exception id is retained for traceability while v2 adds only a separate, optional planner call:
-      the orchestrator may invoke a dedicated planner, consume its serialized handoff, and retain all
-      lifecycle, state, dispatch, approval, and closeout authority. This is a runtime-mechanics choice,
-      not an authority change; executor and reviewer routing remain unchanged.
+      The invoking model holds core's Planner role and is never selected by auto-office routing;
+      "orchestrator" names only its control-plane behavior. This legacy exception id is retained for
+      traceability while v2 adds only a separate, optional plan-drafter call — an added role, never a
+      reassignment of Planner: the Planner may invoke a dedicated plan drafter, consume its serialized
+      draft handoff, and retain all lifecycle, state, dispatch, approval, and closeout authority. This
+      is a runtime-mechanics choice, not an authority change; executor and reviewer routing remain
+      unchanged.
     widens_core_authority: false
   - id: auto-task-subdelegation
     owner: auto-office
     reason: >
-      The orchestrator dispatches the dedicated planner when selected, then one executor per repo and
-      the existing reviewer/scout stages. The approved Executor may sub-delegate individual tasks to
-      another tool (typically agy for read-only recon and bulk mechanical work). When `HERDR_ENV=1`,
-      every real delegation uses the Herdr pane contract; otherwise same-brand fan-out may use the
-      existing in-session route and cross-brand fan-out uses CLI. Ordinary sub-delegation never creates
-      a second writer. The core Tester exception permits one Executor-owned Tester to write disjoint
-      test/config paths in the Executor's tree under the shared lock and pathspec contract.
+      The Planner (orchestrator) dispatches the dedicated plan drafter when selected, then one
+      executor per repo and the existing reviewer/scout stages. The approved Executor may sub-delegate
+      individual tasks to another tool (typically agy for read-only recon and bulk mechanical work).
+      When `HERDR_ENV=1`, every real delegation uses the Herdr pane contract; otherwise same-brand
+      fan-out may use the existing in-session route and cross-brand fan-out uses CLI. Ordinary
+      sub-delegation never creates a second writer. The core Tester exception permits one
+      Executor-owned Tester to write disjoint test/config paths in the Executor's tree under the
+      shared lock and pathspec contract.
     widens_core_authority: false
   - id: auto-goal-locked-autonomy
     owner: auto-office
@@ -51,7 +54,9 @@ exceptions:
     owner: auto-office
     reason: >
       The code-review floor is a fresh Opus subagent at low regardless of which brand executed.
-      The Codex Luna reviewer path applies only when Codex is the planner. This is strictly narrower
+      The Codex Luna reviewer path applies only when Codex is the orchestrator/control-plane Planner
+      (a Codex session invoked this workflow), not merely when Codex was selected as the dedicated
+      plan drafter. This is strictly narrower
       than core, which permits any independent reviewer. Core 3.0.0 states that a declared floor
       binds the gate it was declared for, so this floor is the code-review gate's alone.
     widens_core_authority: false
@@ -121,11 +126,12 @@ Core `2.0.0` absorbed three things this office would otherwise have had to decla
 The remaining exceptions were re-checked against core `2.0.0` and all remain
 `widens_core_authority: false`:
 
-- `auto-orchestrator-selection` — the legacy exception id now records that the invoking model is the
-  orchestrator and is not auto-selected. v2's dedicated planner call is a narrow runtime-mechanics
-  addition; it does not change authority, executor routing, or reviewer routing.
-- `auto-task-subdelegation` — the orchestrator dispatches the dedicated planner/executor stages when
-  applicable; the approved Executor owns task-worker fan-out. Core 9.0.0's Herdr override takes
+- `auto-orchestrator-selection` — the legacy exception id now records that the invoking model holds
+  the Planner role and is not auto-selected. v2's dedicated plan-drafter call is a narrow
+  runtime-mechanics addition; it does not change authority, executor routing, or reviewer routing.
+- `auto-task-subdelegation` — the Planner (orchestrator) dispatches the dedicated plan-drafter/
+  executor stages when applicable; the approved Executor owns task-worker fan-out. Core 9.0.0's
+  Herdr override takes
   precedence when `HERDR_ENV=1`; without Herdr, same-brand fan-out is in-session, cross-brand is CLI,
   and neither creates a second writer.
 - `auto-goal-locked-autonomy` — unchanged. The loop still cannot raise a cap, remove a phase,

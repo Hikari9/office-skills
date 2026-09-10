@@ -7,8 +7,8 @@ prompt: |
 expect_skill: true
 criteria:
   - "Records why claude/opus-5@medium was unavailable"
-  - "Selects codex/gpt-6-astra@low as the required dedicated-planner fallback"
-  - "Attempts the dedicated fallback before considering orchestrator-as-planner"
+  - "Selects codex/gpt-6-astra@low as the required dedicated-plan-drafter fallback"
+  - "Attempts the dedicated fallback before considering orchestrator-as-drafter"
   - "Does not silently use the orchestrator when Astra Low is usable"
   - "Leaves executor and reviewer routing unchanged"
   - "Records fallback_used and fallback_reason in the handoff or run outcome"

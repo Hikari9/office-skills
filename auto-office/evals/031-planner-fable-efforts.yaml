@@ -6,9 +6,9 @@ prompt: |
   override, and what remains unchanged.
 expect_skill: true
 criteria:
-  - "Accepts Claude Fable 5.1 at low as an explicit dedicated-planner choice"
-  - "Accepts Claude Fable 5.1 at medium as an explicit dedicated-planner choice"
-  - "Accepts Claude Fable 5.1 at high as an explicit dedicated-planner choice"
+  - "Accepts Claude Fable 5.1 at low as an explicit dedicated-plan-drafter choice"
+  - "Accepts Claude Fable 5.1 at medium as an explicit dedicated-plan-drafter choice"
+  - "Accepts Claude Fable 5.1 at high as an explicit dedicated-plan-drafter choice"
   - "Preserves the exact effort spelling instead of normalizing it to another tier"
   - "Does not use the Fable choice to auto-route the orchestrator or change executor/reviewer routing"
 allowed_tools: ["Read", "Grep", "Glob"]

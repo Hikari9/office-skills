@@ -5,33 +5,34 @@ description: Use ONLY when explicitly invoked via /auto-office; never self-trigg
 
 # Auto Office
 
-The office chooser. The user's invoking model is always the **orchestrator**; v2
-never auto-routes it. The planner may be that same session for compatibility, or
-an optional dedicated call that returns a serialized plan before the orchestrator
-continues the existing lifecycle. Executor and reviewer routing stay unchanged.
+The office chooser. The invoking model always holds core's **Planner** role
+([roles-and-authority.md](office-core/protocol/roles-and-authority.md)) — "orchestrator" below just
+names its control-plane behavior, not a second role. It drafts the plan itself for compatibility, or
+dispatches an optional dedicated **plan drafter** (an added role, never the Planner) that returns a
+serialized draft before the Planner continues the existing lifecycle. Executor/reviewer routing is
+unchanged.
 
 ```
-ORCHESTRATOR (user's entry; owns state, dispatch, lifecycle)
-  ├─ planner: same call (compatibility) | dedicated model → serialized handoff
+PLANNER / orchestrator (user's entry; owns state, dispatch, lifecycle, gates)
+  ├─ drafts the plan: itself (compatibility) | dedicated plan drafter → serialized draft handoff
   ├─▶ Plan-reviewer ─▶ retires                         [full gear only]
   └─▶ ONE Executor per repo ─▶ Workers → Reviewer → closeout
 ```
 
 | Role | Who | Job | Never does |
 |---|---|---|---|
-| **Orchestrator** | User's invoking model | Intent, state, lifecycle, dispatch, monitoring, review state, closeout | Auto-route itself or delegate lifecycle to planner |
-| **Planner** | Same session for compatibility, or dedicated call | Plan + serialized handoff | Ask user, dispatch executors, or change executor/reviewer routes |
-| **Plan-reviewer** | Fresh existing control-plane route, Opus **low**; full only | One adversarial pass, then retires | Dedicated planner choice does not override route |
+| **Planner (orchestrator)** | Invoking model | Intent, state, lifecycle, dispatch, monitoring, approval, review state, closeout | Auto-route itself or give up a gate to the plan drafter |
+| **Plan drafter** *(added role)* | Same session, or a dedicated separate call | Draft plan + serialized handoff | Ask user, dispatch executors, hold a gate, or change executor/reviewer routes |
+| **Plan-reviewer** | Fresh, Planner's own control-plane route, Opus **low**; full only | One adversarial pass, then retires | A dedicated drafter's brand does not override this route |
 | **Executor** | One per repo; fixed sonnet-tier high | Whole approved plan end to end; bootstrap, commit, handoff | Self-approve, exceed ceiling, or merge |
 | **Worker** | Per task; declared triple | One task under Executor | Widen scope or self-promote |
-| **Reviewer** | Fresh Opus **low** (`codex-luna` only when Codex is control-plane planner) | Adversarial gate | Fix its own findings |
+| **Reviewer** | Fresh Opus **low** (`codex-luna` only when Codex is the control-plane Planner) | Adversarial gate | Fix its own findings |
 
-The dedicated-planner contract and v2-only boundary are in
-[`references/planner-handoff.md`](references/planner-handoff.md).
-**Core:** no one gates their own work; inline work is still independently reviewed. The planner
-(orchestrator after a dedicated handoff) designs dispatch; one executor performs the whole plan per
-repo. No PM; ≥2 repos means ≥2 executors. Planner-implements is allowed only for a fix whose brief
-would exceed the edit — never for volume.
+Drafter contract, dispatch mechanics, v2-only boundary: [`references/planner-handoff.md`](references/planner-handoff.md).
+**Core:** no one gates their own work; inline work is still independently reviewed. The Planner
+designs dispatch and validates any draft before adopting it; one executor performs the whole plan
+per repo. No PM; ≥2 repos means ≥2 executors. Planner-implements is allowed only for a fix whose
+brief would exceed the edit — never for volume.
 
 ## Invocation gate and caller overrides
 
@@ -42,11 +43,11 @@ planner is invoked with `/auto-office` **plus this plugin directory's absolute p
 
 Anything after `/auto-office` overrides discernment and is echoed in the kickoff line: `use codex`,
 `express`, `full`, `direct`, `no loop`, `skip cleanup`, `plan approved: <path>`,
-`planner_mode=auto|dedicated|orchestrator`, `planner=<harness/model@effort>`, and
+`planner_mode=auto|dedicated|inline`, `planner=<harness/model@effort>`, and
 `planner_isolation=required`. The v2 default is `planner_mode=auto`: if a plan is needed and the
-orchestrator is not a supported planner triple, ask whether to use Opus Medium, Fable, Astra, or
+orchestrator is not a supported plan-drafter triple, ask whether to use Opus Medium, Fable, Astra, or
 inline. Dedicated default/fallback remain `claude/opus-5@medium` → `codex/gpt-6-astra@low`.
-`planner_mode=orchestrator` explicitly preserves the old behavior. A caller override is the
+`planner_mode=inline` explicitly preserves the old same-call behavior. A caller override is the
 **only** thing that may change a default, executor tier and gear included (`express` and `direct`
 are permitted even for prod-facing work) — and none may let an executor review itself, drop a floor,
 or widen blast radius implicitly.
@@ -74,13 +75,13 @@ Brand by fit — **claude** cross-cutting ambiguity (preferred default), **codex
 [auto-routing](skills/auto-routing/SKILL.md).
 
 **Dispatch form is derived, not priced:** Herdr when `HERDR_ENV=1`, otherwise the existing
-CLI/in-session/inline route. The orchestrator records planner selection; the planning step records
+CLI/in-session/inline route. The Planner records drafter selection; the drafted plan records
 task assignments; the executor performs them. See [auto-routing](skills/auto-routing/SKILL.md).
 
-**After handoff, the orchestrator owns** user decisions, approval/review state, lifecycle, dispatch,
-and irreversible actions. The executor owns implementation, fixes, commits, and its draft PR; the
-dedicated planner keeps no run state. The five frozen fields are `goal`, `done_criteria`,
-`blast_radius`, `named_actions`, and `non_goals`.
+**After a drafted handoff, the Planner (orchestrator) owns** user decisions, approval/review state,
+lifecycle, dispatch, and irreversible actions. The executor owns implementation, fixes, commits, and
+its draft PR; the dedicated plan drafter keeps no run state and holds no gate. The five frozen fields
+are `goal`, `done_criteria`, `blast_radius`, `named_actions`, and `non_goals`.
 
 **Headroom is probed at fit-test and before dispatch; UNKNOWN is unavailable.** Agy has a three-task
 cap. Live-system delegation names its tools, pins shape, and requires read-back. Model/effort changes
@@ -92,11 +93,11 @@ are caller-owned.
   test/config paths and locked commits. A planner inline write never overlaps a live executor.
 - With `HERDR_ENV=1`, read [`herdr`](office-core/skills/herdr/SKILL.md): delegated agents use visible
   panes (right, then below), never in-session; otherwise existing CLI/in-session routing remains.
-- **The orchestrator dispatches the dedicated planner during Phase 1 when selected, then the executor,
-  code reviewer, and Phase 1 read-only scouts.** After bootstrap, the Executor may dispatch task
-  workers and Tester under the core contract. A planner-launched numbered-task worker is a protocol
-  violation.
-- **No self-approval, ever** — not the executor on its diff, not the orchestrator/control-plane planner
+- **The Planner (orchestrator) dispatches the dedicated plan drafter during Phase 1 when selected,
+  then the executor, code reviewer, and Phase 1 read-only scouts.** After bootstrap, the Executor
+  may dispatch task workers and Tester under the core contract. A Planner-launched numbered-task
+  worker is a protocol violation.
+- **No self-approval, ever** — not the executor on its diff, not the Planner (orchestrator)
   on its inline fix.
 - Executor is **sonnet-tier high** always; a worker's tier is the plan's call, never raised mid-run.
 - A delegation buys tier, isolation, parallelism, **or price** — and **every inline row states in a
@@ -124,16 +125,16 @@ verify, review/fix, record milestones, then close out. No extra go-aheads except
 unanticipated user-owned decisions.
 
 ```
-resolve planner → detect triple/plan need → prompt if needed → serialized handoff → validate
+resolve plan drafter → detect triple/plan need → prompt if needed → serialized draft handoff → validate
   task: dispatch → verify → review/fix → APPROVED
   finish: final gate → remove plan → ready PR → merge → sync/report
 ```
 
 `planner_mode=auto` detects whether a plan is needed and whether the invoking triple is a supported
-planner; an unsupported triple prompts before planning. `planner_mode=orchestrator` makes the handoff
-an in-session compatibility step. Dedicated mode keeps the orchestrator as the sole controller after
-the planner returns. v3 may deepen the split; this PR does not add v3 routing or a new executor/reviewer
-architecture.
+plan-drafter candidate; an unsupported triple prompts before planning. `planner_mode=inline` makes the
+draft an in-session compatibility step. Dedicated mode keeps the Planner (orchestrator) as the sole
+controller and gate-holder after the plan drafter returns and its draft is validated. v3 may deepen
+the split; this PR does not add v3 routing or a new executor/reviewer architecture.
 
 The branch, plan, local run state, and allowed PR comments are the resume record through closeout.
 
@@ -146,9 +147,9 @@ one. Protocol amnesia past Phase 2 is the observed failure; a re-read is the che
 | Phase / need | Load |
 |---|---|
 | Phase 1 — interview, plan + GOAL + milestones + named actions, self-review, approval (**full** adds plan-review) | [auto-planning](skills/auto-planning/SKILL.md) |
-| Phase 1 — planner mode, planner triple, dispatch form, model+effort | [auto-routing](skills/auto-routing/SKILL.md) |
+| Phase 1 — drafter mode, drafter triple, dispatch form, model+effort | [auto-routing](skills/auto-routing/SKILL.md) |
 | Routing — the local ledger, read **before** the benchmarks | [routing-outcomes.md](references/routing-outcomes.md) · [model-benchmarks.md](references/model-benchmarks.md) |
-| Dedicated planner request/response and serialized artifact | [planner-handoff.md](references/planner-handoff.md) |
+| Dedicated plan-drafter request/response and serialized artifact | [planner-handoff.md](references/planner-handoff.md) |
 | Phase 2+ — goal loop, milestone landing, caps, stops, drift checks | [auto-loop](skills/auto-loop/SKILL.md) |
 | Every dispatch — sibling spoke to load, forced-invocation path | [delegation-map.md](references/delegation-map.md) |
 | Milestone landing and final closeout (unless `skip cleanup`) | [auto-closeout](skills/auto-closeout/SKILL.md) |
@@ -161,7 +162,7 @@ narrowing is never imported.
 
 ## Telemetry and maintenance
 
-**The harness records it; you do not.** Hooks emit run events; planner metadata lives in the
+**The harness records it; you do not.** Hooks emit run events; plan-drafter metadata lives in the
 serialized handoff, run report, and existing routing-outcome fields. Actual calls use the established
 `brand`, `model`, `effort`, and `dispatch_form` fields. Install with `node eval/hooks/install.mjs`.
 

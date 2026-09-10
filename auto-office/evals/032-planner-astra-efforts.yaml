@@ -5,8 +5,8 @@ prompt: |
   that it is a caller override, and how fallback metadata is recorded.
 expect_skill: true
 criteria:
-  - "Accepts GPT-6 Astra at low as an explicit dedicated-planner choice"
-  - "Accepts GPT-6 Astra at medium as an explicit dedicated-planner choice"
+  - "Accepts GPT-6 Astra at low as an explicit dedicated-plan-drafter choice"
+  - "Accepts GPT-6 Astra at medium as an explicit dedicated-plan-drafter choice"
   - "Preserves the exact harness, model, and effort triple"
   - "Does not confuse Astra Medium with the required Astra Low fallback"
   - "Does not use the Astra choice to auto-route the orchestrator or change executor/reviewer routing"
