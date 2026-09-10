@@ -1,5 +1,17 @@
 # Review states and the fix loop (core protocol)
 
+## Which tier is funded
+
+Adversarial review is the default. The
+[inline-review tier](roles-and-authority.md#three-review-tiers) — the producer self-reviewing and
+running the plan's validation commands with no adversary spawned — is available only for cheap,
+reversible, low-risk work, is chosen at routing time, and never covers the run's main correctness
+or security risk. An **integration adversary** runs only when two or more executors produce
+dependent or merging landings; a single-executor family does not get a second reviewer over the
+landing its own local loop already gated.
+
+Everything below describes a funded adversarial round.
+
 ## The reviewer
 
 Fresh, and never the agent that did the work. The planner is the **worst** available reviewer
@@ -80,9 +92,11 @@ planner posts to the PR only at these three events:
 2. **First executor completion.** The first executor's completion comment records its status,
    handoff, commit range, final `HEAD`, gate evidence, and next resume point. Follow-up fix
    executors do not add PR comments.
-3. **Final `APPROVED`.** After the reviewer returns `APPROVED`, post one short summary with the
+3. **Final exit state.** After the reviewer returns `APPROVED`, post one short summary with the
    reviewer id, final `HEAD`, review rounds, the total number of changes required across those
-   rounds, and a brief reason for each change — or why none were required. Use
+   rounds, and a brief reason for each change — or why none were required. **For an inline-routed
+   task there is no reviewer and no rounds**: post the same summary naming the inline tier, the
+   orchestrator that declared it at dispatch, and every validation command with its real output. Use
    `gh pr comment <number> --body-file <approval-summary-file>` and read the comment back.
 
 Do not post `CHANGES REQUIRED`, `PLAN DEFECT`, intermediate verdicts, or fix-resolution comments
@@ -116,14 +130,33 @@ A verdict returned with no self-review goes back to the reviewer to complete, an
 re-consume the round.** Schema:
 [`../schemas/review-verdict.schema.json`](../schemas/review-verdict.schema.json).
 
-## Planner disposition after `CHANGES REQUIRED`
+## Disposition after `CHANGES REQUIRED`
+
+Two dispositions, held by two different agents:
+
+- **Per finding, the producer disposes.** The executor (or whoever wrote the gated artifact) records
+  `accepted_fixed`, `rejected_with_evidence`, or `unresolved` for each numbered finding. The
+  reviewer is an adversary, not its superior: a rejection stands when it carries evidence of the
+  kind the gate itself demands — real output, a read file, a run. Confidence is not evidence, and a
+  rejection without it is `unresolved`. The reviewer then judges the resulting `HEAD` on
+  correctness, never on whether its suggestion was adopted.
+- **Per round, the control plane disposes.** Whether to fund another round, replan, waive, or stop
+  is the orchestrator's, below.
+
+Where the producer genuinely cannot resolve conflicting evidence, it emits `TRUE_CONFLICT` /
+`USER_DECISION_REQUIRED` instead of guessing. `TRUE_CONFLICT` is a defined state in
+[`../schemas/review-verdict.schema.json`](../schemas/review-verdict.schema.json) (`5.0.0`), whose
+findings now carry the producer's `disposition` and its `disposition_evidence`. That state stops the thread, and the orchestrator
+surfaces both cases plus a recommendation to the user. It is exceptional; routine use of it is a
+producer declining to decide.
 
 `CHANGES REQUIRED` is the reviewer's gate state, not an instruction to launch another fix wave.
-The planner owns the next transition and must pause for a written disposition before fixing,
+The orchestrator owns the next transition and must pause for a written disposition before fixing,
 re-dispatching the reviewer, or deciding that no further round is warranted. The disposition is
 recorded in the review files and planner run state and includes:
 
-- each finding's status: accepted, contested, deferred, or escalated;
+- each finding's producer disposition (`accepted_fixed`, `rejected_with_evidence`, `unresolved`)
+  and, where the control plane differs, its own read of that finding;
 - the planner's recommendation: `FIX_AND_REVIEW`, `REPLAN`, `WAIVE_AND_STOP`, or `STOP`;
 - the concrete failure scenario and expected outcome that justify the choice;
 - a **pre-fix reflection**: whether the finding is material, whether the plan is at fault, and
@@ -192,21 +225,33 @@ evaluate.
 
 ## The fix loop
 
-The **planner** applies fixes; the reviewer does not fix what it gates.
+**The producer applies fixes to its own work**, and disposes of every finding; the reviewer does not
+fix what it gates. For implementation findings that producer is the **executor**, which owns the
+resulting technical decision — see *The producer disposes* in
+[`roles-and-authority.md`](roles-and-authority.md#the-producer-disposes-the-adversary-challenges).
+
+The control plane owns the **round**, not the edit: whether to fund another one, replan, waive, or
+stop. It does not edit in the executor's tree — that is a second writer — and it does not overwrite
+an evidenced disposition.
+
+**The one exception is a retired executor.** Once the executor has exited, the control plane
+discerns per the [delegation test](roles-and-authority.md#delegation-test): edit inline when the
+brief would exceed the edit, or relaunch an executor when the fix set is worth a process. Either way
+a fresh adversary still gates the result, and inline work never covers the run's main correctness or
+security risk.
 
 - **One fix wave per round, all findings together.** Per-finding dispatches each rebuild context
   and re-run the suite.
 - **Escalate out of the tool, not up within it.** A failure class the worker just demonstrated —
   an invented interface, a test that will not go red — does not go back to that worker.
-- **At 2 `CHANGES REQUIRED` rounds on one task — consecutive or not — force a fresh planner
-  disposition checkpoint.** The planner records whether the next action is another fix and review,
+- **At 2 `CHANGES REQUIRED` rounds on one task — consecutive or not — force a fresh control-plane
+  disposition checkpoint.** It records whether the next action is another fix and review,
   a plan amendment, a waiver/escalation, or a stop. Two rounds are evidence to weigh, not an
-  automatic `PLAN DEFECT`; the planner must explain why another round is or is not expected to
-  converge. A technical plan gap still takes the `PLAN DEFECT` route above, and a tradeoff, scope,
+  automatic `PLAN DEFECT`; it must explain why another round is or is not expected to converge. A technical plan gap still takes the `PLAN DEFECT` route above, and a tradeoff, scope,
   or cost decision still goes to the user.
 - **Re-run the gate after each accepted wave that changes a gated surface** and capture the real
-  output. The fix diff + fresh gate output go back to the same reviewer when the planner's
-  disposition is `FIX_AND_REVIEW`.
+  output. The fix diff + fresh gate output go back to the same reviewer when the control plane's
+  round disposition is `FIX_AND_REVIEW`.
 - **A finding that contradicts the approved plan is the user's call.** Present the finding beside
   the plan text and ask which governs. Do not fix against the plan; do not dismiss the finding
   because the plan mandated it.

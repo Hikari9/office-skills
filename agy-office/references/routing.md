@@ -8,12 +8,15 @@ Optimize in this order: **effectiveness first, then the cheapest shape that stil
 Cheap-and-wrong is the most expensive outcome available — a run that ships a defect costs another whole
 run. Never trade away the reasoning tier on the task that carries the risk.
 
-**The structural difference from `claude-office`:** an `agy` run has no in-session subagents and does
-not review itself per task. There are only three places work can land:
+**The structural difference from `claude-office`:** an `agy` run has no in-session subagents, so
+there is no per-task *independent* reviewer inside the run — the Phase 3 gate is the independent one.
+Per-task **self-review by the producer is still mandatory** before any handoff
+(`office-core/protocol/evidence-and-handoff.md`); "no in-session reviewer" never means "no
+self-review". There are only three places work can land:
 
 | Landing spot | What it is |
 |---|---|
-| **INLINE** | The planner edits it directly. No brief, no dispatch. |
+| **INLINE** | The smallest possible `agy` dispatch — one scoped run, no separate brief document. **The planner does not edit the plan's code**; this office narrows core's inline-producer allowance (`SKILL.md` → *Declared narrowing of core*). If a change is too small to be worth a dispatch, it is a Phase 3b fix wave or it is not in this plan. |
 | **One agy dispatch** | An `agy --print` run scoped to a slice of the plan, at a chosen model. |
 | **PLANNER-HELD** | Kept out of every brief; the planner runs it after the gate, or the user does. |
 

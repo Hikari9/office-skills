@@ -1,5 +1,130 @@
 # Changelog — auto-office
 
+## 18.0.0 — 2026-09-10
+
+Core `18.0.0`. **Breaking: the orchestrator and the planner are now separate roles.** Implements
+issue #79 — the v2 backport of the behavioral architecture described in #77 and its
+phase-boundary-compaction addendum, applied to today's live offices. **#77 stays open** as the v3
+architecture source: v2 implements the behavior now; v3 keeps the architecture as an independent
+source of truth and may reorganize it later. This does not close or complete #77 or the #35
+Wayfinder map.
+
+- **The planner interviews the user.** The orchestrator gathers only provisional intent, files the
+  tracking issue, routes, and hands an *initial-intent packet* labelled as a hypothesis. The planner
+  does repo recon first, then talks to the user directly, may reshape any pre-freeze requirement —
+  goal, scope, done criteria, blast radius, named actions, non-goals, interfaces, milestones, the
+  problem statement — and **freezes** the requirements at the end of discovery. This overturns the
+  earlier rule that a planner never speaks to the user.
+- **The orchestrator does not re-review the returned plan.** It validates the packet's shape
+  (`base_sha`, sections, `requirements_freeze`, no undisposed `plan_review` finding, metadata, the
+  three versions) and takes the single user approval. The plan is gated by the planner's own
+  adversary and by the user.
+- **The producer disposes; the adversary challenges.** Each finding gets `accepted_fixed`,
+  `rejected_with_evidence`, or `unresolved` from the executor, which is the final local technical
+  decision-maker for its own implementation. `APPROVED` from the adversary is still the only exit
+  from review, so an evidenced rejection is an argument, not a bypass. Conflicting evidence the
+  producer cannot resolve becomes `TRUE_CONFLICT`, which the orchestrator puts to the user.
+- **The executor launches its own code adversary — it never chooses it.** Tier, triple, effort, and
+  brief stay the control plane's, at the current `routing_version`.
+- **Review tiers.** `review=inline` (self-review plus the plan's validation commands, no adversary)
+  is available for cheap, reversible, low-risk work only, and never for the run's main correctness
+  or security risk. Adversarial stays the default.
+- **No final adversary over a single-executor family.** An integration adversary runs only when two
+  or more executors produce **dependent or merging** landings; the trigger is the integration
+  boundary, not executor count. Its findings route structurally: code defect → executor, plan defect
+  → wake the planner, user-owned requirement → the user, cross-executor conflict → the orchestrator.
+- **Landing packets, not transcripts.** Executors return a compact structured packet (family,
+  scope, status, the three versions, tasks, change summary, interfaces, validation, review mode and
+  round dispositions, deviations, artifacts, downstream impacts, blockers).
+- **Review checkpoint before review** (the #77 addendum, backported per #79). `EXECUTOR-STATE.md` doubles as the
+  checkpoint: bring it current, read it back, **then** compact, then launch the adversary. Serialize
+  first — proof is re-derivable from the repo, the reasoning behind a choice is not. Conditional, not
+  mandatory; skipped on the inline tier and small tasks.
+- **Independent versions.** `requirements_version`, `plan_version`, `routing_version`. A
+  routing-only amendment never wakes the planner; a requirement that fits the plan goes out as a
+  delta packet; a plan-contract change pauses only affected work and wakes the planner for
+  interactive delta-planning.
+- **Multiple families, most-recent sticky focus.** New
+  [`references/family-registry.md`](references/family-registry.md): the durable registry, focus
+  rules, amendment classes, routing precedence, and soft quota projections. Unqualified commands
+  apply to the current focus until the user overrides it; irreversible acts echo the family in the
+  line that announces them. Child transcripts are never orchestrator state.
+- `references/planner-handoff.md` is now the interactive-planner contract and plan packet;
+  `planner_mode=inline` remains the single-session path and still may not gate its own plan.
+- Routing ledger gains `planner`, `review_tier`, `integration_adversary`, `versions`, and
+  `families_live`, with the cost of a multi-family orchestrator recorded as an open question rather
+  than an assumed saving.
+
+**Round 1 adversarial review (`gpt-5.6-luna` xhigh) returned `CHANGES REQUIRED`; all nine findings
+are applied here.**
+
+- **Two blockers, both stale authority left behind by the rename.** The executor brief still said
+  "you are the reviewer for every task" while the loop still said the executor must never launch the
+  code reviewer and the hub said it must — an executor could read its own QC pass as the gate. The
+  brief now separates *internal QC of its workers' output* from *the gate it launches but never
+  chooses*. Separately, the planning fan-out tree still showed `CODE REVIEWER ← planner-dispatched`
+  and `review-gate.md` still had "Phase 3b — The fix loop (Planner fixes)", which reintroduced a
+  second writer in the executor's tree; fixes and per-finding dispositions are the executor's, and
+  the orchestrator's inline exception is narrowed to *after the executor has retired*.
+- **Schemas caught up with the prose** (they had not moved at all): `review-verdict` `4.0.0` →
+  `5.0.0` adds the `TRUE_CONFLICT` state and per-finding `disposition` /`disposition_evidence`;
+  `handoff` `3.0.0` → `4.0.0` adds the `landing_packet` object; `run-event` `3.0.0` → `4.0.0` adds
+  `review_tier`, `integration_adversary`, `families_live`, `planner_interactive`. All three gain the
+  version fields.
+- **Inline review is now a test, not an adjective.** Five lines — named tested revert; no
+  production/security/credential/auth/personal-data/migration surface; no shared interface; not the
+  run's main risk; a gate that mechanically observes the change — all must pass. **`review=inline`
+  is the one caller override that can be refused**, because it is a floor rather than a default.
+- **An interactive planner needs an actual user channel.** A one-shot `codex exec` / `agy --print`
+  cannot ask a question, so dispatching a planner *as interactive* into one is a dispatch defect.
+  Herdr pane, relayed resumable session, or an explicitly non-interactive recon/draft call whose
+  questions come back for the orchestrator to ask. Recorded as `interactive` and `user_channel`.
+- The three versions now appear in **every** brief template (codex `task-prompt`, agy executor and
+  reviewer briefs, auto executor and reviewer briefs), so the loop's stale-packet rule has values to
+  compare instead of being vacuous.
+- agy's review gate moved off `accepted/contested/deferred/escalated` to the core dispositions plus
+  the `TRUE_CONFLICT` route; both sibling hubs stopped advertising core `9.0.0` (and codex's
+  compatibility file stopped citing `1.3.0`) while shipping `18.0.0`.
+- Express vs. inline planning no longer contradict: the plan adversary follows the **gear**, not the
+  planner mode. Fixed the `#v2-selection-policy` anchor left dangling by the heading rename.
+
+**Round 2 (resumed reviewer, `gpt-5.6-luna` xhigh): 7 of 9 addressed, 2 not, 5 new — all applied.**
+The round was briefed on the *shape* of round 1's blockers rather than their lines, which is what
+found the five new members.
+
+- **Round 1's blocker was only half fixed.** `review-states.md` — the **binding core file** — still
+  opened its fix loop with "The planner applies fixes," so an agent reading core and an agent reading
+  the repaired adapter would pick different owners for the same gated code. Core now says the
+  producer applies fixes and disposes; the control plane owns the *round*, not the edit; and the
+  retired-executor inline exception is stated there rather than only in auto-office.
+- **The Codex reviewer packet was the one consumer still missing the three versions**, so its
+  reviewer could be handed a stale plan/diff pairing with nothing to compare. Added, with the
+  `BRIEF DEFECT` route and the adversary-not-superior framing the other briefs carry.
+- **`auto-office/COMPATIBILITY.md` was still auditing itself against core `2.0.0`/`3.0.0`** and still
+  claimed "the planner does not implement" as an auto-office narrowing — which core `18.0.0` no
+  longer requires. Re-audited against `18.0.0`, obsolete narrowing withdrawn, historical section
+  kept and labelled as history.
+- **`agy-office/references/routing.md` still said "the planner edits it directly"** (against agy's own
+  hub narrowing) **and "does not review itself per task"** (against core's mandatory self-review).
+  `INLINE` is now the smallest agy dispatch, and per-task producer self-review is stated as
+  mandatory.
+- **Three schema defects in the fix I had just shipped**: the version fields were properties but
+  absent from every root `required` list, so a versionless artifact still validated; the landing
+  packet's documented `validation: [<command — real result>]` was a *scalar* the schema's
+  `{command, result}` object rejects, so an executor following the core template would emit an
+  invalid packet; and `run-event`'s nested `review.verdict` enum still lacked `TRUE_CONFLICT`, making
+  the new state unobservable in telemetry. `handoff` → `4.1.0`, `review-verdict` → `5.1.0`,
+  `run-event` → `4.1.0`.
+- **One finding rejected with evidence**, per the protocol this PR adds: `requirements_version` /
+  `plan_version` / `routing_version` stay **optional on `run-event`**. Run events are emitted by
+  `eval/hooks/session-end.mjs` from a transcript, which has no access to a run's version state —
+  requiring them would invalidate every event the harness emits, which is the unsatisfiable-criterion
+  class the self-review loop exists to catch. They are required where a role authors the artifact
+  and holds the values (`handoff`, `review-verdict`), and the schema now says why.
+- The reviewer was asked to judge the hub-budget increase (12000 → 15000) and returned it as
+  **defensible, not a bar lowered to pass**: the check is warning-only, the content added is required
+  protocol, and auto-office keeps 835 bytes of headroom.
+
 ## 17.11.0 — 2026-09-10
 
 Core `17.9.0`.
@@ -31,7 +156,7 @@ gate** (issue #70 findings; fills the executor/reviewer picks issue #71 left out
   to Astra. Astra Low is the required fallback when Opus Medium is unavailable, nothing more. Codex
   headroom is still probed for cost, and no longer selects the drafter. Candidate list (Opus medium,
   Fable 5.1 low/medium/high, Astra low/medium) is unchanged. Canonical:
-  [`planner-handoff.md`](references/planner-handoff.md#v2-selection-policy).
+  [`planner-handoff.md`](references/planner-handoff.md#selection-policy).
 - **The executor is an availability ladder, not one default.** Rung 1 **agy Flash latest `medium`**
   (resolved with `agy-model.sh medium`), capped at **3 tasks**; rung 2 **claude `sonnet` high**, any
   number of tasks, and the rung to take the moment a plan exceeds 3; rung 3 **codex

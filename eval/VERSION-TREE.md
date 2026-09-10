@@ -1,6 +1,6 @@
 # Version tree (reverse-chronological)
 
-Generated 2026-09-10T05:50:57.173Z at `e5d7e61` by `eval/build-version-tree.mjs`. Do not hand-edit.
+Generated 2026-09-10T13:29:27.630Z at `5e8cae3` by `eval/build-version-tree.mjs`. Do not hand-edit.
 
 The offices are symlinked live into `~/.claude/skills`, so the version in effect at any
 instant is this repo's working tree at that instant. Each row below opens an interval that
@@ -11,7 +11,9 @@ score from them is a score of code that no longer exists.
 
 | # | Effective from | core | codex | claude | agy | auto | commit | moved |
 |---|---|---|---|---|---|---|---|---|
-| **→** | 2026-09-10 12:32 | 17.8.0 | 16.5.0 | — | 16.5.0 | 17.10.0 | `e5d7e61` | core, codex-office, agy-office, auto-office |
+| **→** | 2026-09-10 17:49 | 18.0.0 | 17.0.0 | — | 17.0.0 | 18.0.0 | `67d370f` | core, codex-office, agy-office, auto-office |
+| 39 | 2026-09-10 16:19 | 17.9.0 | 16.6.0 | — | 16.6.0 | 17.11.0 | `f7db0b0` | core, codex-office, agy-office, auto-office |
+| 38 | 2026-09-10 12:32 | 17.8.0 | 16.5.0 | — | 16.5.0 | 17.10.0 | `e5d7e61` | core, codex-office, agy-office, auto-office |
 | 37 | 2026-09-10 12:02 | 17.7.0 | 16.4.0 | — | 16.4.0 | 17.8.0 | `d68eddb` | codex-office, agy-office, auto-office |
 | 36 | 2026-09-10 11:39 | 17.7.0 | 16.3.0 | — | 16.3.0 | 17.7.0 | `f911b2c` | core |
 | 35 | 2026-09-10 09:36 | 17.6.0 | 16.3.0 | — | 16.3.0 | 17.7.0 | `536270c` | auto-office |

@@ -1,15 +1,25 @@
 # Closeout (core protocol)
 
-Run by the **planner**, after the reviewer returns `APPROVED` — or invoked directly, standalone
-(see below), when there is no planner and no reviewer round to wait on. Self-contained: it loads
+Run by the **orchestrator** — the invoking session that holds lifecycle and run state — after the
+review tier's exit state: the reviewer's `APPROVED` for an adversarial or integration round, or the
+recorded **inline pass** for a task the orchestrator routed to the inline tier at dispatch (see
+`roles-and-authority.md` → *Three review tiers*). Inline is never selected here, at closeout, by
+whoever wrote the work. Or invoked directly, **standalone** (see below), when the work never
+went through a plan pipeline and there is no reviewer round to wait on. Self-contained: it loads
 no other skill.
+
+**"Planner-held" in this file means orchestrator-held.** The term is long-standing and names the
+control plane, not the plan author. A dedicated Planner interviews the user, returns the plan, and
+**exits before closeout** — so a run that had a dedicated planner is still a full run, never the
+standalone path below. Standalone is selected by the absence of a *plan pipeline*, not by the
+absence of a planner process.
 
 Each office narrows this with an adapter file naming its own gate command, its report fields,
 and where it records durable lessons. An adapter may add a step; it may not drop one.
 
 ## Standalone invocation
 
-This file also runs with no planner, no Office Kernel packet, and no plan file — when an
+This file also runs with no plan pipeline behind it — no Office Kernel packet and no plan file — when an
 office's closeout skill is invoked directly to finish work that never went through the full
 pipeline (a quick fix, a one-off task, resuming a branch after the session that started it is
 gone). Nothing below changes: confirm target, commit, gate, PR, document, sync, cleanup, close
@@ -56,7 +66,8 @@ path argument as a substitute for actually running from inside the worktree.
 
 `git status`. At a milestone, stage and commit only the approved implementation changes, with a
 message describing **why**, not what. Keep the plan tracked while the run is active. At final
-closeout, after the reviewer returns `APPROVED` and the final gate is green, delete
+closeout, after the review tier's exit state is recorded — reviewer `APPROVED`, or the inline pass
+for an inline-routed task — and the final gate is green, delete
 `docs/plans/<slug>.md` in a dedicated why-focused commit and verify that deletion before pushing.
 If the tree is clean at a milestone, skip the implementation commit.
 
@@ -79,12 +90,17 @@ have created the one draft PR.
 
 - **No PR:** this is a bootstrap defect in a normal executor run. Stop and report unless this is
   standalone closeout and the caller explicitly authorized creating one.
-- **Draft PR before reviewer approval:** keep it draft; add no milestone or intermediate-review comment.
-- **Draft PR after final reviewer approval:** after the plan-removal commit is pushed and read back,
-  run `gh pr ready <number>`, then `gh pr merge --auto` (or the repository's approved merge form).
+- **Draft PR before the review tier's exit state:** keep it draft; add no milestone or
+  intermediate-review comment.
+- **Draft PR after the review tier's exit state** — the final reviewer's `APPROVED` for an
+  adversarial or integration round, or the recorded inline pass for an inline-routed task: after the
+  plan-removal commit is pushed and read back, run `gh pr ready <number>`, then `gh pr merge --auto`
+  (or the repository's approved merge form). **Never treat a missing exit state as an inline pass** —
+  inline is a tier the orchestrator declared at dispatch, not a fallback for review that did not
+  happen.
 - **PR exists but not merged:** reuse it; do not create a second PR.
 
-Before marking the PR ready, read the local review files and planner run state and confirm that every
+Before marking the PR ready, read the local review files and the orchestrator's run state and confirm that every
 completed verdict, disposition, fix wave, and gate result is present. Read the PR comments and confirm
 the allowed bootstrap, first-executor-completion, and final-approval comments are present where their
 events occurred. Also read the PR body and confirm its plan deeplink resolves to the latest approved
@@ -97,7 +113,7 @@ and confirm the file list matches what the review actually covered. Observed: a 
 the local diff, but the executor's five implementation commits were never pushed — the PR's real
 diff was a single plan doc, and it would have merged effectively empty had this check not run.
 
-Merge, ready-for-review, plan removal, and cleanup remain planner-held actions under
+Merge, ready-for-review, plan removal, and cleanup remain planner-held (orchestrator-held) actions under
 [`roles-and-authority.md`](roles-and-authority.md). Push and draft-PR creation happen at executor
 bootstrap under the explicit exception there. An approved plan carrying these actions is the
 authority to perform them; what remains forbidden is landing something the plan does not cover or
@@ -169,7 +185,9 @@ Check merge state once with `gh pr view <n> --json state,mergedAt`. Do not poll.
 | Gate red | Commit + document only; no PR |
 | No PR after executor dispatch | Stop and report bootstrap failure |
 | Draft PR during run | Keep draft; post only the three allowed event comments |
-| Final reviewer approved | Remove plan, `gh pr ready`, then merge |
+| Final reviewer approved (adversarial / integration) | Remove plan, `gh pr ready`, then merge |
+| Inline pass recorded, inline tier declared at dispatch | Remove plan, `gh pr ready`, then merge |
+| No exit state, or inline claimed but not declared at dispatch | Stop — this is not review that happened |
 | PR merged | Sync local main, verify `main` == `origin/main`, then worktree + branch |
 | PR pending | Leave worktree, don't poll, report status |
 | Worktree not under `.worktrees/`/`worktrees/` | Not yours — don't remove it |
@@ -183,7 +201,7 @@ Check merge state once with `gh pr view <n> --json state,mergedAt`. Do not poll.
 - **Cleaning up a worktree you didn't create** — check provenance first.
 - **Writing a docs update nobody asked for.**
 - **Deleting the tracked plan before the PR is merged** — it is the first-commit record until final
-  closeout, and the planner must remove it in the pre-merge commit.
+  closeout, and the orchestrator must remove it in the pre-merge commit.
 
 ## Final report
 

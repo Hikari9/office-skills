@@ -1,21 +1,45 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:office-core:4.0.0:review-verdict.schema.json",
+  "$id": "urn:office-core:5.1.0:review-verdict.schema.json",
   "title": "Review verdict",
   "description": "What a reviewer returns, for a plan review or a code review. Carries the reviewer's own self-review of its findings: a gate that never re-reads itself softens under fatigue, and round 3 is where that lands. The planner returns a verdict with no self_review to the reviewer without consuming the round again.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["invocation_id", "gate", "round", "verdict", "findings", "self_review"],
+  "required": [
+    "invocation_id",
+    "gate",
+    "round",
+    "verdict",
+    "findings",
+    "self_review",
+    "requirements_version",
+    "plan_version",
+    "routing_version"
+  ],
   "properties": {
-    "invocation_id": { "type": "string" },
+    "invocation_id": {
+      "type": "string"
+    },
     "gate": {
-      "enum": ["plan-review", "code-review"],
+      "enum": [
+        "plan-review",
+        "code-review"
+      ],
       "description": "Separate gates with separately declared floors. A plan review gates a document and runs exactly once."
     },
-    "round": { "type": "integer", "minimum": 1, "maximum": 5 },
+    "round": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5
+    },
     "verdict": {
-      "enum": ["APPROVED", "CHANGES REQUIRED", "PLAN DEFECT"],
-      "description": "The three defined verdicts. 'LGTM', 'approved with nits', and any other wording leaves the run with no state to act on."
+      "enum": [
+        "APPROVED",
+        "CHANGES REQUIRED",
+        "PLAN DEFECT",
+        "TRUE_CONFLICT"
+      ],
+      "description": "The four defined states. 'LGTM', 'approved with nits', and any other wording leaves the run with no state to act on. TRUE_CONFLICT is emitted when a producer and its adversary hold genuinely conflicting evidence the producer cannot responsibly resolve; it stops the thread and routes to the user (USER_DECISION_REQUIRED), and it is exceptional."
     },
     "reviewed_head": {
       "type": "string",
@@ -27,8 +51,10 @@
     },
     "gate_blind_spots": {
       "type": "array",
-      "items": { "type": "string" },
-      "description": "Surfaces the gate structurally cannot fail on — reflection, template compilation, framework callbacks. Named before approving, per evidence-and-handoff.md."
+      "items": {
+        "type": "string"
+      },
+      "description": "Surfaces the gate structurally cannot fail on \u2014 reflection, template compilation, framework callbacks. Named before approving, per evidence-and-handoff.md."
     },
     "findings": {
       "type": "array",
@@ -36,17 +62,51 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "severity", "summary", "failure_scenario"],
+        "required": [
+          "id",
+          "severity",
+          "summary",
+          "failure_scenario"
+        ],
         "properties": {
-          "id": { "type": "integer", "minimum": 1 },
-          "severity": { "enum": ["blocker", "important", "minor"] },
-          "summary": { "type": "string" },
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "severity": {
+            "enum": [
+              "blocker",
+              "important",
+              "minor"
+            ]
+          },
+          "summary": {
+            "type": "string"
+          },
           "failure_scenario": {
             "type": "string",
             "description": "Concrete inputs or state producing the wrong outcome. A finding with no statable scenario is the class the reviewer's own self-review is meant to catch."
           },
-          "location": { "type": "string", "description": "file:line the finding anchors to." },
-          "fix": { "type": "string", "description": "A hypothesis the implementer may reject with evidence. A finding recommends a fix; it never writes one." }
+          "location": {
+            "type": "string",
+            "description": "file:line the finding anchors to."
+          },
+          "fix": {
+            "type": "string",
+            "description": "A hypothesis the implementer may reject with evidence. A finding recommends a fix; it never writes one."
+          },
+          "disposition": {
+            "enum": [
+              "accepted_fixed",
+              "rejected_with_evidence",
+              "unresolved"
+            ],
+            "description": "The PRODUCER's disposition of this finding. rejected_with_evidence requires evidence of the kind the gate itself demands (real output, a read file, a run); confidence is not evidence and a rejection without it is unresolved. Required on any round the producer has disposed of; absent only on the reviewer's first emission, before the producer has answered."
+          },
+          "disposition_evidence": {
+            "type": "string",
+            "description": "Required when disposition is rejected_with_evidence: the command output, file read, or run that settles it."
+          }
         }
       }
     },
@@ -54,12 +114,20 @@
       "type": "object",
       "description": "The reviewer's read-back of its own findings before the verdict is returned. May sharpen or add findings; may never quietly drop one. A withdrawn finding is recorded as withdrawn, with its reason.",
       "additionalProperties": false,
-      "required": ["done", "surfaces_not_opened", "findings"],
+      "required": [
+        "done",
+        "surfaces_not_opened",
+        "findings"
+      ],
       "properties": {
-        "done": { "type": "boolean" },
+        "done": {
+          "type": "boolean"
+        },
         "surfaces_not_opened": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Parts of the artifact the reviewer did not read. Stating them is what makes a partial review honest instead of silently narrow."
         },
         "withdrawn": {
@@ -68,10 +136,17 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["id", "reason"],
+            "required": [
+              "id",
+              "reason"
+            ],
             "properties": {
-              "id": { "type": "integer" },
-              "reason": { "type": "string" }
+              "id": {
+                "type": "integer"
+              },
+              "reason": {
+                "type": "string"
+              }
             }
           }
         },
@@ -81,12 +156,32 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["grade", "summary", "disposition"],
+            "required": [
+              "grade",
+              "summary",
+              "disposition"
+            ],
             "properties": {
-              "grade": { "enum": ["critical", "important", "minor"] },
-              "summary": { "type": "string" },
-              "disposition": { "enum": ["fixed", "deferred", "parked"] },
-              "ruling": { "type": "string" }
+              "grade": {
+                "enum": [
+                  "critical",
+                  "important",
+                  "minor"
+                ]
+              },
+              "summary": {
+                "type": "string"
+              },
+              "disposition": {
+                "enum": [
+                  "fixed",
+                  "deferred",
+                  "parked"
+                ]
+              },
+              "ruling": {
+                "type": "string"
+              }
             }
           }
         }
@@ -95,6 +190,21 @@
     "continuity_preserved": {
       "type": "boolean",
       "description": "Whether this round was held by the same reviewer identity as the previous round."
+    },
+    "requirements_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Frozen by the planner at the end of interactive discovery. Bumped by a requirements amendment."
+    },
+    "plan_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Bumped by a plan-contract change; a routing or requirements change alone does not move it."
+    },
+    "routing_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Bumped by a routing-only amendment; forces no other bump and never wakes the planner."
     }
   }
 }

@@ -5,7 +5,9 @@ description: Final closeout — verify the criteria are green, remove the plan, 
 
 # Auto Closeout
 
-Planner-only. Runs unless the caller said `skip cleanup`. The executor bootstraps one draft PR before
+Orchestrator-held (the long-standing term is *planner-held*): the invoking control-plane session
+performs this, never a delegate and never the dedicated planner, which has already exited. Runs
+unless the caller said `skip cleanup`. The executor bootstraps one draft PR before
 implementation. Each green milestone is committed and recorded in local run state inside the loop. Final
 closeout runs once after the last milestone: gate → remove the plan → push → mark the PR ready → merge,
 then sync, worktree removal, loop closure, and the run report.
@@ -26,7 +28,7 @@ final evidence.
    ready). Off-list is a stop, not a silent absorb into "done."
 3. **Roles.** The executor bootstraps the plan-only first commit, pushes its named branch, opens one
    draft PR whose body contains the immutable plan blob deeplink and references the plan and issue,
-   and posts only the approved-plan/execution-begins and first-executor-completion comments. The planner holds the gate,
+   and posts only the approved-plan/execution-begins and first-executor-completion comments. The orchestrator holds the gate,
    removes the plan, marks the PR ready, and performs the merge. Never author a commit for code you
    didn't write.
 4. **Read the existing PR and promotion chain from the repo** before closeout (`gh pr list --head
@@ -44,7 +46,8 @@ final evidence.
    done
    ```
    Re-run immediately before the merge, not only when choosing the number.
-6. **Remove the plan and land once.** After final reviewer `APPROVED` and a green final gate, delete
+6. **Remove the plan and land once.** After the review tier's exit state — final reviewer `APPROVED`,
+   or the recorded inline pass for an inline-routed task — and a green final gate, delete
    `docs/plans/<slug>.md` in a dedicated pre-merge commit, push the named branch, verify the deletion
    and final approval summary, mark the existing draft PR ready, then merge it. Automerge if that's
    the repo's convention; merge directly if checks are green and automerge isn't available. Don't
@@ -73,20 +76,21 @@ final evidence.
     ranges), Route, Task ledger, Stops, **Not verified** (never let an unrun check read as passed),
     Still open. Neither of the last two is empty by default — say so explicitly if it genuinely is.
     Express runs emit no report; the PR body is the record. Every non-express report also carries the
-    compact v2 plan-drafter line, using the same field names as the serialized handoff
+    compact planner line, using the same field names as the plan packet
     ([planner-handoff.md](../../references/planner-handoff.md)) and routing ledger
     ([routing-outcomes.md](../../references/routing-outcomes.md)) so the three stay diffable:
     `planner_mode · plan_needed=<true|false> · detector_verdict=<supported|unsupported|unknown|not-needed>
     · orchestrator=<harness/model@effort> · prompt_shown=<true|false> · prompt_choice=<opus|fable|astra|inline|null>
-    · plan_drafter=<harness/model@effort> · reused_from_orchestrator=<true|false> · fallback_used=<true|false>
-    · fallback_reason=<reason|null>`.
-    The serialized handoff or run artifact retains attempted triples and failure reasons.
+    · planner=<harness/model@effort> · reused_from_orchestrator=<true|false> · fallback_used=<true|false>
+    · fallback_reason=<reason|null> · versions=<req/plan/routing> · review_tier=<inline|adversarial>
+    · integration_adversary=<true|false>`.
+    The plan packet or run artifact retains attempted triples and failure reasons.
 12. **If the Planner is claude at Opus tier**, append one row (two lines max — the columns carry the
     numbers, the `lesson` cell carries one sentence or "as expected") to
     [routing-outcomes.md](../../references/routing-outcomes.md); write a rule change instead of a row
     if the lesson needs more than that. codex/agy Planners propose in the run report and stop. Express
-    runs append nothing. When a row is appended, include the v2 plan-drafter metadata fields defined
-    in the ledger. This is this office's routing ledger specifically, separate from and in addition to
+    runs append nothing. When a row is appended, include the planner and family metadata fields
+    defined in the ledger. This is this office's routing ledger specifically, separate from and in addition to
     step 13.
 13. Load [`office-learnings`](../../office-core/skills/office-learnings/SKILL.md) for any other
     durable lesson (routing feedback, a mechanism gotcha, a shared invariant) per this office's

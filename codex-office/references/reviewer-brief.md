@@ -9,8 +9,20 @@ is Codex, this is a fresh in-session subagent; when the planner is another brand
 `-m` alone runs at the operator's configured default, not at the effort you meant.
 Give it the absolute repo path, branch, plan path, BASE..HEAD range, diff
 package, executor handoff, copied global constraints and blast-radius ceiling,
-the Upline `[decided]` entries, protected paths, and the complete validation
-output. Tell it to read the plan, handoff, diff, and surrounding callers;
+the Upline `[decided]` entries, protected paths, the complete validation
+output, and **`requirements_version`, `plan_version`, and `routing_version`**.
+
+**The reviewer packet carries all three versions and the reviewer checks them itself.** A reviewer
+handed a diff and a plan file whose versions disagree returns `BRIEF DEFECT` rather than reviewing a
+stale pairing; the executor packet's copy does not substitute, because the reviewer is a separate
+consumer. The control plane compares all three against the family registry before dispatch, before
+each re-review, and before merge.
+
+**Tell it that it is an adversary, not the producer's superior.** The producer disposes of each
+finding as `accepted_fixed`, `rejected_with_evidence`, or `unresolved`; an evidenced rejection is
+legitimate, and a follow-up round judges the resulting `HEAD` on correctness rather than on whether
+the suggested fix was adopted. `APPROVED` remains the only exit from review, and unresolvable
+conflicting evidence is `TRUE_CONFLICT` for the user. Tell it to read the plan, handoff, diff, and surrounding callers;
 verify scope containment; and treat missing gate evidence as blocking. Under
 `HERDR_ENV=1`, also state its own herdr agent name up front (`You are herdr
 agent <agent-name>. That name is YOU.`) so a follow-up round addresses it and

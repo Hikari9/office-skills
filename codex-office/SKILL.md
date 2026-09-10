@@ -14,7 +14,7 @@ in the spokes it routes to.
 
 | Role | Owner | Default model | Responsibility |
 |---|---|---|---|
-| Planner | Active Codex session | current session | scope, plan, escalation, closeout |
+| Orchestrator + Planner (one session, both hats) | Active Codex session | current session | scope, plan, escalation; lifecycle, closeout, ready-for-review, merge |
 | Executor | Fresh Herdr-managed agent pane when HERDR_ENV=1; otherwise Codex in-session when planner and assignee are Codex, or the assignee's CLI | `gpt-5.6-luna`, high | bootstraps the draft PR, implements the approved plan, and posts the first-completion event |
 | Reviewer | Separate fresh Herdr-managed agent pane when HERDR_ENV=1; otherwise Codex in-session when planner and assignee are Codex, or the assignee's CLI | `gpt-5.6-luna`, xhigh (code review of a low-blast-radius leg: high) | adversarial gate and re-review |
 
@@ -97,13 +97,19 @@ or three sentences and proceed. Full rule: `office-core/protocol/roles-and-autho
 
 ## Protocol version
 
-This plugin implements office-core protocol `9.0.0`, vendored at `office-core/` in this plugin.
+This plugin implements office-core protocol `18.0.0`, vendored at `office-core/` in this plugin.
 The vendored copy is authoritative for an installed plugin; the repo-root `office-core/` is the
 development source. Mandatory read: `office-core/protocol/roles-and-authority.md`.
 
-**Declared narrowing of core.** Core `9.0.0` lets the planner implement inline; this office
-does **not** — the planner never implements the plan here. Narrowing is legal, and it is stated so a
-reader of both files need not guess which governs.
+**Declared narrowing of core.** Core `18.0.0` lets a producer implement inline; this office
+does **not** — the control-plane session never implements the plan here. Narrowing is legal, and it
+is stated so a reader of both files need not guess which governs.
+
+**Core 18.0.0, inherited.** One session holds both the Orchestrator and Planner hats and still may
+not gate its own writing. The **producer** disposes of each finding (`accepted_fixed` /
+`rejected_with_evidence` / `unresolved`) on gate-quality evidence; unresolvable conflict is
+`TRUE_CONFLICT` for the user. Final adversary is integration-scoped only. Landings carry
+`requirements_version`, `plan_version`, `routing_version`.
 
 ## Routing table
 
@@ -123,7 +129,7 @@ below it selects, and nothing else.
 | Driving `codex exec` safely | `skills/codex-cli/SKILL.md` | Any phase whose routing selects Codex CLI |
 | Executor role and packet contract | `skills/codex-executor/SKILL.md` | Phase 2, building or receiving the executor dispatch |
 | Reviewer role and fix loop | `skills/codex-reviewer/SKILL.md` | Phase 3, building or receiving the reviewer dispatch |
-| Closeout and planner-held actions | `skills/codex-closeout/SKILL.md` | Phase 4, planner only |
+| Closeout and planner-held actions | `skills/codex-closeout/SKILL.md` | Phase 4, control plane only |
 
 ## The four phases
 

@@ -2,8 +2,8 @@
 
 | Line | Value |
 |---|---|
-| Plugin version | `16.5.0` (see `.claude-plugin/plugin.json`) |
-| Core protocol supported | `>=17.0.0 <18.0.0` |
+| Plugin version | `17.0.0` (see `.claude-plugin/plugin.json`) |
+| Core protocol supported | `>=18.0.0 <19.0.0` |
 | Vendored snapshot | `office-core/` in this plugin, with `office-core/SNAPSHOT.json`, written by `scripts/vendor-core.sh` |
 
 This plugin is an adapter over `office-core`. It restates or links every core gate that applies to
@@ -25,6 +25,17 @@ exceptions:
       runtime-mechanics addition (who produces the evidence, and when), not an authority change —
       it does not relax any gate in roles-and-authority.md or evidence-and-handoff.md; it exists
       because this executor cannot be trusted to supply the evidence those files already require.
+    widens_core_authority: false
+  - id: agy-no-inline-tier
+    owner: agy-office
+    reason: >
+      Core 18.0.0 permits an inline review tier — producer self-review plus green validation, with no
+      adversary — for cheap, reversible, low-risk work. This office declines it for every task. The
+      inline tier is priced on the producer's self-assessment being informative, and this executor's
+      characteristic failure is self-consistently wrong work that passes its own tests, so an inline
+      pass here would certify exactly the case the tier cannot see. Every agy task therefore takes the
+      adversarial tier and exits only on a reviewer `APPROVED`. Declining a permitted tier removes a
+      cheaper path; it widens nothing.
     widens_core_authority: false
   - id: agy-non-agy-reviewer
     owner: agy-office

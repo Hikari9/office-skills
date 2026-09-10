@@ -2,9 +2,9 @@
 
 | Line | Value |
 |---|---|
-| Plugin version | `17.10.0` (see `.claude-plugin/plugin.json`) |
-| Core protocol supported | `>=17.0.0 <18.0.0` |
-| Core protocol vendored | `17.8.0` (see `office-core/SNAPSHOT.json`) |
+| Plugin version | `18.0.0` (see `.claude-plugin/plugin.json`) |
+| Core protocol supported | `>=18.0.0 <19.0.0` |
+| Core protocol vendored | `18.0.0` (see `office-core/SNAPSHOT.json`) |
 | Vendored snapshot | `office-core/SNAPSHOT.json`, written by `scripts/vendor-core.sh` |
 | Sibling plugins required | `codex-office`, `agy-office` — for the CLI, executor, and closeout mechanics of those two routes. The claude route ships in this plugin as of `4.0.0`. |
 
@@ -20,19 +20,19 @@ exceptions:
   - id: auto-orchestrator-selection
     owner: auto-office
     reason: >
-      The invoking model holds core's Planner role and is never selected by auto-office routing;
-      "orchestrator" names only its control-plane behavior. This legacy exception id is retained for
-      traceability while v2 adds only a separate, optional plan-drafter call — an added role, never a
-      reassignment of Planner: the Planner may invoke a dedicated plan drafter, consume its serialized
-      draft handoff, and retain all lifecycle, state, dispatch, approval, and closeout authority. This
-      is a runtime-mechanics choice, not an authority change; executor and reviewer routing remain
-      unchanged.
+      The invoking model is core's Orchestrator and is never selected by auto-office routing. It may
+      invoke a dedicated interactive Planner, consume its plan packet, and retains all lifecycle,
+      state, dispatch, approval, amendment, and closeout authority. The Planner owns requirements
+      discovery with the user and the plan; it holds no gate and keeps no run state. Executor
+      selection and adversary floors remain as routed.
     widens_core_authority: false
   - id: auto-task-subdelegation
     owner: auto-office
     reason: >
-      The Planner (orchestrator) dispatches the dedicated plan drafter when selected, then one
-      executor per repo and the existing reviewer/scout stages. The approved Executor may sub-delegate
+      The orchestrator dispatches the dedicated planner when selected, then one executor per repo,
+      Phase 1 scouts, and an integration adversary only when two or more executors produce dependent
+      or merging landings. The planner dispatches its own plan adversary; the executor launches its
+      own code adversary at the orchestrator's declared triple. The approved Executor may sub-delegate
       individual tasks to another tool (typically agy for read-only recon and bulk mechanical work).
       When `HERDR_ENV=1`, every real delegation uses the Herdr pane contract; otherwise same-brand
       fan-out may use the existing in-session route and cross-brand fan-out uses CLI. Ordinary
@@ -56,7 +56,7 @@ exceptions:
       The code-review gate is a fresh reviewer independent of whoever executed: `codex-luna` xhigh by default, a fresh Opus subagent at low as the fallback.
       The Codex Luna path is no longer conditional on who orchestrated (2026-09-10); it is the
       standing default holder, and the reviewer is never the agent that wrote the diff. This is strictly narrower
-      than core, which permits any independent reviewer. Core 3.0.0 states that a declared floor
+      than core, which permits any independent reviewer. Core 18.0.0 states that a declared floor
       binds the gate it was declared for, so this floor is the code-review gate's alone.
     widens_core_authority: false
   - id: auto-plan-review-gate
@@ -64,7 +64,7 @@ exceptions:
     reason: >
       A plan-review gate runs between the planner's self-review and user approval: one adversarial
       pass over the plan document by a fresh agent of the planner's own brand, at that brand's
-      Opus-tier low effort, which then retires permanently. Core 3.0.0 explicitly permits an office
+      Opus-tier low effort, which then retires permanently. Core 18.0.0 explicitly permits an office
       to add a plan-review gate ahead of user approval, and this one adds a gate rather than
       absorbing any existing one — the code-review gate, its opus-low floor, and every verdict
       are untouched. Its floor is declared separately (opus low) and binds only itself. It runs
@@ -110,7 +110,26 @@ exceptions:
     widens_core_authority: false
 ```
 
-## Re-audit against core 2.0.0
+## Re-audit against core 18.0.0
+
+**2026-09-10, core `18.0.0`.** Every exception below was re-checked against the current core, not
+the historical one, and all remain `widens_core_authority: false`. Two obsolete claims were removed
+in the process:
+
+- **"The planner does not implement" is no longer an auto-office narrowing.** Core `18.0.0` permits
+  a producer to implement inline when the delegation test buys nothing, and this office follows core:
+  an orchestrator inline write is allowed for a fix whose brief would exceed the edit, never for
+  volume, never overlapping a live executor, and never for the run's main correctness or security
+  risk. (agy-office still narrows this; auto-office does not.)
+- **Reviewer and plan-review floors** are unchanged in substance and now read against core `18.0.0`,
+  which adds a separately declared floor for the planner-local plan adversary and the integration
+  adversary.
+
+Core `18.0.0` also absorbs the producer-owned dispositions, the inline-review tier, the
+integration-scoped final adversary, the landing packet, and the three independent versions, so none
+of those is an auto-office exception either.
+
+### Historical: re-audit against core 2.0.0
 
 Core `2.0.0` absorbed three things this office would otherwise have had to declare, so they are
 **not** exceptions here:
@@ -122,14 +141,15 @@ Core `2.0.0` absorbed three things this office would otherwise have had to decla
   naming it verbatim with preconditions is what removes the *pause*, not the *actor*. This office
   narrows nothing here and widens nothing; it inherits the rule intact.
 
-The remaining exceptions were re-checked against core `2.0.0` and all remain
+The remaining exceptions were also re-checked against core `2.0.0` at the time and all remain
 `widens_core_authority: false`:
 
-- `auto-orchestrator-selection` — the legacy exception id now records that the invoking model holds
-  the Planner role and is not auto-selected. v2's dedicated plan-drafter call is a narrow
-  runtime-mechanics addition; it does not change authority, executor routing, or reviewer routing.
-- `auto-task-subdelegation` — the Planner (orchestrator) dispatches the dedicated plan-drafter/
-  executor stages when applicable; the approved Executor owns task-worker fan-out. Core 9.0.0's
+- `auto-orchestrator-selection` — the invoking model is the Orchestrator and is not auto-selected.
+  The dedicated interactive Planner call is a routing decision, not an authority widening: the
+  planner gains the user interview and the pre-freeze requirements, both of which core now assigns
+  to that role.
+- `auto-task-subdelegation` — the orchestrator dispatches the planner and executor stages; the
+  approved Executor owns task-worker fan-out and launches its declared code adversary. Core's
   Herdr override takes
   precedence when `HERDR_ENV=1`; without Herdr, same-brand fan-out is in-session, cross-brand is CLI,
   and neither creates a second writer.
@@ -137,9 +157,9 @@ The remaining exceptions were re-checked against core `2.0.0` and all remain
   downgrade a reviewer, or widen its blast radius, and it gained a stop (`BRIEF DEFECT`) rather than
   losing one.
 - `auto-opus-reviewer-floor` — reworded above to name the **code**-review gate explicitly, which is
-  what core 3.0.0 now requires of a declared floor. Still strictly narrower than core.
+  what core 18.0.0 now requires of a declared floor. Still strictly narrower than core.
 
-**Confirmed: no existing exception covered "the planner does not implement."** The four declared were
+**Confirmed at the time: no existing exception covered "the planner does not implement." **Superseded by the core `18.0.0` re-audit above** — auto-office no longer declares that narrowing.** The four declared were
 `auto-orchestrator-selection`, `auto-task-subdelegation`, `auto-goal-locked-autonomy`, and
 `auto-opus-reviewer-floor`, none of which mentions it — because planner-never-implements was a
 *narrowing* of core, and narrowings need no exception. Nothing was removed here; lifting the rule

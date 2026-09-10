@@ -12,7 +12,7 @@ authorization language below is unchanged.
 ## Authorization
 
 Inspect the final diff and status, and commit only intended files. The executor already pushed and
-created the draft PR under the approved bootstrap action. The planner removes the plan, pushes that
+created the draft PR under the approved bootstrap action. The orchestrator removes the plan, pushes that
 final pre-merge commit, marks the PR ready, and merges only under the approved plan's named action.
 Never merge or deploy without that authority.
 

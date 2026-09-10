@@ -3,6 +3,20 @@
 What every office's plan must contain before it can be approved or dispatched. Offices add
 fields (Agy adds pinned interface signatures; Claude adds an effort tag); none may drop one.
 
+## The interview belongs to the planner, after reconnaissance
+
+The orchestrator's initial intent is **provisional**: enough to understand the request, decide
+whether planning is required, open the tracking issue, and route. The planner performs repository
+reconnaissance first and *then* interviews, because the questions worth asking are the ones the
+repository reveals. Before the freeze the planner may revise any requirement — goal, scope, done
+criteria, blast radius, named actions, non-goals, interfaces, milestones, the problem statement.
+
+**The freeze is a distinct, announced moment**: it ends discovery and fixes
+`requirements_version: 1`. Everything after it is an amendment with a version bump, classified by
+the orchestrator per
+[`roles-and-authority.md`](roles-and-authority.md#independent-versions-requirements-plan-routing).
+A plan whose requirements were never explicitly frozen is not approvable.
+
 ## Interview floor
 
 Interview until **95% clear** — clear enough that a stranger with no access to the conversation
@@ -32,6 +46,21 @@ If the approved plan is amended after PR creation, the planner updates the PR bo
 the deeplink with the full SHA of the commit containing the latest approved plan before dispatching
 or resuming work, then reads the body back. The original first-commit link may remain as history.
 
+## Version block
+
+Every plan carries, at the top of its metadata:
+
+```yaml
+requirements_version: <n>   # bumped by a requirements amendment
+plan_version: <n>           # bumped by a plan-contract change
+routing_version: <n>        # bumped by a routing-only amendment; forces no other bump
+```
+
+Every downstream brief, plan packet, and landing packet cites all three verbatim; they are declared
+fields in the handoff, review-verdict, and run-event schemas. A landing whose
+versions do not match the family registry's current values is stale and is not merged on its own
+authority.
+
 ## Required sections
 
 1. **Context** — why this work exists.
@@ -50,7 +79,9 @@ or resuming work, then reads the body back. The original first-commit link may r
 
 A plan declares **milestones**: named groups of done-criteria that, once green, put the tree in a
 shippable state. Each milestone is a commit or commit range and a local run-state checkpoint. The
-single draft PR remains draft until final reviewer approval; the final closeout lands it.
+single draft PR remains draft until the review tier's exit state — the final reviewer's `APPROVED`
+for an adversarial or integration round, or the recorded inline pass for a task the orchestrator
+routed to the inline tier at dispatch. The final closeout lands it.
 
 - **Declared at plan time, reviewed at approval.** The loop does not improvise a milestone
   boundary mid-run; if the grouping is wrong, that is a plan amendment.

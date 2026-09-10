@@ -1,10 +1,16 @@
 # Executor prompt contract
 
 Every executor packet includes: absolute repo/worktree path; branch; tracked plan path;
-tracking issue;
+tracking issue; **`requirements_version`, `plan_version`, and `routing_version`**;
 git-ignored workspace path; BASE SHA; exact in-scope work; protected and
 out-of-scope paths; the blast-radius ceiling copied verbatim; allowed side
-effects; full validation commands; and a handoff path. For a CLI executor, its
+effects; full validation commands; and a handoff path.
+
+**Every packet carries the three versions verbatim — `requirements_version`, `plan_version`,
+`routing_version`** (core `plan-contract.md`). The worker echoes them back in its report or landing
+packet unchanged. The control plane compares all three against the family registry before dispatch,
+before each re-review, and before merge; a mismatch means the artifact is stale and is re-briefed,
+never landed on its own authority. For a CLI executor, its
 `codex exec` prompt carries this packet. It must also say:
 
 > Do not stop to ask questions; make reasonable decisions yourself and implement the entire brief.
@@ -56,6 +62,32 @@ graded Critical / Important / Minor — including work you implemented inline.
 Then once over the whole `BASE..HEAD` diff after the gate is green.
 <one line per finding: grade — what — fixed (<commit>) | deferred (minor) | parked (<ruling>)>
 <"none" is a valid finding list; an absent or empty section is not.>
+## Landing packet (required — schema: core `handoff.schema.json` -> `landing_packet`; YAML)
+family_id: <slug>
+executor: <brand/tier + scope>
+status: landed | blocked | true_conflict
+requirements_version: <n>
+plan_version: <n>
+routing_version: <n>
+tasks_completed: [<task ids>]
+change_summary: <a few lines, not a diff>
+interfaces_changed: [<interface>]
+validation:
+  - command: <the command>
+    result: <its real output — an exit code is not evidence>
+review_mode: inline | adversarial   # your local gate only; integration review is the orchestrator's, not a landing mode
+review_rounds:
+  - round: <n>
+    dispositions: [<accepted_fixed|rejected_with_evidence|unresolved>, ...]
+deviations: [<deviation>]
+artifacts: [<PR/commit/artifact ref>]
+downstream_impacts: [<impact>]
+blockers: [<blocker>]
+
+This is what travels up — the orchestrator reads it, not your transcript. Point at this handoff,
+the review files, and the PR for anything deeper. Contract:
+`office-core/protocol/evidence-and-handoff.md` → *The landing packet*.
+
 ## Gate evidence
 $ <full command>
 <actual output>
