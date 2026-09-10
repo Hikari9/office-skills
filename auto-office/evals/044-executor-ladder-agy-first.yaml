@@ -1,0 +1,14 @@
+name: Executor ladder takes agy Flash medium when available and the plan fits three tasks
+prompt: |
+  /auto-office full The approved plan has 3 tasks in one repo. Deterministic availability fixture:
+  agy, claude, and codex are all installed, authenticated, and launchable, and no caller override
+  names a brand. State the executor brand, model, effort, and why the other rungs were not taken.
+expect_skill: true
+criteria:
+  - "Selects agy as the executor at Flash latest with medium effort"
+  - "Resolves the slug with agy-office/scripts/agy-model.sh medium rather than hardcoding a Gemini version"
+  - "States the 3-task hard cap as the condition that makes rung 1 usable here"
+  - "Does not run the agy executor above medium effort"
+  - "Names claude sonnet high as rung 2 and gpt-5.6-sol low as rung 3 without taking them"
+allowed_tools: ["Read", "Grep", "Glob"]
+timeout: 240

@@ -28,7 +28,7 @@ Announce before doing anything else:
 ```
 auto-office · gear: <express|full> (<the fit-test reason, one clause>)
 executors: <n> (<brand(s)>, <fit reason>) · milestones: <n>
-reviewer: opus low · plan-reviewer: <brand> <model> low   [full only]
+reviewer: codex-luna xhigh (opus low fallback) · plan-reviewer: <brand> <model> low   [full only]
 plan drafter: <auto→prompt|orchestrator-as-drafter|dedicated <harness/model@effort>> · reuse: <yes|no> · fallback: <none|reason→triple>
 headroom: <per window, with reset times, UNKNOWN where a probe failed>
 loop: on · overrides: <none|…>
@@ -93,7 +93,8 @@ has. No v3 routing architecture is introduced.
    unsupported/unknown orchestrator triple, not by default. Apply the v2 detector/policy from
    [auto-routing](../auto-routing/SKILL.md): if `auto` sees a supported exact triple, reuse it;
    otherwise ask the user to choose Opus Medium, Fable, Astra, or inline before calling a drafter.
-   Dedicated choices use Astra Low as the first fallback. Record detection, prompt choice, actual
+   The dedicated default is `claude/opus-5@medium` unconditionally, with Astra Low as the first
+   fallback. Record detection, prompt choice, actual
    triple, reuse, fallback, and reason.
 5. **Route, fully** ([auto-routing](../auto-routing/SKILL.md)) — **every task's brand**, and how many
    executors the run needs. Model and effort are fixed by role, so they are filled in, not decided.
@@ -214,7 +215,7 @@ PLANNER (opus, this session)
   │     ├─ T4 ─── worker claude opus (in-sess) ─┘  arbitration, runs alongside T3
   │     └─ T5 ─── in-session --bg (blocking wait)
   │
-  ├─▶ CODE REVIEWER  opus low   (resume vs fresh per round — cost call, not a default)   ← planner-dispatched, per task
+  ├─▶ CODE REVIEWER  codex-luna xhigh / opus low fallback   (resume vs fresh per round — cost call, not a default)   ← planner-dispatched, per task
   └─▶ [Phase 1 only] read-only scouts
 ```
 

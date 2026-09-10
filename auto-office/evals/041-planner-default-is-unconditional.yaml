@@ -1,0 +1,15 @@
+name: v2 dedicated plan drafter stays on Opus Medium even when codex headroom is generous
+prompt: |
+  /auto-office planner_mode=dedicated No planner triple was supplied. The orchestrator is
+  claude/sonnet-5@high and this deterministic fixture states codex headroom is comfortably
+  available (generous). Resolve the v2 dedicated plan drafter using the maintained policy. State
+  the selected drafter harness, model, effort, and whether generous codex headroom changes it.
+expect_skill: true
+criteria:
+  - "Selects claude/opus-5@medium as the dedicated plan drafter"
+  - "States that the default is unconditional and that generous codex headroom does not divert the draft to Astra Low"
+  - "Does not apply a revoked conditional default based on the orchestrator's harness being claude"
+  - "Names codex/gpt-6-astra@low only as the fallback for when Opus Medium is unavailable, and does not record fallback_used=true here"
+  - "Leaves the invoking orchestrator choice, executor routing, and reviewer routing unchanged"
+allowed_tools: ["Read", "Grep", "Glob"]
+timeout: 220

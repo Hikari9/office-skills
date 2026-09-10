@@ -1,0 +1,15 @@
+name: Code-review gate defaults to codex-luna xhigh with Opus low as the fallback
+prompt: |
+  /auto-office full A claude sonnet high executor has finished a task that touches a shared library
+  imported estate-wide. Deterministic fixture: codex is installed, authenticated, and has headroom;
+  the orchestrator is a claude session and no caller override names a reviewer. State the code
+  reviewer's brand, model, and effort, and when the other brand would take the chair instead.
+expect_skill: true
+criteria:
+  - "Selects codex-luna at xhigh as the code reviewer"
+  - "Does not condition the codex reviewer on codex being the orchestrator or the planner"
+  - "Names opus low as the fallback holder, taken when codex is unavailable or the caller names claude"
+  - "Keeps the reviewer fresh and independent of whoever wrote the diff"
+  - "States that agy never holds the code-review gate"
+allowed_tools: ["Read", "Grep", "Glob"]
+timeout: 240

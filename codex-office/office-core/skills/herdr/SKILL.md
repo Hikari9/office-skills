@@ -297,6 +297,24 @@ idle at 0k context having received nothing. `send-keys` is positional too
 louder and therefore safer than the `prompt` case). Reading the returned `agent_status` — not the
 echoed text — is what distinguishes the two.
 
+**A watcher that only tests for success is blind to a dropped dispatch.** The natural terminal
+condition — `status is idle-or-done AND the artifact exists` — never fires when the prompt did not
+land, because the agent sits `idle` at 0k with no artifact, which is indistinguishable from "not
+finished yet". Observed 2026-09-09: a review round was watched for an hour's timeout after a
+`--text` misuse, and the watcher emitted nothing the whole time; the planner found the failure by
+hand. Silence is not progress. Every agent watcher needs four exits, not one:
+
+- **done** — terminal state *and* artifact present.
+- **blocked** — herdr's own `blocked` status. An agent waiting on a permission prompt will never
+  self-recover, so this must interrupt rather than be polled past.
+- **never-started** — terminal state, no artifact, `state_change_seq` unchanged across several
+  polls, and `working` never observed. This is the dropped-prompt signature.
+- **stalled** — same, but `working` *was* observed: the agent ran and quit without writing.
+
+Distinguishing the last two is worth the extra variable, because they have different fixes: re-send
+the prompt versus read the pane for why it gave up. A reference implementation lives at
+`.office/watch-agent.sh` in the rock-preview-sync run and is worth copying rather than re-deriving.
+
 **`agent_status` read on its own is not receipt.** `working` observed right after `agent start` is
 frequently startup churn, not the brief being accepted — that is why the bounded `--wait --until
 working` above is stronger than a bare `herdr agent get`: it asserts a state *change* caused by
