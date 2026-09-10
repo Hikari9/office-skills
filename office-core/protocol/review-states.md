@@ -11,6 +11,18 @@ findings and cannot tell you whether round 2 regressed round 1. If continuity is
 unavailable, carry the previous findings list verbatim and say in the round line that
 continuity was lost.
 
+**A resumed round dispatched in-session is not synchronous — do not wait on it by guessing.**
+Sending the fix diff to a backgrounded reviewer (e.g. `SendMessage` to its recorded agent id)
+only queues the prompt; the tool call's return is not the verdict, and the verdict itself
+arrives later as an incoming message, on its own schedule. Silence in the same turn is normal,
+not stalled: do not report the round as blocked, re-send it on a hunch that the first one
+dropped, or fabricate a verdict to keep moving. Continue other run work in the meantime if there
+is any; when there is none, use a one-shot `notify_when_idle` (or check `ListAgents`) rather than
+polling the reviewer or asking it "are you done?". The Herdr skill's bounded `agent wait` and its
+four-exit rule (done / blocked / never-started / stalled) exist because a watcher that only tests
+for success cannot tell a dropped dispatch from work still in progress — the same blindness
+applies here in-session: an unanswered round is "not yet", never grounds to assume lost or done.
+
 **After any confirmed defect, brief the next round on its *shape*, not its line.** A fixed finding
 is a sample of a class, and the class usually has other members the first pass walked past. State
 the mechanism in the round brief and instruct the reviewer to hunt more instances of it.

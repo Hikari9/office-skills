@@ -1,5 +1,16 @@
 # Changelog — auto-office
 
+## 17.11.0 — 2026-09-10
+
+Core `17.9.0`.
+
+- Core `17.9.0`: the in-session review resume path (`SendMessage` to a backgrounded reviewer's
+  recorded agent id) had no equivalent to the Herdr skill's `agent wait` discipline — nothing said
+  the reply is asynchronous, so a resumed round could read as stalled or dropped before its verdict
+  ever arrived. `review-states.md` now states this explicitly: the dispatch call's return is not the
+  verdict, silence in the same turn is normal, and the fix is to keep working, use a one-shot
+  `notify_when_idle`, or check `ListAgents` — never re-send on a hunch or fabricate a verdict.
+
 ## 17.10.0 — 2026-09-10
 
 Core `17.8.0`.
