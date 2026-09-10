@@ -1,5 +1,24 @@
 # Changelog — auto-office
 
+## 17.8.0 — 2026-09-10
+
+Core `17.7.0`.
+
+- **Compaction is hook-driven per pane.** The advisor decides from the pane's own transcript at zero
+  token cost, and an `async` courier delivers a directed `/compact` only after a same-boundary
+  handshake, an explicit `COMPACT-SAFE: yes` authorization, and bounded Herdr prompt receipt. It acts
+  only on ledger-recorded `claude`/`codex` panes, never on a human's own session or Agy. The advisor
+  versions every state/request, invalidates stale requests on a later `no`, resets all post-compaction
+  accumulators, and uses metadata or a conservative window when the context size is ambiguous.
+
+- **`/compact-monitor` is session-scoped.** It reads the current session's advisor state rather than
+  tailing a global interleaved log, and retains the qualitative in-flight-reasoning judgment before
+  automatic delivery.
+
+- **Stale courier recovery is exclusive.** A stale lock is atomically quarantined and reacquired, so
+  only one courier can deliver a request. `compact-police.sh planner` and `watch` remain removed;
+  `reuse` is still the planner-owned path and the only path for Codex panes.
+
 ## 17.7.0 — 2026-09-10
 
 **v2 can use a dedicated plan drafter without reassigning the Planner role or changing executor/reviewer

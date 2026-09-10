@@ -26,6 +26,11 @@ office-core/
 │   └── compatibility.md             # versioning, adapters, exceptions, release rules
 ├── skills/
 │   └── herdr/SKILL.md                # Herdr-aware dispatch, layout, prompting, and cleanup
+├── hooks/
+│   ├── compact-boundary.mjs          # shared per-boundary handshake identity
+│   ├── close-finished-panes.mjs     # Stop: closes the panes of finished delegates (opt-in)
+│   ├── compact-advisor.mjs          # Stop: decides compactability, writes a compact request
+│   └── compact-courier.mjs          # Stop, async: delivers the /compact to this pane (opt-in)
 └── schemas/
     ├── office-kernel.schema.json    # the immutable per-run packet header
     ├── handoff.schema.json          # executor → planner report
@@ -33,6 +38,15 @@ office-core/
     ├── capability-manifest.schema.json  # selected skills, instead of a catalog dump
     └── run-event.schema.json        # telemetry shape; the SessionEnd hook fills it from the transcript
 ```
+
+Compaction is hook-driven: `hooks/compact-advisor.mjs` decides at every turn boundary for free and
+`hooks/compact-courier.mjs` delivers the directed `/compact` to that pane, for ledger-recorded
+`claude`/`codex` panes only. A shared boundary key/sequence makes advisor→courier ordering causal;
+the courier also requires explicit `COMPACT-SAFE: yes` authorization and bounded prompt receipt.
+`scripts/compact-police.sh reuse` remains the planner-owned path for a pane about to be reused for a
+different task, and the only path for Codex panes, which have no turn-boundary hook event. Window
+sizing uses transcript/config metadata or a conservative fallback rather than a fixed discriminator;
+neither path touches Agy. See `skills/herdr/SKILL.md` → *Compact police*.
 
 ## Source of truth and vendoring
 

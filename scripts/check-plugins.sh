@@ -145,8 +145,9 @@ PY
   while IFS= read -r s; do
     grep -qi "not invoked directly\|do not invoke" "$s" \
       || warn "spoke ${s#$ROOT/} does not mark itself hub-routed"
-  # claude-cli-send-message is a standalone mechanism skill, legitimately invocable on its own.
-  done < <(find "$dir/skills" -name SKILL.md 2>/dev/null | grep -v claude-cli-send-message)
+  # claude-cli-send-message and compact-monitor are standalone mechanism skills, legitimately
+  # invocable on their own.
+  done < <(find "$dir/skills" -name SKILL.md 2>/dev/null | grep -vE 'claude-cli-send-message|compact-monitor')
 
   # required safety rules survive in the hub
   while IFS='|' read -r label pattern; do
@@ -197,6 +198,7 @@ RULES
     found=0
     [ -f "$ROOT/scripts/$base" ] && found=1
     [ -f "$dir/scripts/$base" ] && found=1
+    [ -f "$dir/office-core/scripts/$base" ] && found=1
     # A sibling plugin's script is a legitimate reference: the delegation map
     # points auto-office at agy-office/scripts/ by design, and a route that
     # resolves a model slug there is not a broken link.

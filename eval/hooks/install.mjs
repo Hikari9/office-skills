@@ -2,12 +2,12 @@
 /**
  * Installs the office-skills telemetry hooks into every agent harness present,
  * plus — only when asked for, and only where Herdr exists — the Herdr pane
- * hygiene hook.
+ * hygiene hook and the compact courier.
  *
  * The four harnesses agree on almost nothing — different config files, different
  * event names, different formats — so each gets what it actually supports:
  *
- *   claude  ~/.claude/settings.json      SessionEnd, PreCompact, Stop x2
+ *   claude  ~/.claude/settings.json      SessionEnd, PreCompact, Stop x1-3
  *   codex   ~/.codex/hooks.json          SessionStart, PreCompact   (no SessionEnd or Stop exists)
  *   gemini  ~/.gemini/config/hooks.json  SessionEnd, Stop x2        (namespaced)
  *   hermes  ~/.hermes/config.yaml        on_session_end, on_session_finalize
@@ -16,12 +16,17 @@
  * silent because it was wired to an event that never fires is indistinguishable
  * from "no runs happened", which is the failure this whole system exists to stop.
  *
+ * The advisor and courier are Stop hooks, so a **Codex pane cannot compact
+ * itself**: Codex fires no turn-boundary event to hang them on, and its rollout
+ * files are not the transcript format the advisor parses. Codex panes stay on
+ * the planner-driven `compact-police.sh reuse` path.
+ *
  * Pane hygiene is **opt-in**: `--with-pane-hygiene`. It closes real panes in a
  * user's visible layout, so it is never installed as a side effect of installing
  * telemetry. Where Herdr is absent the option is not even mentioned, rather than
  * installing a hook that could only ever no-op.
  *
- * Usage: install.mjs [--uninstall] [--with-pane-hygiene]
+ * Usage: install.mjs [--uninstall] [--with-pane-hygiene] [--with-auto-compact]
  *                    [--brand claude,codex,gemini,hermes]
  */
 import { readFileSync, writeFileSync, copyFileSync, existsSync, mkdirSync, accessSync, constants } from "node:fs";
@@ -36,6 +41,7 @@ const bflag = process.argv.indexOf("--brand");
 const only = bflag >= 0 ? (process.argv[bflag + 1] || "").split(",").filter(Boolean) : null;
 
 const wantPanes = process.argv.includes("--with-pane-hygiene");
+const wantCourier = process.argv.includes("--with-auto-compact");
 
 /**
  * Is Herdr here at all? Same detection the skills use: the env marker the office
@@ -50,6 +56,11 @@ const herdrPresent =
     try { accessSync(join(d, "herdr"), constants.X_OK); return true; } catch { return false; }
   });
 const panes = wantPanes && herdrPresent;
+// The courier sends `/compact` into a live pane, so it is opt-in for the same
+// reason pane hygiene is, and pointless without Herdr: there is no pane to
+// address. The advisor that decides is installed unconditionally — deciding
+// costs nothing and sends nothing.
+const courier = wantCourier && herdrPresent;
 
 const node = process.execPath;
 const cmd = (file, args = "") => `${node} ${resolve(here, file)}${args ? " " + args : ""}`.trim();
@@ -58,14 +69,14 @@ const backup = (p) => { if (existsSync(p)) copyFileSync(p, p + ".bak"); };
 const readJson = (p, fallback) => (existsSync(p) ? JSON.parse(readFileSync(p, "utf8")) : fallback);
 const writeJson = (p, d) => { mkdirSync(dirname(p), { recursive: true }); writeFileSync(p, JSON.stringify(d, null, 2) + "\n"); };
 
-/** Claude-Code-shaped hook lists: [{hooks:[{type,command,timeout?}]}] */
-const setEvent = (bucket, event, command, timeout) => {
+/** Claude-Code-shaped hook lists: [{hooks:[{type,command,timeout?,async?}]}] */
+const setEvent = (bucket, event, command, timeout, extra = {}) => {
   bucket[event] ??= [];
   const marker = command.split(" ").slice(1).join(" ");
   bucket[event] = bucket[event]
     .map((g) => ({ ...g, hooks: (g.hooks || []).filter((h) => !String(h.command || "").includes(marker.split(" ")[0])) }))
     .filter((g) => (g.hooks || []).length > 0);
-  if (!uninstall) bucket[event].push({ hooks: [{ type: "command", command, ...(timeout ? { timeout } : {}) }] });
+  if (!uninstall) bucket[event].push({ hooks: [{ type: "command", command, ...(timeout ? { timeout } : {}), ...extra }] });
   if (!bucket[event].length) delete bucket[event];
 };
 
@@ -90,9 +101,17 @@ function claude() {
   // Removing it is `--uninstall`, which is explicit in the other direction.
   const hadPanes = JSON.stringify(s.hooks.Stop || []).includes("close-finished-panes.mjs");
   if (panes || uninstall) setEvent(s.hooks, "Stop", cmd("close-finished-panes.mjs"));
+  // Delivery, opt-in and separate from the decision. The advisor/courier share
+  // a per-boundary handshake, so registration order is not relied on. `async` is not a tuning
+  // choice: the courier waits for this pane's own Herdr status to leave
+  // `working`, which cannot happen until the turn this hook is running in has
+  // ended. A synchronous courier would wait on itself.
+  const hadCourier = JSON.stringify(s.hooks.Stop || []).includes("compact-courier.mjs");
+  if (courier || uninstall) setEvent(s.hooks, "Stop", cmd("compact-courier.mjs"), undefined, { async: true });
   writeJson(p, s);
-  const paneNote = panes ? " x2 (+pane hygiene)" : hadPanes ? " x2 (pane hygiene kept)" : "";
-  report.push(["claude", `SessionEnd, PreCompact, Stop${paneNote}`, p]);
+  const paneNote = panes ? " +pane hygiene" : hadPanes ? " (pane hygiene kept)" : "";
+  const courierNote = courier ? " +compact courier" : hadCourier ? " (compact courier kept)" : "";
+  report.push(["claude", `SessionEnd, PreCompact, Stop${paneNote}${courierNote}`, p]);
 }
 
 // ---- codex ---------------------------------------------------------------
@@ -198,14 +217,23 @@ if (!report.length) console.log("  (no matching harness found)");
 
 // Offer, once, and only where Herdr exists. Silence everywhere else: a machine
 // with no Herdr has no pane to close and does not need to know this option is here.
-if (herdrPresent && !wantPanes && !uninstall) {
+if (herdrPresent && !uninstall && (!wantPanes || !wantCourier)) {
   console.log("");
-  console.log("Herdr detected. Pane hygiene is opt-in and was not installed or removed by this run:");
-  console.log("  node eval/hooks/install.mjs --with-pane-hygiene");
-  console.log("It closes the panes of finished delegates from /tmp/office/panes.jsonl on Stop.");
-  console.log("See office-core/skills/herdr/SKILL.md for what it will and will not close.");
+  console.log("Herdr detected. These are opt-in and were not installed or removed by this run:");
+  if (!wantPanes) {
+    console.log("  node eval/hooks/install.mjs --with-pane-hygiene");
+    console.log("    Closes the panes of finished delegates from /tmp/office/panes.jsonl on Stop.");
+  }
+  if (!wantCourier) {
+    console.log("  node eval/hooks/install.mjs --with-auto-compact");
+    console.log("    Sends the advisor's `compact: yes` into this pane as a directed /compact,");
+    console.log("    for ledger-recorded claude/codex panes only. Never for your own session.");
+  }
+  console.log("See office-core/skills/herdr/SKILL.md for the exact scope of both.");
 }
-if (wantPanes && !herdrPresent) {
-  console.log("");
-  console.log("--with-pane-hygiene ignored: no herdr on PATH and HERDR_ENV is not 1.");
+for (const [flag, on] of [["--with-pane-hygiene", wantPanes], ["--with-auto-compact", wantCourier]]) {
+  if (on && !herdrPresent) {
+    console.log("");
+    console.log(`${flag} ignored: no herdr on PATH and HERDR_ENV is not 1.`);
+  }
 }
