@@ -1,0 +1,15 @@
+name: v2 accepts every Fable planner effort
+prompt: |
+  /auto-office planner_mode=dedicated Exercise each explicit planner override independently:
+  claude/claude-fable-5.1@low, claude/claude-fable-5.1@medium, and
+  claude/claude-fable-5.1@high. For each case state the exact selected triple, that it is a caller
+  override, and what remains unchanged.
+expect_skill: true
+criteria:
+  - "Accepts Claude Fable 5.1 at low as an explicit dedicated-planner choice"
+  - "Accepts Claude Fable 5.1 at medium as an explicit dedicated-planner choice"
+  - "Accepts Claude Fable 5.1 at high as an explicit dedicated-planner choice"
+  - "Preserves the exact effort spelling instead of normalizing it to another tier"
+  - "Does not use the Fable choice to auto-route the orchestrator or change executor/reviewer routing"
+allowed_tools: ["Read", "Grep", "Glob"]
+timeout: 240

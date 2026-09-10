@@ -5,7 +5,11 @@ description: The discernment engine — which brand is the executor, which brand
 
 # Auto Routing
 
-**Three decisions, all made by the planner at plan time**, and never conflated:
+**The invoking model is the orchestrator; it is never auto-routed.** In existing v2 it also performs
+planning for compatibility. This ticket adds one narrow planner-call decision; executor, worker, and
+reviewer routing remain the decisions below and are not changed.
+
+**Three existing decisions, all made at plan time, stay separate:**
 
 1. **Which brand is the executor** — one per repo. Owns the working tree. The only writer. Its
    model and effort are **fixed** by the table below.
@@ -80,15 +84,64 @@ Not derived from the benchmark table, and a leaderboard movement does not change
 
 | Role | claude | codex | agy | Fixed? |
 |---|---|---|---|---|
-| Planner | `opus` (the session) | `codex-luna` | `agy` | fixed |
-| **Plan-reviewer** (full gear only) | `opus` **low** | `codex-luna` **xhigh** | `agy` **high** | fixed |
+| Planner (compatibility path) | `opus` (invoking session) | `codex-luna` | `agy` | fixed for the existing same-call path |
+| **Plan-reviewer** (full gear only) | Existing orchestrator/control-plane planner route at `opus` **low** | `codex-luna` **xhigh** | `agy` **high** | unchanged; dedicated planner choice does not override |
 | Executor | `sonnet` **high** | **`gpt-5.6-luna` `high`** | **Flash latest `high`** | **fixed** |
 | Worker | `sonnet` high *default* | `gpt-5.6-luna` high *default* | Flash latest `high` *default* | **ANY brand/model/effort the planner declares** |
-| Reviewer (code) | `opus` **low** | `codex-luna` **xhigh** default, **`high`** floor *(only when codex is planner)* | never reviews | claude fixed; **codex priced by blast radius** — see *Reviewer selection* |
+| **Reviewer (code)** | `opus` **low** | `codex-luna` **xhigh** default, **`high`** floor *(only when Codex is the orchestrator/control-plane planner)* | never reviews | claude fixed; **codex priced by blast radius** — see *Reviewer selection* |
 
-**The plan-reviewer's brand is always the planner's brand** — it is not routed by fit. It reads one
-document the planner just wrote; same-brand is an advantage there, not the conflict of interest it
-would be on a diff. Executor and worker brand *is* routed by fit.
+## v2 dedicated planner policy
+
+This is the only new routing surface in this ticket. It selects the planner call,
+not the invoking orchestrator, executor, worker, plan-reviewer, or code-reviewer.
+The full contract and serialized artifact are in
+[`planner-handoff.md`](../../references/planner-handoff.md).
+
+| Policy value | Harness | Model | Effort |
+|---|---|---|---|
+| Default | `claude` | `opus-5` (Claude Opus 5) | `medium` |
+| Candidate | `claude` | `claude-fable-5.1` (Claude Fable 5.1) | `low` |
+| Candidate | `claude` | `claude-fable-5.1` | `medium` |
+| Candidate | `claude` | `claude-fable-5.1` | `high` |
+| Required fallback | `codex` | `gpt-6-astra` (GPT-6 Astra) | `low` |
+| Candidate | `codex` | `gpt-6-astra` | `medium` |
+
+Use the exact `harness/model@effort` triple. The default and fallback are
+maintainer-owned v2 policy, not a score-based choice. An explicit planner
+triple is a caller override and must be echoed.
+
+Resolution order is fixed:
+
+1. `planner_mode=orchestrator` uses the old same-call behavior and makes no
+   dedicated planner call. Record `reused_from_orchestrator: true` and no
+   fallback.
+2. Otherwise try the explicit planner triple, or `claude/opus-5@medium`.
+3. If it is unavailable or fails, try **`codex/gpt-6-astra@low` first**. Do
+   not fall back to the orchestrator before this attempt.
+4. If that fallback is unavailable, try the remaining declared candidates in
+   their listed order. Only when no dedicated candidate is usable may the
+   existing orchestrator-as-planner path be used as the graceful v2 fallback.
+
+Record every failed attempt and its reason (`not-installed`, `unauthenticated`,
+`unsupported-model`, `unsupported-effort`, `quota-unavailable`, `launch-error`,
+or `planner-failure`). A preferred planner's failure never changes executor or
+reviewer routing.
+
+If the selected planner triple exactly equals the orchestrator's
+harness/model/effort, reuse the orchestrator planning step when isolation was
+not explicitly requested. Record `reused_from_orchestrator: true` and make no
+duplicate call. `planner_isolation=required` always makes a separate call.
+
+The orchestrator kickoff, serialized handoff, run report, and routing outcome
+record state: `planner_mode`, orchestrator triple, planner triple,
+`reused_from_orchestrator`, `fallback_used`, and `fallback_reason`. Use the
+existing telemetry fields `brand`, `model`, `effort`, and `dispatch_form` for
+the actual planner call; do not add executor/reviewer route fields here.
+
+**The plan-reviewer's brand remains the existing planner/reviewer route** — it is not selected by the
+v2 dedicated-planner policy. It reads one document the planning step just wrote; same-brand is an
+advantage there, not the conflict of interest it would be on a diff. Executor and worker brand *is*
+routed by fit, exactly as before.
 
 **The executor is sonnet-tier, high effort — Claude Sonnet is the standing default, and the other
 brands remain fit-selected alternatives.**
@@ -413,10 +466,10 @@ The reviewer must explicitly check, with evidence, that agy did not:
 ## Reviewer selection
 
 **Code review: fresh Opus, low, by default, always.** The `codex-luna` reviewer path applies only
-when **Codex is the planner** (i.e. a Codex session invoked this workflow), not merely when codex
-executed. A caller may add a second opinion; a caller may not drop below the floor. **agy never holds
-the code-review gate** — long, adversarial, multi-round work against a diff is its documented
-weakness, and the miss-list is why.
+when **Codex is the orchestrator/control-plane planner** (a Codex session invoked this workflow),
+not merely when Codex was selected as the dedicated planner. A caller may add a second opinion; a
+caller may not drop below the floor. **agy never holds the code-review gate** — long, adversarial,
+multi-round work against a diff is its documented weakness, and the miss-list is why.
 
 ### Review effort is priced per leg, by blast radius
 

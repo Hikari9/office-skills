@@ -5,6 +5,21 @@ description: Phase 2–3 — the goal-locked autonomous loop that runs draft-PR 
 
 # Auto Loop
 
+## v2 planner boundary
+
+In `planner_mode=dedicated`, the orchestrator has already invoked the planner
+and accepted its serialized handoff before this loop begins. The dedicated
+planner call has no lifecycle, dispatch, approval, reviewer, or closeout state;
+it returns the artifact and exits. The orchestrator is the control-plane owner
+for every step below, including planner-held actions and executor/reviewer
+dispatch. In `planner_mode=orchestrator`, the same session fills both labels,
+which is the existing v2 compatibility path.
+
+After the handoff, references to “planner” in this loop mean the orchestrator's
+planning authority, not a second hidden planner session. Executor and reviewer
+routing and the loop itself are otherwise unchanged. This is the v2 bridge to
+the more fundamental separation described for v3, not v3 implementation.
+
 After approval the run is **end-to-end**. No go-aheads, no "shall I continue," no summarizing and
 waiting. Report progress and keep moving until closeout or a stop condition.
 

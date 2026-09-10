@@ -1,5 +1,19 @@
 # Changelog — auto-office
 
+## 17.7.0 — 2026-09-10
+
+**v2 can use a dedicated planner without changing the orchestrator, executor, or reviewer routes.**
+The invoking model remains the orchestrator. Dedicated planning defaults to Claude Opus 5 medium,
+falls back to GPT-6 Astra low before any compatibility fallback, and accepts the explicit Fable 5.1
+and Astra candidates. The planner returns a serialized handoff; the orchestrator validates it and
+continues the existing lifecycle. `planner_mode=orchestrator` preserves the old same-call behavior,
+and identical triples may reuse the orchestrator step unless isolation is required. Planner mode,
+triples, reuse, fallback, and reasons are recorded in the handoff, run report, and routing ledger.
+
+Adds eval coverage for compatibility, separate handoff/lifecycle, defaults, fallback, all supported
+planner efforts, deterministic reuse, and protection of executor/reviewer routing. v3 adaptive
+routing remains out of scope.
+
 ## 17.6.0 — 2026-09-08
 
 **Claude Sonnet high is now the standing default executor.** The router still selects Codex Luna

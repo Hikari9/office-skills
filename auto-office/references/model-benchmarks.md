@@ -32,6 +32,15 @@ you argue on; it is still not the argument. See [auto-routing](../skills/auto-ro
 Read [routing-outcomes.md](routing-outcomes.md) before this file — local outcomes outrank the
 leaderboard.
 
+## v2 dedicated planner note
+
+This snapshot does **not** choose the v2 dedicated planner. The maintained policy
+is explicit: Claude Opus 5 medium by default, GPT-6 Astra low as the required
+fallback, with the Fable 5.1 and Astra candidate triples documented in
+[`auto-routing`](../skills/auto-routing/SKILL.md). A benchmark refresh may update
+this evidence file, but it must not silently change those planner defaults or
+fallbacks.
+
 ## Intelligence Index and output speed
 
 | Model | Intelligence | Output tok/s | ~$/M tokens | Office role |

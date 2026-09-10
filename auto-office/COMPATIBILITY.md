@@ -20,22 +20,22 @@ exceptions:
   - id: auto-orchestrator-selection
     owner: auto-office
     reason: >
-      The orchestrator role is selected at plan time by a documented rubric (capability role, measured
-      codex weekly headroom, speed-vs-correctness) instead of being fixed by the plugin. This is a
-      runtime-mechanics choice about which process fills the orchestrator role, not an authority change:
-      every gate in roles-and-authority.md applies unchanged to whichever tool is selected, and the
-      review gate is held by a fresh reviewer that did not do the work in every case.
+      The invoking model is the orchestrator and is never selected by auto-office routing. This legacy
+      exception id is retained for traceability while v2 adds only a separate, optional planner call:
+      the orchestrator may invoke a dedicated planner, consume its serialized handoff, and retain all
+      lifecycle, state, dispatch, approval, and closeout authority. This is a runtime-mechanics choice,
+      not an authority change; executor and reviewer routing remain unchanged.
     widens_core_authority: false
   - id: auto-task-subdelegation
     owner: auto-office
     reason: >
-      The selected orchestrator may sub-delegate individual tasks to another tool (typically agy for
-      read-only recon and bulk mechanical work). When `HERDR_ENV=1`, every real sub-delegation uses
-      the Herdr pane contract; otherwise same-brand fan-out may use the existing in-session route
-      and cross-brand fan-out uses CLI. Ordinary sub-delegation never creates a second writer. The
-      core Tester exception permits one Executor-owned Tester to write disjoint test/config paths in
-      the orchestrator's tree under the shared lock and pathspec contract, and inherits the
-      orchestrator brief's file scope and constraints rather than a wider one.
+      The orchestrator dispatches the dedicated planner when selected, then one executor per repo and
+      the existing reviewer/scout stages. The approved Executor may sub-delegate individual tasks to
+      another tool (typically agy for read-only recon and bulk mechanical work). When `HERDR_ENV=1`,
+      every real delegation uses the Herdr pane contract; otherwise same-brand fan-out may use the
+      existing in-session route and cross-brand fan-out uses CLI. Ordinary sub-delegation never creates
+      a second writer. The core Tester exception permits one Executor-owned Tester to write disjoint
+      test/config paths in the Executor's tree under the shared lock and pathspec contract.
     widens_core_authority: false
   - id: auto-goal-locked-autonomy
     owner: auto-office
@@ -121,12 +121,13 @@ Core `2.0.0` absorbed three things this office would otherwise have had to decla
 The remaining exceptions were re-checked against core `2.0.0` and all remain
 `widens_core_authority: false`:
 
-- `auto-orchestrator-selection` — still a runtime-mechanics choice about which brand fills the
-  executor role, with every gate applying unchanged. The exception id is kept as-is for traceability
-  even though this office's prose now says **Executor** rather than Orchestrator.
-- `auto-task-subdelegation` — unchanged, and core 9.0.0's Herdr override takes precedence when
-  `HERDR_ENV=1`; without Herdr, same-brand fan-out is in-session, cross-brand is CLI, and neither
-  creates a second writer.
+- `auto-orchestrator-selection` — the legacy exception id now records that the invoking model is the
+  orchestrator and is not auto-selected. v2's dedicated planner call is a narrow runtime-mechanics
+  addition; it does not change authority, executor routing, or reviewer routing.
+- `auto-task-subdelegation` — the orchestrator dispatches the dedicated planner/executor stages when
+  applicable; the approved Executor owns task-worker fan-out. Core 9.0.0's Herdr override takes
+  precedence when `HERDR_ENV=1`; without Herdr, same-brand fan-out is in-session, cross-brand is CLI,
+  and neither creates a second writer.
 - `auto-goal-locked-autonomy` — unchanged. The loop still cannot raise a cap, remove a phase,
   downgrade a reviewer, or widen its blast radius, and it gained a stop (`BRIEF DEFECT`) rather than
   losing one.

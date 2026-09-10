@@ -1,0 +1,15 @@
+name: v2 keeps orchestrator-as-planner compatibility
+prompt: |
+  /auto-office planner_mode=orchestrator Implement the requested change using the existing v2
+  lifecycle. Explain which model is the orchestrator, which call produces the plan, whether a
+  dedicated planner is invoked, and how the normal plan approval, executor, reviewer, and closeout
+  stages continue.
+expect_skill: true
+criteria:
+  - "Identifies the invoking model as the orchestrator"
+  - "Uses the existing orchestrator-as-planner planning step without a redundant dedicated call"
+  - "Preserves the tracked plan, approval, executor, independent reviewer, and closeout lifecycle"
+  - "States that this explicit mode is backward-compatible v2 behavior"
+  - "Does not auto-route the orchestrator or change executor/reviewer routing"
+allowed_tools: ["Read", "Grep", "Glob"]
+timeout: 240
