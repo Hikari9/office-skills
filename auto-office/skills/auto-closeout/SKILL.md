@@ -72,13 +72,22 @@ final evidence.
     Goal (with each criterion's final verify output), Landed (PR numbers, merge targets, commit
     ranges), Route, Task ledger, Stops, **Not verified** (never let an unrun check read as passed),
     Still open. Neither of the last two is empty by default — say so explicitly if it genuinely is.
-    Express runs emit no report; the PR body is the record.
-12. **If the planner is claude at Opus tier**, append one row (two lines max — the columns carry the
+    Express runs emit no report; the PR body is the record. Every non-express report also carries the
+    compact v2 plan-drafter line, using the same field names as the serialized handoff
+    ([planner-handoff.md](../../references/planner-handoff.md)) and routing ledger
+    ([routing-outcomes.md](../../references/routing-outcomes.md)) so the three stay diffable:
+    `planner_mode · plan_needed=<true|false> · detector_verdict=<supported|unsupported|unknown|not-needed>
+    · orchestrator=<harness/model@effort> · prompt_shown=<true|false> · prompt_choice=<opus|fable|astra|inline|null>
+    · plan_drafter=<harness/model@effort> · reused_from_orchestrator=<true|false> · fallback_used=<true|false>
+    · fallback_reason=<reason|null>`.
+    The serialized handoff or run artifact retains attempted triples and failure reasons.
+12. **If the Planner is claude at Opus tier**, append one row (two lines max — the columns carry the
     numbers, the `lesson` cell carries one sentence or "as expected") to
     [routing-outcomes.md](../../references/routing-outcomes.md); write a rule change instead of a row
-    if the lesson needs more than that. codex/agy planners propose in the run report and stop. Express
-    runs append nothing. This is this office's routing ledger specifically, separate from and in
-    addition to step 13.
+    if the lesson needs more than that. codex/agy Planners propose in the run report and stop. Express
+    runs append nothing. When a row is appended, include the v2 plan-drafter metadata fields defined
+    in the ledger. This is this office's routing ledger specifically, separate from and in addition to
+    step 13.
 13. Load [`office-learnings`](../../office-core/skills/office-learnings/SKILL.md) for any other
     durable lesson (routing feedback, a mechanism gotcha, a shared invariant) per this office's
     [routing table](../../references/closeout.md#recording-durable-lessons) — no tier restriction,

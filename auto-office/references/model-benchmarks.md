@@ -32,6 +32,17 @@ you argue on; it is still not the argument. See [auto-routing](../skills/auto-ro
 Read [routing-outcomes.md](routing-outcomes.md) before this file — local outcomes outrank the
 leaderboard.
 
+## v2 dedicated plan-drafter note
+
+This snapshot does **not** choose the v2 dedicated plan drafter (an added role,
+never the Planner). The maintained policy is conditional on the orchestrator,
+not benchmark-derived — canonical definition, resolution order, and fallback
+semantics: [`planner-handoff.md`](planner-handoff.md#v2-selection-policy). In
+short: Claude Opus 5 medium by default, except GPT-6 Astra low when the
+orchestrator's harness is claude and codex headroom is comfortably available.
+A benchmark refresh may update this evidence file, but it must not silently
+change those drafter defaults or fallbacks.
+
 ## Intelligence Index and output speed
 
 | Model | Intelligence | Output tok/s | ~$/M tokens | Office role |

@@ -1,0 +1,17 @@
+name: planner failure does not reroute executor or reviewer
+prompt: |
+  /auto-office planner_mode=dedicated Use this deterministic fixture: the requested dedicated
+  claude/claude-fable-5.1@high planner fails after launch; codex/gpt-6-astra@low is unavailable due
+  to quota; codex/gpt-6-astra@medium is usable. The approved v2 plan already routes the executor to
+  claude/sonnet@high and the code reviewer to claude/opus@low. Explain the planner recovery and all
+  routes that must remain unchanged.
+expect_skill: true
+criteria:
+  - "Records the Fable planner failure and Astra Low quota-unavailable reason"
+  - "Tries the dedicated fallback policy before considering orchestrator-as-drafter"
+  - "Selects a usable declared dedicated plan drafter candidate rather than silently changing to the orchestrator"
+  - "Leaves the approved executor route at claude/sonnet@high"
+  - "Leaves the approved reviewer route at claude/opus@low"
+  - "States that planner failure changes only planner selection metadata and the serialized handoff"
+allowed_tools: ["Read", "Grep", "Glob"]
+timeout: 260

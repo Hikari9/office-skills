@@ -5,7 +5,12 @@ description: The discernment engine — which brand is the executor, which brand
 
 # Auto Routing
 
-**Three decisions, all made by the planner at plan time**, and never conflated:
+**The invoking model holds the core Planner role and is never auto-routed** ("orchestrator" below
+names only its control-plane behavior, not a new role). In existing v2 it also drafts the plan
+directly for compatibility. This ticket adds one narrow plan-drafter-call decision; executor, worker,
+and reviewer routing remain the decisions below and are not changed.
+
+**Three existing decisions, all made at plan time, stay separate:**
 
 1. **Which brand is the executor** — one per repo. Owns the working tree. The only writer. Its
    model and effort are **fixed** by the table below.
@@ -80,15 +85,90 @@ Not derived from the benchmark table, and a leaderboard movement does not change
 
 | Role | claude | codex | agy | Fixed? |
 |---|---|---|---|---|
-| Planner | `opus` (the session) | `codex-luna` | `agy` | fixed |
-| **Plan-reviewer** (full gear only) | `opus` **low** | `codex-luna` **xhigh** | `agy` **high** | fixed |
+| Planner (compatibility path — invoking session, drafts inline) | `opus` (invoking session) | `codex-luna` | `agy` | fixed for the existing same-call path |
+| **Plan-reviewer** (full gear only) | Existing orchestrator/control-plane Planner's own route at `opus` **low** | `codex-luna` **xhigh** | `agy` **high** | unchanged; a dedicated plan drafter's choice does not override |
 | Executor | `sonnet` **high** | **`gpt-5.6-luna` `high`** | **Flash latest `high`** | **fixed** |
-| Worker | `sonnet` high *default* | `gpt-5.6-luna` high *default* | Flash latest `high` *default* | **ANY brand/model/effort the planner declares** |
-| Reviewer (code) | `opus` **low** | `codex-luna` **xhigh** default, **`high`** floor *(only when codex is planner)* | never reviews | claude fixed; **codex priced by blast radius** — see *Reviewer selection* |
+| Worker | `sonnet` high *default* | `gpt-5.6-luna` high *default* | Flash latest `high` *default* | **ANY brand/model/effort the Planner declares** |
+| **Reviewer (code)** | `opus` **low** | `codex-luna` **xhigh** default, **`high`** floor *(only when Codex is the orchestrator/control-plane Planner)* | never reviews | claude fixed; **codex priced by blast radius** — see *Reviewer selection* |
 
-**The plan-reviewer's brand is always the planner's brand** — it is not routed by fit. It reads one
-document the planner just wrote; same-brand is an advantage there, not the conflict of interest it
-would be on a diff. Executor and worker brand *is* routed by fit.
+## v2 dedicated plan-drafter policy
+
+This is the only new routing surface in this ticket. It selects the plan-drafter call —
+an added role, never the Planner itself — not the invoking orchestrator, executor, worker,
+plan-reviewer, or code-reviewer. The full detector, prompt, contract, dispatch mechanics, and
+serialized artifact are in [`planner-handoff.md`](../../references/planner-handoff.md).
+
+`planner_mode=auto` is the default when no drafter override is supplied. After
+the fit test, if a plan is needed and the detected orchestrator triple is not a
+drafter candidate, prompt the user with `AskUserQuestion` — unless
+`planner_isolation=required` was also given explicitly, which skips the prompt
+and goes straight to dedicated resolution using the declared default (see
+resolution step 3 below; the gap this closes is detailed in
+[`planner-handoff.md`](../../references/planner-handoff.md)). When the prompt
+runs: recommend the same conditional default described below first (**Opus
+Medium**, or **Astra Low** when the orchestrator's harness is `claude` and
+codex headroom is comfortably available), with the other of the two as the
+stated fallback, then offer **Fable 5.1**, **GPT-6 Astra**, or **inline**.
+Family choices resolve to an exact declared effort; silence does not select
+inline. No prompt is shown for direct (no-plan) work, a supported exact
+triple, or an explicit caller override.
+
+| Policy value | Harness | Model | Effort |
+|---|---|---|---|
+| Default *(claude orchestrator, codex headroom NOT generous — or orchestrator isn't claude)* | `claude` | `opus-5` (Claude Opus 5) | `medium` |
+| Conditional default *(claude orchestrator, codex headroom generous)* | `codex` | `gpt-6-astra` | `low` |
+| Candidate | `claude` | `claude-fable-5.1` (Claude Fable 5.1) | `low` |
+| Candidate | `claude` | `claude-fable-5.1` | `medium` |
+| Candidate | `claude` | `claude-fable-5.1` | `high` |
+| Required fallback *(whichever of the two rows above wasn't the default just tried)* | `codex` or `claude` | `gpt-6-astra` or `opus-5` | `low` or `medium` |
+| Candidate | `codex` | `gpt-6-astra` | `medium` |
+
+**The default is conditional, not fixed**: when the orchestrator's harness is `claude` and codex
+headroom is comfortably available (the standing fit-test/pre-dispatch probe, never a hardcoded
+threshold), the default attempt is `codex/gpt-6-astra@low` instead of `claude/opus-5@medium` — this
+avoids spending the orchestrator's own account on a redundant Opus call when codex has room to
+spare. Whichever of the two is not the default is still the required fallback if the default is
+unavailable, so resolution never leaves a run with no drafter selected. Full rule:
+[`planner-handoff.md`](../../references/planner-handoff.md#v2-selection-policy).
+
+This table mirrors the `planner_candidates` YAML in
+[`planner-handoff.md`](../../references/planner-handoff.md#v2-selection-policy),
+which is **canonical** — if the two ever disagree, that file wins and this
+table is stale and must be updated to match.
+
+Use the exact, **canonicalized** `harness/model@effort` triple — normalize launch
+aliases and runtime/read-back strings (`opus`, `claude-opus-5` → `opus-5`) before
+any equality check; see *Canonical model identity* in
+[`planner-handoff.md`](../../references/planner-handoff.md). The default and
+fallback are maintainer-owned v2 policy, not a score-based choice. An explicit
+drafter triple is a caller override and must be echoed.
+
+**The full 7-rule resolution order — including the `planner_isolation=required`
+isolation-gap fix and where the no-duplicate-call reuse check folds in — is
+defined once, canonically, in [`planner-handoff.md`](../../references/planner-handoff.md#v2-selection-policy).
+Do not re-derive or re-state it here; a second copy is exactly the kind of
+drift this note exists to prevent.** In short: `inline` never dispatches a
+drafter; a supported/reused triple or an explicit override skips the prompt;
+an unsupported/unknown triple prompts unless isolation was already required;
+and dedicated resolution always terminates at a selected drafter — default,
+then required fallback, then remaining candidates, then orchestrator-as-drafter
+as the last resort. Record every failed attempt and its reason
+(`not-installed`, `unauthenticated`, `unsupported-model`, `unsupported-effort`,
+`quota-unavailable`, `launch-error`, or `planner-failure`). A preferred
+drafter's failure never changes executor or reviewer routing.
+
+The orchestrator kickoff, serialized handoff, run report, and routing outcome
+record the detector verdict, plan-needed flag, orchestrator triple, prompt
+visibility/choice, `planner_mode`, plan-drafter triple, `reused_from_orchestrator`,
+`fallback_used`, and `fallback_reason`. Use the existing telemetry fields
+`brand`, `model`, `effort`, and `dispatch_form` for the actual drafter call; do
+not add executor/reviewer route fields here.
+
+**The plan-reviewer's brand remains the existing orchestrator/control-plane Planner's own route** —
+it is not selected by the v2 dedicated-plan-drafter policy. It reads one document the drafting step
+just wrote; same-brand is an advantage there, not the conflict of interest it would be on a diff.
+Executor and worker brand *is*
+routed by fit, exactly as before.
 
 **The executor is sonnet-tier, high effort — Claude Sonnet is the standing default, and the other
 brands remain fit-selected alternatives.**
@@ -192,6 +272,7 @@ Inline work remains inline. When Herdr is absent, the table below is unchanged.
 | Who dispatches whom | Form | What the delegation buys |
 |---|---|---|
 | Any real delegation while `HERDR_ENV=1` | **Herdr pane** | Visible topology, prompt/read/wait control, and no hidden in-session child |
+| Planner → dedicated **plan drafter**, **Phase 1 only, `planner_mode=dedicated`** | **CLI, own worktree scoped to `docs/plans/<slug>.md`** — see *Dispatch mechanics* in [`planner-handoff.md`](../../references/planner-handoff.md) | A different model call producing the draft, with no gate and no write access outside the plan artifact |
 | Planner → executor, **one per repo, whole plan** | **CLI, own worktree** | Isolation, unattended running, and a ~6× cheaper writer that already holds the reviewed plan |
 | Planner → code reviewer | **CLI / fresh agent** | Independence — the executor may never launch its own gate |
 | Planner → read-only scout, **Phase 1 only** | **CLI, `agy` by default**; if agy is unavailable, the planner's own brand at its **lower** tier (`haiku` in-session for claude, `gpt-5.6-luna` for codex) — **never planner tier** | Breadth before a plan or an executor exists |
@@ -413,10 +494,10 @@ The reviewer must explicitly check, with evidence, that agy did not:
 ## Reviewer selection
 
 **Code review: fresh Opus, low, by default, always.** The `codex-luna` reviewer path applies only
-when **Codex is the planner** (i.e. a Codex session invoked this workflow), not merely when codex
-executed. A caller may add a second opinion; a caller may not drop below the floor. **agy never holds
-the code-review gate** — long, adversarial, multi-round work against a diff is its documented
-weakness, and the miss-list is why.
+when **Codex is the orchestrator/control-plane planner** (a Codex session invoked this workflow),
+not merely when Codex was selected as the dedicated planner. A caller may add a second opinion; a
+caller may not drop below the floor. **agy never holds the code-review gate** — long, adversarial,
+multi-round work against a diff is its documented weakness, and the miss-list is why.
 
 ### Review effort is priced per leg, by blast radius
 

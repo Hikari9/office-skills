@@ -5,6 +5,25 @@ description: Phase 2–3 — the goal-locked autonomous loop that runs draft-PR 
 
 # Auto Loop
 
+## v2 Planner / plan-drafter boundary
+
+In `planner_mode=auto`, the detector and any user drafter-choice prompt have
+already resolved before this loop begins; the loop receives the resulting
+serialized handoff. In `planner_mode=dedicated`, the Planner (orchestrator) has
+already invoked the dedicated plan drafter and validated its serialized handoff
+before this loop begins. The plan-drafter call is an added role with no
+lifecycle, dispatch, approval, reviewer, or closeout state; it returns the
+draft artifact and exits. The Planner (orchestrator) is the control-plane
+owner for every step below, including planner-held actions and executor/
+reviewer dispatch. In `planner_mode=inline`, the same session drafts the plan
+directly, which is the existing v2 compatibility path.
+
+After the handoff, references to "the planner" in this loop mean the Planner's
+control-plane authority (the invoking session), never the plan drafter — the
+drafter has already exited and holds no further state. Executor and reviewer
+routing and the loop itself are otherwise unchanged. This is the v2 bridge to
+the more fundamental separation described for v3, not v3 implementation.
+
 After approval the run is **end-to-end**. No go-aheads, no "shall I continue," no summarizing and
 waiting. Report progress and keep moving until closeout or a stop condition.
 

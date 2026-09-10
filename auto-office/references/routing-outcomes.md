@@ -88,6 +88,34 @@ nothing; a rule in an owning file binds the next run. If a lesson has no owner, 
 44. **A staging rehearsal that runs a different code branch than production proves nothing.** Staging lacked the two attributes entirely, so the provisioner's *create* branch would have run green while production needs the *update* branch (field-type flip plus qualifier creation on rows that already exist). Seeding staging into production's actual broken shape first — wrong field type, no qualifiers, same descriptions, one deliberately out-of-range value — is what made the rehearsal evidence rather than a demo. → `auto-loop` (named-action preconditions)
 45. **An API's empty collection is not evidence of absence, and a rollback baseline built on one is empty.** The singular `GET /Attributes/{id}` returned `AttributeQualifiers: []` for an attribute holding three qualifier rows, because that route does not expand the nested collection. A capture trusting it would have restored nothing while reporting success. Read a nested collection from its own endpoint before treating it as a baseline. → `office-core/evidence-and-handoff.md` (read-back)
 
+## v2 plan-drafter metadata
+
+Dedicated-plan-drafter rows extend the established ledger row rather than
+creating a second telemetry format. Keep the existing columns and append these
+compact fields in the `lesson`/run-note portion:
+
+```text
+planner_mode=<auto|inline|dedicated>
+plan_needed=<true|false>
+detector_verdict=<supported|unsupported|unknown|not-needed>
+orchestrator=<harness/model@effort or unknown>
+prompt_shown=<true|false>
+prompt_choice=<opus|fable|astra|inline|null>
+plan_drafter=<harness/model@effort>
+reused_from_orchestrator=<true|false>
+fallback_used=<true|false>
+fallback_reason=<reason|null>
+attempts=<triple:result:reason,...>
+```
+
+The `plan_drafter` value is the actual selected or reused triple, not the
+requested one. `fallback_reason` explains why the preferred triple was
+unusable; `attempts` keeps the dedicated fallback path auditable. Existing rows
+without these fields remain valid historical compatibility rows. The normal
+event fields `brand`, `model`, `effort`, and `dispatch_form` still describe the
+actual call; executor and reviewer routing are not rewritten by drafter
+selection.
+
 ## Ledger
 
 `date · repo-slug · task · brand · model · effort · dispatch · rounds · tokens · wall · verdict · lesson`
