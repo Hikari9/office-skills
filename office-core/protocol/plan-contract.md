@@ -79,7 +79,9 @@ authority.
 
 A plan declares **milestones**: named groups of done-criteria that, once green, put the tree in a
 shippable state. Each milestone is a commit or commit range and a local run-state checkpoint. The
-single draft PR remains draft until final reviewer approval; the final closeout lands it.
+single draft PR remains draft until the review tier's exit state — the final reviewer's `APPROVED`
+for an adversarial or integration round, or the recorded inline pass for a task the orchestrator
+routed to the inline tier at dispatch. The final closeout lands it.
 
 - **Declared at plan time, reviewed at approval.** The loop does not improvise a milestone
   boundary mid-run; if the grouping is wrong, that is a plan amendment.

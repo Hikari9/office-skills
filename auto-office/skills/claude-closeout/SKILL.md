@@ -5,7 +5,8 @@ description: Final plan removal, PR readiness + merge, sync main, close every op
 
 # Claude Closeout
 
-Loaded by: the planner, at Phase 4.
+Loaded by: the orchestrator — the invoking control-plane session — at Phase 4. Not the dedicated
+planner, which exits at plan handoff and holds no lifecycle authority.
 Assumes: the Office Kernel is already in the packet.
 
 The step-by-step procedure is core: `office-core/protocol/closeout.md`. This office's additions
@@ -18,8 +19,9 @@ happen regardless of wording.
 ## Runs once at final closeout
 
 A plan declares milestones (`office-core/protocol/plan-contract.md`). Each green milestone is
-committed and recorded in local run state during the loop. This file runs after the final
-reviewer approval: remove the tracked plan, mark the PR ready, merge it, then sync, remove the
+committed and recorded in local run state during the loop. This file runs after the review tier's exit
+state — the final reviewer's `APPROVED`, or the recorded inline pass for a task the orchestrator
+routed to the inline tier at dispatch: remove the tracked plan, mark the PR ready, merge it, then sync, remove the
 worktree, and close Upline entries. Removing a worktree at milestone 1 of 3 destroys the run.
 
 Never batch milestones. An unrecorded green milestone is a re-entry point thrown away.

@@ -92,9 +92,11 @@ planner posts to the PR only at these three events:
 2. **First executor completion.** The first executor's completion comment records its status,
    handoff, commit range, final `HEAD`, gate evidence, and next resume point. Follow-up fix
    executors do not add PR comments.
-3. **Final `APPROVED`.** After the reviewer returns `APPROVED`, post one short summary with the
+3. **Final exit state.** After the reviewer returns `APPROVED`, post one short summary with the
    reviewer id, final `HEAD`, review rounds, the total number of changes required across those
-   rounds, and a brief reason for each change — or why none were required. Use
+   rounds, and a brief reason for each change — or why none were required. **For an inline-routed
+   task there is no reviewer and no rounds**: post the same summary naming the inline tier, the
+   orchestrator that declared it at dispatch, and every validation command with its real output. Use
    `gh pr comment <number> --body-file <approval-summary-file>` and read the comment back.
 
 Do not post `CHANGES REQUIRED`, `PLAN DEFECT`, intermediate verdicts, or fix-resolution comments

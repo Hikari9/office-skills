@@ -14,7 +14,7 @@ in the spokes it routes to.
 
 | Role | Owner | Default model | Responsibility |
 |---|---|---|---|
-| Planner | Active Codex session | current session | scope, plan, escalation, closeout |
+| Orchestrator + Planner (one session, both hats) | Active Codex session | current session | scope, plan, escalation; lifecycle, closeout, ready-for-review, merge |
 | Executor | Fresh Herdr-managed agent pane when HERDR_ENV=1; otherwise Codex in-session when planner and assignee are Codex, or the assignee's CLI | `gpt-5.6-luna`, high | bootstraps the draft PR, implements the approved plan, and posts the first-completion event |
 | Reviewer | Separate fresh Herdr-managed agent pane when HERDR_ENV=1; otherwise Codex in-session when planner and assignee are Codex, or the assignee's CLI | `gpt-5.6-luna`, xhigh (code review of a low-blast-radius leg: high) | adversarial gate and re-review |
 
@@ -129,7 +129,7 @@ below it selects, and nothing else.
 | Driving `codex exec` safely | `skills/codex-cli/SKILL.md` | Any phase whose routing selects Codex CLI |
 | Executor role and packet contract | `skills/codex-executor/SKILL.md` | Phase 2, building or receiving the executor dispatch |
 | Reviewer role and fix loop | `skills/codex-reviewer/SKILL.md` | Phase 3, building or receiving the reviewer dispatch |
-| Closeout and planner-held actions | `skills/codex-closeout/SKILL.md` | Phase 4, planner only |
+| Closeout and planner-held actions | `skills/codex-closeout/SKILL.md` | Phase 4, control plane only |
 
 ## The four phases
 

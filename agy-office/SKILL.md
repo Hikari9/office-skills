@@ -82,7 +82,8 @@ rule: `office-core/protocol/roles-and-authority.md` → *Fit test*.
 - Executor bootstrap is authorized by the approved plan: commit the plan alone first, push the named
   branch, open one draft PR whose body contains an immutable plan blob deeplink and references the
   plan and issue, and post the approved-plan/execution-begins comment plus the first-executor-completion comment.
-  Planner-held closeout removes the plan, marks the PR ready, and merges it.
+  Planner-held closeout — held by the control plane, which in this office is the invoking session
+  wearing both hats — removes the plan, marks the PR ready, and merges it.
 - Milestones are internal checkpoints and do not create PR comments. Keep the single PR draft until
   final reviewer approval, which gets one short summary comment; do not merge milestones independently.
 - Dispatch live-system work **with** its access: MCP/API tools named in the launch, production
@@ -153,7 +154,7 @@ defect before dispatching the reviewer. **Not review** — no spec judgement, no
 Constraints, handoff, diff, your Phase 2b evidence; triage/fix; re-run Phase 2b + the gate each
 round; cap 5. → [`agy-reviewer`](skills/agy-reviewer/SKILL.md).
 
-**Phase 4 — Closeout (Planner).** Verify the final gate, remove the plan in a pre-merge commit, push,
+**Phase 4 — Closeout (the control plane, wearing both hats here).** Verify the final gate, remove the plan in a pre-merge commit, push,
 confirm the first-executor-completion and final-approval-summary comments, mark the existing draft PR ready, merge to main (`gh pr merge --auto --squash`
 or standard merge), sync local `main`, remove the worktree, close every open Upline entry, and report
 in ≤6 lines. → [`agy-closeout`](skills/agy-closeout/SKILL.md).

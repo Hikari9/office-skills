@@ -62,8 +62,9 @@ and missing comment.
 
 ## Closeout boundary
 
-The PR remains draft through implementation, verification, and review. After the final reviewer
-returns `APPROVED` and the final gate is green, the **orchestrator** — not the dedicated planner,
+The PR remains draft through implementation, verification, and review. After the review tier's exit
+state — the final reviewer's `APPROVED`, or the recorded inline pass for an inline-routed task — and
+a green final gate, the **orchestrator** — not the dedicated planner,
 which has already exited — posts the final approval summary, then performs closeout: remove the tracked plan in a dedicated pre-merge commit, push that commit,
 confirm the deletion and approval summary, mark the PR ready, and merge it under the approved plan's
 authority. The plan is removed
