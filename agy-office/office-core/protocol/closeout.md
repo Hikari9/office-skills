@@ -1,15 +1,22 @@
 # Closeout (core protocol)
 
-Run by the **planner**, after the reviewer returns `APPROVED` — or invoked directly, standalone
-(see below), when there is no planner and no reviewer round to wait on. Self-contained: it loads
+Run by the **orchestrator** — the invoking session that holds lifecycle and run state — after the
+reviewer returns `APPROVED`. Or invoked directly, **standalone** (see below), when the work never
+went through a plan pipeline and there is no reviewer round to wait on. Self-contained: it loads
 no other skill.
+
+**"Planner-held" in this file means orchestrator-held.** The term is long-standing and names the
+control plane, not the plan author. A dedicated Planner interviews the user, returns the plan, and
+**exits before closeout** — so a run that had a dedicated planner is still a full run, never the
+standalone path below. Standalone is selected by the absence of a *plan pipeline*, not by the
+absence of a planner process.
 
 Each office narrows this with an adapter file naming its own gate command, its report fields,
 and where it records durable lessons. An adapter may add a step; it may not drop one.
 
 ## Standalone invocation
 
-This file also runs with no planner, no Office Kernel packet, and no plan file — when an
+This file also runs with no plan pipeline behind it — no Office Kernel packet and no plan file — when an
 office's closeout skill is invoked directly to finish work that never went through the full
 pipeline (a quick fix, a one-off task, resuming a branch after the session that started it is
 gone). Nothing below changes: confirm target, commit, gate, PR, document, sync, cleanup, close
@@ -84,7 +91,7 @@ have created the one draft PR.
   run `gh pr ready <number>`, then `gh pr merge --auto` (or the repository's approved merge form).
 - **PR exists but not merged:** reuse it; do not create a second PR.
 
-Before marking the PR ready, read the local review files and planner run state and confirm that every
+Before marking the PR ready, read the local review files and the orchestrator's run state and confirm that every
 completed verdict, disposition, fix wave, and gate result is present. Read the PR comments and confirm
 the allowed bootstrap, first-executor-completion, and final-approval comments are present where their
 events occurred. Also read the PR body and confirm its plan deeplink resolves to the latest approved
@@ -97,7 +104,7 @@ and confirm the file list matches what the review actually covered. Observed: a 
 the local diff, but the executor's five implementation commits were never pushed — the PR's real
 diff was a single plan doc, and it would have merged effectively empty had this check not run.
 
-Merge, ready-for-review, plan removal, and cleanup remain planner-held actions under
+Merge, ready-for-review, plan removal, and cleanup remain planner-held (orchestrator-held) actions under
 [`roles-and-authority.md`](roles-and-authority.md). Push and draft-PR creation happen at executor
 bootstrap under the explicit exception there. An approved plan carrying these actions is the
 authority to perform them; what remains forbidden is landing something the plan does not cover or
@@ -183,7 +190,7 @@ Check merge state once with `gh pr view <n> --json state,mergedAt`. Do not poll.
 - **Cleaning up a worktree you didn't create** — check provenance first.
 - **Writing a docs update nobody asked for.**
 - **Deleting the tracked plan before the PR is merged** — it is the first-commit record until final
-  closeout, and the planner must remove it in the pre-merge commit.
+  closeout, and the orchestrator must remove it in the pre-merge commit.
 
 ## Final report
 
