@@ -168,9 +168,22 @@ The orchestrator launches a dedicated planner the same way it launches any
 other real delegation, per
 [auto-routing](../skills/auto-routing/SKILL.md#dispatch-form-replaces-the-tier-ladder):
 Herdr pane when `HERDR_ENV=1`, otherwise CLI in its own worktree — a dedicated
-planner is a different process by construction, so it is never in-session. A
-Herdr pane is **preferred** when available, because the planner has to talk to
-the user and a visible pane is the natural surface for it.
+planner is a different process by construction, so it is never in-session.
+
+**Check the planner's user channel before dispatching it as interactive.** A
+`codex exec` or `agy --print` call runs once and exits: it has no inbound
+channel, so a planner launched that way cannot interview anyone. Resolve it one
+of three ways, and record which:
+
+| Channel | Dispatch |
+|---|---|
+| Herdr pane (`HERDR_ENV=1`) | **Preferred.** Interactive planner; it talks to the user in its own pane. |
+| Resumable session the orchestrator can relay through (`claude` + SendMessage, `codex exec resume`) | Interactive planner; the orchestrator relays turns and records them in the packet. |
+| One-shot with no inbound channel | **Non-interactive planner**: recon and draft only, `interactive: false` in the packet, every question returned as `open_questions` for the orchestrator to ask. Or keep planning inline in the session that has the user. |
+
+Dispatching a planner **as interactive** into a harness that cannot ask a
+question is a dispatch defect: it will invent the answers or return an
+unanswerable plan.
 
 - **Launch mechanism**: the sibling CLI skill for the planner's brand
   (`claude-cli`, `codex-cli`, or the `agy` CLI route), exactly as the executor
@@ -217,7 +230,7 @@ envelope followed by the full plan-contract sections. This packet — not the
 planner's transcript — is the handoff.
 
 ```yaml
-schema: auto-office.v3.plan-packet
+schema: auto-office.v2.plan-packet
 status: ready                     # or rejected / failed
 run_id: <opaque run id>
 base_sha: <full sha>
@@ -257,6 +270,8 @@ open_questions:                    # `[needs-user]` items the planner could not 
   - <question + the planner's recommendation>
 planner:
   mode: <inline|dedicated>
+  interactive: <true|false>        # false = one-shot recon/draft, questions returned unanswered
+  user_channel: <herdr-pane|relayed-session|none>
   harness: <harness>
   model: <model>
   effort: <effort>
@@ -317,6 +332,14 @@ requirement revisions, and the funded review tier. A dedicated planner's
 attempts are included when a fallback or failure occurs. Use the existing `brand`, `model`,
 `effort`, and `dispatch_form` telemetry fields for the actual call; do not
 invent a second executor/reviewer route record.
+
+## Generation boundary
+
+This is the **v2** implementation (issue #79). The architecture it implements is issue #77, which
+stays open as the v3 source — v2 implements the behavior now; v3 keeps the architecture as an
+independent source of truth and may reorganize it later under the #35 Wayfinder map. Nothing here
+assumes the current office/core layout is the final v3 structure, and the packet's `schema:` field
+is versioned so a v3 envelope can differ without breaking a v2 reader.
 
 ## Compatibility
 

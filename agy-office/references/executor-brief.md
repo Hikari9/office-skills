@@ -7,6 +7,12 @@ delegation) MUST specify all of the following. A prompt missing any of these is 
 flag ordering, workspace semantics, model names, quota, live monitoring. This file covers what the
 *brief* must say; that one covers how to launch it. Do not reconstruct either from memory.
 
+**Every packet carries the three versions verbatim — `requirements_version`, `plan_version`,
+`routing_version`** (core `plan-contract.md`). The worker echoes them back in its report or landing
+packet unchanged. The control plane compares all three against the family registry before dispatch,
+before each re-review, and before merge; a mismatch means the artifact is stale and is re-briefed,
+never landed on its own authority.
+
 ## Required fields
 
 1. **Workspace root, absolute, stated in the prompt text itself** — plus `--add-dir <same path>`.

@@ -114,9 +114,15 @@ run state. It posts no intermediate review or fix-resolution comments. Only a fi
 review gets a PR comment: a short summary naming the reviewer, final `HEAD`, round count, total
 changes required across the rounds, and why each change was required — or why none were.
 
-Before triage or a follow-up, the planner also records a disposition for every finding: accepted,
-contested, deferred, or escalated; a recommendation of `FIX_AND_REVIEW`, `REPLAN`, `WAIVE_AND_STOP`,
-or `STOP`; the concrete failure scenario and expected outcome; and a pre-fix reflection. If the fix
+Two dispositions, two owners (core `18.0.0`). **Per finding, the producer disposes**: the agent that
+wrote the gated artifact records exactly `accepted_fixed`, `rejected_with_evidence`, or `unresolved`.
+A rejection stands only with evidence of the kind the gate itself demands — real output, a read file,
+a run; confidence is not evidence, and a rejection without it is `unresolved`. Conflicting evidence
+the producer cannot responsibly resolve is `TRUE_CONFLICT` / `USER_DECISION_REQUIRED`, which stops
+that thread and goes to the user with both cases and a recommendation — never resolved by the
+control plane as a higher technical judge. **Per round, the control plane disposes**: a
+recommendation of `FIX_AND_REVIEW`, `REPLAN`, `WAIVE_AND_STOP`, or `STOP`; the concrete failure
+scenario and expected outcome; and a pre-fix reflection. If the fix
 changes assumptions, scope, or risk, the planner pauses for a mid-fix checkpoint. The planner may
 decline to fund another round, but an accepted change to a gated surface requires independent
 re-review and an unresolved finding cannot be treated as approval.

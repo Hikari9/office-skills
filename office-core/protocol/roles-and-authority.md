@@ -3,9 +3,11 @@
 Binding on every office. An adapter may **narrow** these rules or add office-specific
 obligations; it may never widen authority, remove a gate, or reassign a role.
 
-**Core 18.0.0 reassigns roles deliberately** (issue #77, maintainer decision 2026-09-10): the
+**Core 18.0.0 reassigns roles deliberately** (issue #79, maintainer decision 2026-09-10): the
 control plane and the planner are separate roles, the planner interviews the user, the producer
-disposes of findings, and the final adversary is integration-scoped. It also loosens three
+disposes of findings, and the final adversary is integration-scoped. The architecture comes from
+issue #77, which **stays open** as the v3 source: v2 implements the behavior now; v3 keeps the
+architecture as an independent source of truth and may reorganize it later. It also loosens three
 requirements — the inline-review tier, an executor's evidenced rejection, and no final adversary
 over a single-executor family — each of which is a paid-for gate that bought nothing where it was
 removed. The counterweights are in this file and are not optional.
@@ -49,6 +51,15 @@ done criteria, blast radius, named actions, non-goals, interfaces, milestones, a
 statement itself when repository evidence shows the initial framing was wrong. This deliberately
 replaces the earlier rule that a planner never speaks to the user and owns only "the how."
 
+**Interactive planning requires an actual channel to the user, and most one-shot dispatches have
+none.** A CLI process launched to run once and exit cannot ask a question: it will invent the
+answer or return everything unanswered, and both outcomes are worse than not splitting the role.
+Before dispatching a dedicated planner, confirm it will hold a live user channel — a visible pane,
+or a resumable session the control plane can relay through. When no channel exists, either keep
+planning inline in the session that has one, or dispatch the planner as an explicitly
+**non-interactive** recon-and-draft call whose open questions come back for the orchestrator to ask.
+What is forbidden is dispatching a planner *as interactive* into a harness that cannot ask anything.
+
 The planner freezes the requirements at the end of interactive planning, writes the plan,
 self-reviews it, spawns its own plan adversary, disposes of that adversary's findings, and returns a
 structured plan packet. **The orchestrator does not then re-review the plan technically.** It reads
@@ -83,6 +94,22 @@ technical judge. **This is exceptional.** A producer that routinely emits it is 
 The tier is a routing decision made per gate from mode, risk, and the office's routing table — never
 a mid-run downgrade to finish faster, and never applied to the task carrying the run's main
 correctness or security risk.
+
+**Inline eligibility is a test with an answer, not an adjective.** A gate may run inline only when
+**every** line below is true, and the control plane records the answers before dispatch:
+
+1. **Reversible** — a named, already-tested revert path exists (a commit to revert, a backup to
+   restore, a flag to flip). "It's only docs" is not a revert path; the named target is.
+2. **No production, security, credential, auth, personal-data, or migration surface** is touched.
+3. **No shared interface** — no signature, schema, event, endpoint, or config another scope reads.
+4. **Not the run's main risk** — it is not the task the fit test was worried about.
+5. **The gate is mechanical** — the plan's validation commands actually observe the change, so a
+   green run means something without a reader.
+
+**A caller override cannot buy inline past this test.** `review=inline` on work that fails any line
+is refused and the gate runs adversarial; the office says which line failed. This is the one place a
+caller override does not win, for the same reason a caller may not downgrade a reviewer below the
+declared floor — it is a floor, not a default.
 
 **A producer may launch its own adversary; it may never choose it.** The tier, triple, effort, and
 brief template are the control plane's, fixed at the current `routing_version` and stated in the

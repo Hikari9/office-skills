@@ -45,7 +45,9 @@ non-Claude orchestrator is invoked with `/auto-office` **plus this plugin direct
 Anything after `/auto-office` overrides discernment and is echoed in the kickoff line: `use codex`,
 `express`, `full`, `direct`, `no loop`, `skip cleanup`, `plan approved: <path>`,
 `planner_mode=auto|dedicated|inline`, `planner=<harness/model@effort>`,
-`planner_isolation=required`, `review=inline|adversarial`, `family=<id>`. Default
+`planner_isolation=required`, `review=inline|adversarial`, `family=<id>`. **`review=inline` is the
+one override that can be refused**: it is checked against core's five-line inline-eligibility test
+before dispatch, and work that fails a line runs adversarial with the failed line named. Default
 `planner_mode=auto`: if a plan is needed and the orchestrator is not a supported planner triple, ask
 Opus Medium, Fable, Astra, or inline. Dedicated default/fallback: `claude/opus-5@medium` →
 `codex/gpt-6-astra@low`. `planner_mode=inline` plans in the invoking session, which then wears both
@@ -102,8 +104,11 @@ are caller-owned.
   adversary only at an integration boundary.** The planner spawns its plan adversary; the executor
   spawns its code adversary (at the declared triple), task workers, and Tester. An
   orchestrator-launched numbered-task worker is a protocol violation.
-- **No self-approval, ever.** `review=inline` drops the adversary for cheap, reversible, low-risk
-  work only — never the validation evidence, never the run's main correctness or security risk.
+- **No self-approval, ever.** `review=inline` drops the adversary only when all five lines of
+  core's inline-eligibility test pass — named tested revert, no prod/security/credential/auth/
+  personal-data/migration surface, no shared interface, not the run's main risk, and a gate that
+  mechanically observes the change. Record the answers before dispatch; a failing line means
+  adversarial, caller override included. It never drops the validation evidence.
 - **No final adversary over a single-executor family**; only two or more *dependent or merging*
   landings buy an integration adversary.
 - Executor is **sonnet-tier high** always; a worker's tier is the plan's call, never raised mid-run.

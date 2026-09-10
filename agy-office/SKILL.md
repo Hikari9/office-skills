@@ -100,9 +100,15 @@ Implements office-core **`18.0.0`**, vendored at `office-core/` here. Mandatory 
 authoritative once installed; repo-root `office-core/` is the dev source. Exception:
 `agy-phase-2b` (`COMPATIBILITY.md`).
 
-**Declared narrowing of core.** Core `9.0.0` lets the planner implement inline; this office
-does **not** — the planner never implements the plan here. Narrowing is legal, and it is stated so a
-reader of both files need not guess which governs.
+**Declared narrowing of core.** Core `18.0.0` lets a producer implement inline; this office
+does **not** — the control-plane session never implements the plan here. Narrowing is legal, and it
+is stated so a reader of both files need not guess which governs.
+
+**Core 18.0.0, inherited.** One session holds both the Orchestrator and Planner hats and still may
+not gate its own writing. The **producer** disposes of each finding (`accepted_fixed` /
+`rejected_with_evidence` / `unresolved`) on gate-quality evidence; unresolvable conflict is
+`TRUE_CONFLICT` for the user. Final adversary is integration-scoped only. Landings carry
+`requirements_version`, `plan_version`, `routing_version`.
 
 ## Routing table
 

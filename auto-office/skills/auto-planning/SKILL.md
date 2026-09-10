@@ -69,9 +69,11 @@ the single user approval. It is **not** a second technical plan reviewer: the
 plan was gated by the planner's adversary and is about to be gated by the user.
 A packet is never adopted unread; its engineering is never re-argued.
 
-`planner_mode=inline` keeps planning in the invoking session. The same steps
-still run — recon, interview, freeze, self-review, plan adversary, packet — and
-the session still may not gate its own plan.
+`planner_mode=inline` keeps planning in the invoking session. Recon, interview,
+freeze, self-review, and the packet still run. **The plan adversary follows the
+gear, not the mode**: required in full, not run in express (7.5), for inline and
+dedicated planning alike — express buys its cheapness by dropping that gate, and
+the mode never adds it back. The session still may not gate its own plan.
 
 ## Order of operations
 
@@ -236,7 +238,10 @@ PLANNER (opus, this session)
   │     ├─ T4 ─── worker claude opus (in-sess) ─┘  arbitration, runs alongside T3
   │     └─ T5 ─── in-session --bg (blocking wait)
   │
-  ├─▶ CODE REVIEWER  codex-luna xhigh / opus low fallback   (resume vs fresh per round — cost call, not a default)   ← planner-dispatched, per task
+  │     └─▶ CODE ADVERSARY  codex-luna xhigh / opus low fallback   ← EXECUTOR-launched, per task,
+  │              at the orchestrator's declared triple (resume vs fresh per round — a cost call)
+  ├─▶ INTEGRATION ADVERSARY   ← orchestrator-spawned, ONLY when 2+ executors produce
+  │                             dependent or merging landings
   └─▶ [Phase 1 only] read-only scouts
 ```
 

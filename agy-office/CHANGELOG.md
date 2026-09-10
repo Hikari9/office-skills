@@ -2,8 +2,9 @@
 
 ## 17.0.0 — 2026-09-10
 
-Core `18.0.0` (breaking, issue #77). This office keeps one session wearing both the Orchestrator and
-Planner hats, which core explicitly permits — the two-hats rule binds it to both rows and still
+Core `18.0.0` (breaking, issue #79 — the v2 backport of the architecture in #77, which stays open
+as the v3 source). This office keeps one session wearing both the Orchestrator and Planner hats,
+which core explicitly permits — the two-hats rule binds it to both rows and still
 forbids gating its own writing. What changes here is inherited from the vendored protocol:
 
 - The producer disposes of each review finding (`accepted_fixed`, `rejected_with_evidence`,

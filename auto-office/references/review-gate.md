@@ -117,16 +117,28 @@ Sometimes the diff faithfully implements the plan and the **plan** is what's wro
 
 Never answer a `PLAN DEFECT` by pressuring the reviewer to downgrade it, and never quietly implement your own preference instead. If you believe the reviewer is simply wrong on the merits, argue it on the merits in the same conversation — that's legitimate, and it will concede if you're right.
 
-## Phase 3b — The fix loop (Planner fixes)
+## Phase 3b — The fix loop (the executor fixes)
 
-You apply the fixes. Triage each finding with this matrix before touching anything:
+**The executor applies the fixes to its own work and disposes of every finding.** It records
+`accepted_fixed`, `rejected_with_evidence`, or `unresolved` per numbered finding; an evidenced
+rejection stands, because `APPROVED` from the adversary is still the only exit and the adversary
+judges the resulting `HEAD` on correctness rather than on whether its suggestion was taken. The
+orchestrator owns the *round*: whether to fund another one, replan, waive, or stop. It does not
+overwrite a producer's evidenced disposition, and it does not become a second writer in the
+executor's tree.
+
+**The one inline exception — and it is narrow: the executor has already retired.** Then, and only
+then, the orchestrator discerns per core's delegation test: edit inline when the brief would exceed
+the edit, or relaunch an executor when the fix set is worth a process. Either way a fresh adversary
+still gates it, and inline work never covers the run's main correctness or security risk. Triage
+matrix for that case:
 
 | Finding shape | Mode | Why |
 |---|---|---|
 | Deterministic, zero ambiguity, and the finding text *is* the brief — typo, import, off-by-one, missing constant, copy fix | **INLINE** (you edit) | Brief + dispatch + handoff costs more than the edit |
-| Real volume, a refactor, or a fix whose correct shape is not obvious from the finding text | **Delegate `sonnet`** | Volume is a purchase: cheaper per output token, and it stays out of your coordination context |
-| Subtle correctness, concurrency, security, or cross-cutting design; or a `sonnet` fix attempt already drifted | **Delegate `opus`** | Needs the higher reasoning tier |
-| Bulk mechanical repetition across many files — renames, codemods | **Delegate `haiku`** | Cheapest tier handles deterministic edits |
+| Real volume, a refactor, or a fix whose correct shape is not obvious from the finding text | **Relaunch `sonnet` executor** | Volume is a purchase: cheaper per output token, and it stays out of your coordination context |
+| Subtle correctness, concurrency, security, or cross-cutting design; or a `sonnet` fix attempt already drifted | **Relaunch `opus`** | Needs the higher reasoning tier |
+| Bulk mechanical repetition across many files — renames, codemods | **Relaunch `haiku`** | Cheapest tier handles deterministic edits |
 
 Announce the mode in one terse line per fix wave: `Mode: <INLINE|sonnet|opus|haiku> — Why: <≤8 words>`.
 
@@ -135,6 +147,7 @@ Rules for the loop:
 - **One fix wave per round, all findings together.** Not one dispatch per finding — per-finding agents each rebuild context and re-run the suite.
 - **Re-run the gate yourself** after each wave (or, per the reuse rule above, pull the fresh Stop-hook output if the wave's commit already triggered it). Capture the real command output; you will paste it to the reviewer.
 - **A finding that contradicts the approved plan is the user's call**, not yours. Present the finding beside the plan text and ask which governs. Do not fix against the plan, and do not dismiss the finding because the plan mandated it.
+- **Conflicting evidence the producer cannot responsibly resolve is `TRUE_CONFLICT`.** The thread stops, and the orchestrator surfaces both cases plus a recommendation to the user. It is exceptional; routine use is a producer declining to decide.
 - **Send the same reviewer** the fix diff package (`git diff PREV_HEAD..HEAD` to a new file), a per-finding note of what you did, and the gate output — via SendMessage to the recorded agent ID. If SendMessage is unavailable, dispatch a fresh reviewer carrying the previous findings list verbatim and say in the round line that continuity was lost.
 - **Cap: 5 rounds.** At round 5 with findings still open, stop dispatching. Report to the user: each open finding, the reviewer's reasoning, your counter-reasoning, and the fix history. Do not self-approve past the cap and do not park a load-bearing finding to escape the loop.
 

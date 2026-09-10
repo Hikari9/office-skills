@@ -1,10 +1,16 @@
 # Executor prompt contract
 
 Every executor packet includes: absolute repo/worktree path; branch; tracked plan path;
-tracking issue;
+tracking issue; **`requirements_version`, `plan_version`, and `routing_version`**;
 git-ignored workspace path; BASE SHA; exact in-scope work; protected and
 out-of-scope paths; the blast-radius ceiling copied verbatim; allowed side
-effects; full validation commands; and a handoff path. For a CLI executor, its
+effects; full validation commands; and a handoff path.
+
+**Every packet carries the three versions verbatim — `requirements_version`, `plan_version`,
+`routing_version`** (core `plan-contract.md`). The worker echoes them back in its report or landing
+packet unchanged. The control plane compares all three against the family registry before dispatch,
+before each re-review, and before merge; a mismatch means the artifact is stale and is re-briefed,
+never landed on its own authority. For a CLI executor, its
 `codex exec` prompt carries this packet. It must also say:
 
 > Do not stop to ask questions; make reasonable decisions yourself and implement the entire brief.

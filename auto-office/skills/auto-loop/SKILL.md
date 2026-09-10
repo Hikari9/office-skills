@@ -65,8 +65,10 @@ re-read GOAL:
 **The loop iterates over the executor's returns, not over your dispatches.** You launch the executor
 once per repo and then hold the gate — verify, review, triage, answer consults, perform the
 planner-held actions. If you find yourself launching a process for task *n*, stop: that is the
-executor's job and you have become a scheduler. The exceptions are the code reviewer (which the
-executor must never launch for itself) and, in Phase 1 only, read-only scouts.
+executor's job and you have become a scheduler. The exceptions are the integration adversary — only when two or more executors produce
+dependent or merging landings — and, in Phase 1 only, read-only scouts. The **code adversary is the
+executor's to launch**, at the triple, effort, and brief you declared: launching is mechanics, and
+choosing would be self-approval with extra steps.
 
 **The executor is expected to hand back per task, not per run.** Its brief requires it to stop at
 each task boundary, write `EXECUTOR-STATE.md`, and wait — so review happens per task, as it always

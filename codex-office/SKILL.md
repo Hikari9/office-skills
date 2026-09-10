@@ -97,13 +97,19 @@ or three sentences and proceed. Full rule: `office-core/protocol/roles-and-autho
 
 ## Protocol version
 
-This plugin implements office-core protocol `9.0.0`, vendored at `office-core/` in this plugin.
+This plugin implements office-core protocol `18.0.0`, vendored at `office-core/` in this plugin.
 The vendored copy is authoritative for an installed plugin; the repo-root `office-core/` is the
 development source. Mandatory read: `office-core/protocol/roles-and-authority.md`.
 
-**Declared narrowing of core.** Core `9.0.0` lets the planner implement inline; this office
-does **not** — the planner never implements the plan here. Narrowing is legal, and it is stated so a
-reader of both files need not guess which governs.
+**Declared narrowing of core.** Core `18.0.0` lets a producer implement inline; this office
+does **not** — the control-plane session never implements the plan here. Narrowing is legal, and it
+is stated so a reader of both files need not guess which governs.
+
+**Core 18.0.0, inherited.** One session holds both the Orchestrator and Planner hats and still may
+not gate its own writing. The **producer** disposes of each finding (`accepted_fixed` /
+`rejected_with_evidence` / `unresolved`) on gate-quality evidence; unresolvable conflict is
+`TRUE_CONFLICT` for the user. Final adversary is integration-scoped only. Landings carry
+`requirements_version`, `plan_version`, `routing_version`.
 
 ## Routing table
 

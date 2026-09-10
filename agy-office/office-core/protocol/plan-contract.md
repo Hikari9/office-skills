@@ -56,7 +56,8 @@ plan_version: <n>           # bumped by a plan-contract change
 routing_version: <n>        # bumped by a routing-only amendment; forces no other bump
 ```
 
-Every downstream brief, plan packet, and landing packet cites all three verbatim. A landing whose
+Every downstream brief, plan packet, and landing packet cites all three verbatim; they are declared
+fields in the handoff, review-verdict, and run-event schemas. A landing whose
 versions do not match the family registry's current values is stale and is not merged on its own
 authority.
 

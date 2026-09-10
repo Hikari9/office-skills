@@ -204,7 +204,9 @@ downstream_impacts: [<what other executors or families must know>]
 blockers: [<blocker or conflict, with owner label>]
 ```
 
-The packet **points at** the handoff file, review files, and PR for anything deeper. An orchestrator
+Schema: [`../schemas/handoff.schema.json`](../schemas/handoff.schema.json) → `landing_packet`
+(`4.0.0`, which also adds the three version fields). The packet **points at** the handoff file,
+review files, and PR for anything deeper. An orchestrator
 that finds itself reading a child's full transcript to know whether the work landed is missing a
 field the packet should have carried.
 

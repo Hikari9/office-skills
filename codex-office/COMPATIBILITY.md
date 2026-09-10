@@ -9,7 +9,10 @@
 
 ## Exceptions
 
-Codex Office has no office-specific additions that fall outside core at `1.3.0`.
+Codex Office has no office-specific additions that fall outside core at `18.0.0`. Re-checked
+against core `18.0.0`: this office keeps one session in both the Orchestrator and Planner roles,
+which core's two-hats rule permits, and adopts the producer-owned dispositions, the inline-review
+tier, the integration-scoped final adversary, and the landing packet unchanged.
 
 ```yaml
 exceptions: []

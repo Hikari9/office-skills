@@ -142,7 +142,9 @@ Two dispositions, held by two different agents:
   is the orchestrator's, below.
 
 Where the producer genuinely cannot resolve conflicting evidence, it emits `TRUE_CONFLICT` /
-`USER_DECISION_REQUIRED` instead of guessing. That state stops the thread, and the orchestrator
+`USER_DECISION_REQUIRED` instead of guessing. `TRUE_CONFLICT` is a defined state in
+[`../schemas/review-verdict.schema.json`](../schemas/review-verdict.schema.json) (`5.0.0`), whose
+findings now carry the producer's `disposition` and its `disposition_evidence`. That state stops the thread, and the orchestrator
 surfaces both cases plus a recommendation to the user. It is exceptional; routine use of it is a
 producer declining to decide.
 
