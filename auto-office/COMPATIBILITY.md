@@ -56,7 +56,7 @@ exceptions:
       The code-review gate is a fresh reviewer independent of whoever executed: `codex-luna` xhigh by default, a fresh Opus subagent at low as the fallback.
       The Codex Luna path is no longer conditional on who orchestrated (2026-09-10); it is the
       standing default holder, and the reviewer is never the agent that wrote the diff. This is strictly narrower
-      than core, which permits any independent reviewer. Core 3.0.0 states that a declared floor
+      than core, which permits any independent reviewer. Core 18.0.0 states that a declared floor
       binds the gate it was declared for, so this floor is the code-review gate's alone.
     widens_core_authority: false
   - id: auto-plan-review-gate
@@ -64,7 +64,7 @@ exceptions:
     reason: >
       A plan-review gate runs between the planner's self-review and user approval: one adversarial
       pass over the plan document by a fresh agent of the planner's own brand, at that brand's
-      Opus-tier low effort, which then retires permanently. Core 3.0.0 explicitly permits an office
+      Opus-tier low effort, which then retires permanently. Core 18.0.0 explicitly permits an office
       to add a plan-review gate ahead of user approval, and this one adds a gate rather than
       absorbing any existing one — the code-review gate, its opus-low floor, and every verdict
       are untouched. Its floor is declared separately (opus low) and binds only itself. It runs
@@ -110,7 +110,26 @@ exceptions:
     widens_core_authority: false
 ```
 
-## Re-audit against core 2.0.0
+## Re-audit against core 18.0.0
+
+**2026-09-10, core `18.0.0`.** Every exception below was re-checked against the current core, not
+the historical one, and all remain `widens_core_authority: false`. Two obsolete claims were removed
+in the process:
+
+- **"The planner does not implement" is no longer an auto-office narrowing.** Core `18.0.0` permits
+  a producer to implement inline when the delegation test buys nothing, and this office follows core:
+  an orchestrator inline write is allowed for a fix whose brief would exceed the edit, never for
+  volume, never overlapping a live executor, and never for the run's main correctness or security
+  risk. (agy-office still narrows this; auto-office does not.)
+- **Reviewer and plan-review floors** are unchanged in substance and now read against core `18.0.0`,
+  which adds a separately declared floor for the planner-local plan adversary and the integration
+  adversary.
+
+Core `18.0.0` also absorbs the producer-owned dispositions, the inline-review tier, the
+integration-scoped final adversary, the landing packet, and the three independent versions, so none
+of those is an auto-office exception either.
+
+### Historical: re-audit against core 2.0.0
 
 Core `2.0.0` absorbed three things this office would otherwise have had to declare, so they are
 **not** exceptions here:
@@ -122,7 +141,7 @@ Core `2.0.0` absorbed three things this office would otherwise have had to decla
   naming it verbatim with preconditions is what removes the *pause*, not the *actor*. This office
   narrows nothing here and widens nothing; it inherits the rule intact.
 
-The remaining exceptions were re-checked against core `2.0.0` and all remain
+The remaining exceptions were also re-checked against core `2.0.0` at the time and all remain
 `widens_core_authority: false`:
 
 - `auto-orchestrator-selection` — the invoking model is the Orchestrator and is not auto-selected.
@@ -138,9 +157,9 @@ The remaining exceptions were re-checked against core `2.0.0` and all remain
   downgrade a reviewer, or widen its blast radius, and it gained a stop (`BRIEF DEFECT`) rather than
   losing one.
 - `auto-opus-reviewer-floor` — reworded above to name the **code**-review gate explicitly, which is
-  what core 3.0.0 now requires of a declared floor. Still strictly narrower than core.
+  what core 18.0.0 now requires of a declared floor. Still strictly narrower than core.
 
-**Confirmed: no existing exception covered "the planner does not implement."** The four declared were
+**Confirmed at the time: no existing exception covered "the planner does not implement." **Superseded by the core `18.0.0` re-audit above** — auto-office no longer declares that narrowing.** The four declared were
 `auto-orchestrator-selection`, `auto-task-subdelegation`, `auto-goal-locked-autonomy`, and
 `auto-opus-reviewer-floor`, none of which mentions it — because planner-never-implements was a
 *narrowing* of core, and narrowings need no exception. Nothing was removed here; lifting the rule

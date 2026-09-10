@@ -193,7 +193,9 @@ routing_version: <n>
 tasks_completed: [<plan task numbers>]
 change_summary: <a few lines, not a diff>
 interfaces_changed: [<name — file:line>]
-validation: [<command — real result>]
+validation:
+  - command: <the command>
+    result: <its real output — an exit code is not evidence>
 review_mode: <inline|adversarial>
 review_rounds:
   - round: <n>

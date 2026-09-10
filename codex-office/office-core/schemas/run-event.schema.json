@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:office-core:4.0.0:run-event.schema.json",
+  "$id": "urn:office-core:4.1.0:run-event.schema.json",
   "title": "Office run event",
   "description": "Emitted at explicit command dispatch. A transcript keyword match is a catalog mention, not an invocation, and never produces one of these. Stores counts and redacted labels only: no user prompts, secrets, or credentials.",
   "type": "object",
@@ -275,8 +275,10 @@
           "enum": [
             "APPROVED",
             "CHANGES REQUIRED",
-            "PLAN DEFECT"
-          ]
+            "PLAN DEFECT",
+            "TRUE_CONFLICT"
+          ],
+          "description": "Matches review-verdict.schema.json's state set, TRUE_CONFLICT included; a telemetry schema that cannot express a protocol state makes that state unobservable."
         },
         "findings": {
           "type": "integer",
@@ -311,17 +313,17 @@
     "requirements_version": {
       "type": "integer",
       "minimum": 1,
-      "description": "Frozen by the planner at the end of interactive discovery. Bumped by a requirements amendment."
+      "description": "Frozen by the planner at the end of interactive discovery. Bumped by a requirements amendment. Optional here by design: run events are emitted by eval/hooks/session-end.mjs from a transcript, which has no access to a run's version state. Required in the artifacts a role authors (handoff, review-verdict), where the author does hold them."
     },
     "plan_version": {
       "type": "integer",
       "minimum": 1,
-      "description": "Bumped by a plan-contract change; a routing or requirements change alone does not move it."
+      "description": "Bumped by a plan-contract change; a routing or requirements change alone does not move it. Optional here by design: run events are emitted by eval/hooks/session-end.mjs from a transcript, which has no access to a run's version state. Required in the artifacts a role authors (handoff, review-verdict), where the author does hold them."
     },
     "routing_version": {
       "type": "integer",
       "minimum": 1,
-      "description": "Bumped by a routing-only amendment; forces no other bump and never wakes the planner."
+      "description": "Bumped by a routing-only amendment; forces no other bump and never wakes the planner. Optional here by design: run events are emitted by eval/hooks/session-end.mjs from a transcript, which has no access to a run's version state. Required in the artifacts a role authors (handoff, review-verdict), where the author does hold them."
     },
     "review_tier": {
       "enum": [

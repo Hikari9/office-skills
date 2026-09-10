@@ -88,6 +88,43 @@ are applied here.**
 - Express vs. inline planning no longer contradict: the plan adversary follows the **gear**, not the
   planner mode. Fixed the `#v2-selection-policy` anchor left dangling by the heading rename.
 
+**Round 2 (resumed reviewer, `gpt-5.6-luna` xhigh): 7 of 9 addressed, 2 not, 5 new — all applied.**
+The round was briefed on the *shape* of round 1's blockers rather than their lines, which is what
+found the five new members.
+
+- **Round 1's blocker was only half fixed.** `review-states.md` — the **binding core file** — still
+  opened its fix loop with "The planner applies fixes," so an agent reading core and an agent reading
+  the repaired adapter would pick different owners for the same gated code. Core now says the
+  producer applies fixes and disposes; the control plane owns the *round*, not the edit; and the
+  retired-executor inline exception is stated there rather than only in auto-office.
+- **The Codex reviewer packet was the one consumer still missing the three versions**, so its
+  reviewer could be handed a stale plan/diff pairing with nothing to compare. Added, with the
+  `BRIEF DEFECT` route and the adversary-not-superior framing the other briefs carry.
+- **`auto-office/COMPATIBILITY.md` was still auditing itself against core `2.0.0`/`3.0.0`** and still
+  claimed "the planner does not implement" as an auto-office narrowing — which core `18.0.0` no
+  longer requires. Re-audited against `18.0.0`, obsolete narrowing withdrawn, historical section
+  kept and labelled as history.
+- **`agy-office/references/routing.md` still said "the planner edits it directly"** (against agy's own
+  hub narrowing) **and "does not review itself per task"** (against core's mandatory self-review).
+  `INLINE` is now the smallest agy dispatch, and per-task producer self-review is stated as
+  mandatory.
+- **Three schema defects in the fix I had just shipped**: the version fields were properties but
+  absent from every root `required` list, so a versionless artifact still validated; the landing
+  packet's documented `validation: [<command — real result>]` was a *scalar* the schema's
+  `{command, result}` object rejects, so an executor following the core template would emit an
+  invalid packet; and `run-event`'s nested `review.verdict` enum still lacked `TRUE_CONFLICT`, making
+  the new state unobservable in telemetry. `handoff` → `4.1.0`, `review-verdict` → `5.1.0`,
+  `run-event` → `4.1.0`.
+- **One finding rejected with evidence**, per the protocol this PR adds: `requirements_version` /
+  `plan_version` / `routing_version` stay **optional on `run-event`**. Run events are emitted by
+  `eval/hooks/session-end.mjs` from a transcript, which has no access to a run's version state —
+  requiring them would invalidate every event the harness emits, which is the unsatisfiable-criterion
+  class the self-review loop exists to catch. They are required where a role authors the artifact
+  and holds the values (`handoff`, `review-verdict`), and the schema now says why.
+- The reviewer was asked to judge the hub-budget increase (12000 → 15000) and returned it as
+  **defensible, not a bar lowered to pass**: the check is warning-only, the content added is required
+  protocol, and auto-office keeps 835 bytes of headroom.
+
 ## 17.11.0 — 2026-09-10
 
 Core `17.9.0`.

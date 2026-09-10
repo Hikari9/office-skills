@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:office-core:4.0.0:handoff.schema.json",
+  "$id": "urn:office-core:4.1.0:handoff.schema.json",
   "title": "Executor handoff report",
   "description": "Written to a file at the Kernel's handoff_path. A chat summary is not a handoff: summaries compact, files survive.",
   "type": "object",
@@ -11,7 +11,11 @@
     "commits",
     "validation",
     "upline",
-    "self_review"
+    "self_review",
+    "requirements_version",
+    "plan_version",
+    "routing_version",
+    "landing_packet"
   ],
   "properties": {
     "invocation_id": {

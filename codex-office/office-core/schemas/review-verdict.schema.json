@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:office-core:5.0.0:review-verdict.schema.json",
+  "$id": "urn:office-core:5.1.0:review-verdict.schema.json",
   "title": "Review verdict",
   "description": "What a reviewer returns, for a plan review or a code review. Carries the reviewer's own self-review of its findings: a gate that never re-reads itself softens under fatigue, and round 3 is where that lands. The planner returns a verdict with no self_review to the reviewer without consuming the round again.",
   "type": "object",
@@ -11,7 +11,10 @@
     "round",
     "verdict",
     "findings",
-    "self_review"
+    "self_review",
+    "requirements_version",
+    "plan_version",
+    "routing_version"
   ],
   "properties": {
     "invocation_id": {
@@ -98,7 +101,7 @@
               "rejected_with_evidence",
               "unresolved"
             ],
-            "description": "The PRODUCER's disposition of this finding. rejected_with_evidence requires evidence of the kind the gate itself demands (real output, a read file, a run); confidence is not evidence and a rejection without it is unresolved."
+            "description": "The PRODUCER's disposition of this finding. rejected_with_evidence requires evidence of the kind the gate itself demands (real output, a read file, a run); confidence is not evidence and a rejection without it is unresolved. Required on any round the producer has disposed of; absent only on the reviewer's first emission, before the producer has answered."
           },
           "disposition_evidence": {
             "type": "string",

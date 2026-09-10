@@ -326,8 +326,8 @@ Then once over the whole `BASE..HEAD` diff after the gate is green.
 ## Landing packet
 family_id · executor + scope · status (`landed` | `blocked` | `true_conflict`) ·
 requirements_version / plan_version / routing_version · tasks completed · change summary (a few
-lines, not a diff) · interfaces changed · validation results · review mode and each round's
-dispositions · deviations · PR/commit/artifact refs · downstream impacts · blockers.
+lines, not a diff) · interfaces changed · validation as `{command, result}` objects with real output ·
+review mode and each round's dispositions · deviations · PR/commit/artifact refs · downstream impacts · blockers.
 This is what travels up — the orchestrator reads it, not your transcript. Point at this handoff, the
 review files, and the PR for anything deeper. Contract:
 `office-core/protocol/evidence-and-handoff.md` → *The landing packet*.

@@ -223,21 +223,33 @@ evaluate.
 
 ## The fix loop
 
-The **planner** applies fixes; the reviewer does not fix what it gates.
+**The producer applies fixes to its own work**, and disposes of every finding; the reviewer does not
+fix what it gates. For implementation findings that producer is the **executor**, which owns the
+resulting technical decision — see *The producer disposes* in
+[`roles-and-authority.md`](roles-and-authority.md#the-producer-disposes-the-adversary-challenges).
+
+The control plane owns the **round**, not the edit: whether to fund another one, replan, waive, or
+stop. It does not edit in the executor's tree — that is a second writer — and it does not overwrite
+an evidenced disposition.
+
+**The one exception is a retired executor.** Once the executor has exited, the control plane
+discerns per the [delegation test](roles-and-authority.md#delegation-test): edit inline when the
+brief would exceed the edit, or relaunch an executor when the fix set is worth a process. Either way
+a fresh adversary still gates the result, and inline work never covers the run's main correctness or
+security risk.
 
 - **One fix wave per round, all findings together.** Per-finding dispatches each rebuild context
   and re-run the suite.
 - **Escalate out of the tool, not up within it.** A failure class the worker just demonstrated —
   an invented interface, a test that will not go red — does not go back to that worker.
-- **At 2 `CHANGES REQUIRED` rounds on one task — consecutive or not — force a fresh planner
-  disposition checkpoint.** The planner records whether the next action is another fix and review,
+- **At 2 `CHANGES REQUIRED` rounds on one task — consecutive or not — force a fresh control-plane
+  disposition checkpoint.** It records whether the next action is another fix and review,
   a plan amendment, a waiver/escalation, or a stop. Two rounds are evidence to weigh, not an
-  automatic `PLAN DEFECT`; the planner must explain why another round is or is not expected to
-  converge. A technical plan gap still takes the `PLAN DEFECT` route above, and a tradeoff, scope,
+  automatic `PLAN DEFECT`; it must explain why another round is or is not expected to converge. A technical plan gap still takes the `PLAN DEFECT` route above, and a tradeoff, scope,
   or cost decision still goes to the user.
 - **Re-run the gate after each accepted wave that changes a gated surface** and capture the real
-  output. The fix diff + fresh gate output go back to the same reviewer when the planner's
-  disposition is `FIX_AND_REVIEW`.
+  output. The fix diff + fresh gate output go back to the same reviewer when the control plane's
+  round disposition is `FIX_AND_REVIEW`.
 - **A finding that contradicts the approved plan is the user's call.** Present the finding beside
   the plan text and ask which governs. Do not fix against the plan; do not dismiss the finding
   because the plan mandated it.
