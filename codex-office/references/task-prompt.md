@@ -75,7 +75,7 @@ interfaces_changed: [<interface>]
 validation:
   - command: <the command>
     result: <its real output — an exit code is not evidence>
-review_mode: inline | adversarial | integration
+review_mode: inline | adversarial   # your local gate only; integration review is the orchestrator's, not a landing mode
 review_rounds: <n, with each round's dispositions>
 deviations: [<deviation>]
 artifacts: [<PR/commit/artifact ref>]

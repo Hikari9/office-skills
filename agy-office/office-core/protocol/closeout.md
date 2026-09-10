@@ -1,7 +1,10 @@
 # Closeout (core protocol)
 
 Run by the **orchestrator** — the invoking session that holds lifecycle and run state — after the
-reviewer returns `APPROVED`. Or invoked directly, **standalone** (see below), when the work never
+review tier's exit state: the reviewer's `APPROVED` for an adversarial or integration round, or the
+recorded **inline pass** for a task the orchestrator routed to the inline tier at dispatch (see
+`roles-and-authority.md` → *Three review tiers*). Inline is never selected here, at closeout, by
+whoever wrote the work. Or invoked directly, **standalone** (see below), when the work never
 went through a plan pipeline and there is no reviewer round to wait on. Self-contained: it loads
 no other skill.
 
@@ -63,7 +66,8 @@ path argument as a substitute for actually running from inside the worktree.
 
 `git status`. At a milestone, stage and commit only the approved implementation changes, with a
 message describing **why**, not what. Keep the plan tracked while the run is active. At final
-closeout, after the reviewer returns `APPROVED` and the final gate is green, delete
+closeout, after the review tier's exit state is recorded — reviewer `APPROVED`, or the inline pass
+for an inline-routed task — and the final gate is green, delete
 `docs/plans/<slug>.md` in a dedicated why-focused commit and verify that deletion before pushing.
 If the tree is clean at a milestone, skip the implementation commit.
 

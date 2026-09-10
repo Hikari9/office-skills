@@ -5,7 +5,7 @@ description: Remove the plan, ready and merge the draft PR, sync, close loops, a
 
 # Agy Closeout
 
-Loaded by: planner, at Phase 4.
+Loaded by: the orchestrator (the planner-held control plane), at Phase 4.
 Assumes: the Office Kernel is already in the packet, and the reviewer has returned `APPROVED`.
 
 The procedure is core: `office-core/protocol/closeout.md`. This office's additions are in

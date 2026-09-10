@@ -91,6 +91,18 @@ technical judge. **This is exceptional.** A producer that routinely emits it is 
 | **Adversarial review** | the default for anything else | a fresh adversary that did not do the work, at the office's declared floor |
 | **Integration review** | only at a real integration boundary (below) | one orchestrator-spawned integration adversary over the combined landings |
 
+**Each tier has its own exit state, and closeout accepts exactly one of them.** Adversarial and
+integration review exit on the reviewer's `APPROVED`. Inline review spawns no adversary, so there is
+no `APPROVED` to wait for: it exits on an **inline pass** — the producer's recorded self-review plus
+every one of the plan's validation commands green, carried in the landing packet as
+`review_mode: inline` with the real `{command, result}` output. An inline pass is **not** a verdict
+and is never written into a review-verdict artifact; there was no reviewer.
+
+Two rules keep that from becoming self-approval. **The tier is the orchestrator's to declare at
+dispatch, never the producer's to select** — a producer that reaches its own gate and decides inline
+is cheaper has just approved its own work. And **a failed validation command is not an inline pass**;
+it escalates to the adversarial tier, which is the tier the work should have had.
+
 The tier is a routing decision made per gate from mode, risk, and the office's routing table — never
 a mid-run downgrade to finish faster, and never applied to the task carrying the run's main
 correctness or security risk.
@@ -283,12 +295,15 @@ initial and first-completion resumability comments. The executor must verify eac
 implementation if any bootstrap precondition fails.
 
 This exception transfers neither the review gate nor closeout. The PR remains draft until reviewer
-approval; the planner removes the plan in the final pre-merge commit, marks the PR ready, and merges.
+approval; the **orchestrator** removes the plan in the final pre-merge commit, marks the PR ready,
+and merges. The dedicated planner, if there was one, exited at plan handoff and performs none of this.
 
 ### Planner-held names the actor, not a pause
 
 Two different things wore one label and the conflation cost whole runs. **Planner-held** means
-*the planner performs this action, never a delegate.* It does **not**, on its own, mean the run
+*the control plane performs this action, never a delegate* — the Orchestrator row of the role table,
+which is what the long-standing term has always named. It does **not** mean the dedicated Planner,
+which holds no lifecycle authority and has exited by the time any of these actions run. It does **not**, on its own, mean the run
 stops and asks again — a plan the user approved is authority the run already holds.
 
 A planner-held action executes **without a new go-ahead** when both hold:

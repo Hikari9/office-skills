@@ -1,9 +1,9 @@
 ---
 name: codex-closeout
-description: Planner-only closeout — gate verification, commit, PR, deploy authority. Loaded by the codex-office hub; not invoked directly.
+description: Orchestrator-held (planner-held) closeout — gate verification, commit, PR, deploy authority. Loaded by the codex-office hub; not invoked directly.
 ---
 
-Loaded by: planner only, at Phase 4.
+Loaded by: the orchestrator only (the planner-held control plane), at Phase 4.
 Assumes: the Office Kernel is already in the packet.
 
 ## Contract
