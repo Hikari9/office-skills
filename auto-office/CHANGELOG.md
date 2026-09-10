@@ -33,6 +33,11 @@ the default brand, not the per-brand executor settings or reviewer gates.
 
 ## Unreleased
 
+- **Phase 1 scouts are now explicitly low-effort and availability-routed.** When agy is available,
+  resolve its scout model with `agy-model.sh low` (currently `gemini-3.7-flash-low`); otherwise the
+  orchestrator chooses Codex `gpt-5.6-luna` at medium or Claude `haiku`/`sonnet` at low. Scouts may
+  not inherit planner settings or run at high effort or above.
+
 - **New core skill: `self-review-loop`.** One self-review pass is the first pass, not the gate.
   Review, fix, review the fix, until a pass finds nothing, executing every verify command at `BASE`
   rather than trusting it. Six detectors, the defect classes ranked by what they cost, and observed
