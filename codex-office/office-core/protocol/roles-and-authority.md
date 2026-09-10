@@ -87,7 +87,7 @@ technical judge. **This is exceptional.** A producer that routinely emits it is 
 
 | Tier | When | What runs |
 |---|---|---|
-| **Inline review** | cheap, reversible, low-risk work, where an independent adversary is not worth its price | the producer self-reviews and validates against the plan's commands; no adversary spawned |
+| **Inline review** | cheap, reversible, low-risk work, where an independent adversary is not worth its price | the producer self-reviews and validates against the plan's commands, and exits on an inline pass |
 | **Adversarial review** | the default for anything else | a fresh adversary that did not do the work, at the office's declared floor |
 | **Integration review** | only at a real integration boundary (below) | one orchestrator-spawned integration adversary over the combined landings |
 
