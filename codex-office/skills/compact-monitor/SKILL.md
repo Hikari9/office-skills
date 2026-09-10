@@ -13,11 +13,19 @@ the last turn boundary, at no token cost and with data a pane model cannot see �
 context. Read that verdict first:
 
 ```bash
-tail -3 "${OFFICE_TELEMETRY_DIR:-$HOME/.claude/office-skills-telemetry}/compact-advisor.log"
+SESSION_ID="${CLAUDE_SESSION_ID:-${OFFICE_SESSION_ID:-}}"
+STATE_DIR="${OFFICE_TELEMETRY_DIR:-$HOME/.claude/office-skills-telemetry}/compact-state"
+if [ -z "$SESSION_ID" ]; then
+  echo "Advisor: unavailable — the current session id is not exposed to this shell"
+else
+  cat "$STATE_DIR/$SESSION_ID.json" 2>/dev/null || \
+    echo "Advisor: unavailable — no state for the current session"
+fi
 ```
 
-No line, or no such file? The hook is not installed here (`node eval/hooks/install.mjs`), and this
-skill is the fallback: judge the factors below yourself, and say that the arithmetic was unavailable.
+Never tail `compact-advisor.log` here: it is a global interleaved history and can report another
+pane's verdict. If the current session id or its state is unavailable, judge the factors below
+yourself and say that the arithmetic was unavailable.
 
 ## What the hook already decided
 
@@ -28,6 +36,7 @@ skill is the fallback: judge the factors below yourself, and say that the arithm
 | Run state exists on disk | yes — a path in recent output must **exist**, not merely be mentioned |
 | Run state is current | yes — a state file citing commits but not `HEAD` is a `no` |
 | Live in-flight reasoning | **no. This is yours.** |
+| Explicit auto-delivery authorization | **no. The final response must end with `COMPACT-SAFE: yes`.** |
 
 A `no` for "nothing points at a file that exists" or "it cites commits and not HEAD" is a defect
 report, not a wait instruction: something real exists only in this window. Fix the file, and the
@@ -39,6 +48,17 @@ Being resumable via files is not the same as compacting being a good idea right 
 facts; compacting destroys reasoning, nuance, or in-flight decisions that were never externalized.
 So override a `yes` to `NOT YET` only when a partial decision, a live multi-step chain, or nuance
 you have not written down would be lost. Never override at all mid-tool-call-chain.
+
+Automatic delivery has one additional safety handshake. Only append this exact line to the final
+assistant response when the in-flight reasoning is already externalized and a directed `/compact`
+is safe:
+
+```
+COMPACT-SAFE: yes
+```
+
+If that line is absent, or the reasoning is still unresolved, the advisor may recommend `yes` but
+the courier will not send `/compact`; say `NOT YET` and preserve the request for a human decision.
 
 Do not add a numeric context threshold of your own. The advisor's arithmetic is the threshold.
 
@@ -68,5 +88,6 @@ Next: <who delivers it>
 ```
 
 For `Next`: in a Herdr pane with `--with-auto-compact` installed, `compact-courier.mjs` delivers the
-`/compact` at this boundary and there is nothing to do. Otherwise the user runs `/compact` — this
-skill cannot invoke it, and neither can any tool: `SlashCommand` excludes built-ins.
+`/compact` only after the advisor handshake and the explicit `COMPACT-SAFE: yes` authorization. If
+that authorization is absent, the user runs `/compact` after reviewing the unresolved reasoning —
+this skill cannot invoke it, and neither can any tool: `SlashCommand` excludes built-ins.

@@ -1,5 +1,24 @@
 # Changelog — auto-office
 
+## 17.8.0 — 2026-09-10
+
+Core `17.7.0`.
+
+- **Compaction is hook-driven per pane.** The advisor decides from the pane's own transcript at zero
+  token cost, and an `async` courier delivers a directed `/compact` only after a same-boundary
+  handshake, an explicit `COMPACT-SAFE: yes` authorization, and bounded Herdr prompt receipt. It acts
+  only on ledger-recorded `claude`/`codex` panes, never on a human's own session or Agy. The advisor
+  versions every state/request, invalidates stale requests on a later `no`, resets all post-compaction
+  accumulators, and uses metadata or a conservative window when the context size is ambiguous.
+
+- **`/compact-monitor` is session-scoped.** It reads the current session's advisor state rather than
+  tailing a global interleaved log, and retains the qualitative in-flight-reasoning judgment before
+  automatic delivery.
+
+- **Stale courier recovery is exclusive.** A stale lock is atomically quarantined and reacquired, so
+  only one courier can deliver a request. `compact-police.sh planner` and `watch` remain removed;
+  `reuse` is still the planner-owned path and the only path for Codex panes.
+
 ## 17.7.0 — 2026-09-10
 
 **v2 can use a dedicated plan drafter without reassigning the Planner role or changing executor/reviewer
@@ -37,26 +56,6 @@ the default brand, not the per-brand executor settings or reviewer gates.
   resolve its scout model with `agy-model.sh low` (currently `gemini-3.7-flash-low`); otherwise the
   orchestrator chooses Codex `gpt-5.6-luna` at medium or Claude `haiku`/`sonnet` at low. Scouts may
   not inherit planner settings or run at high effort or above.
-
-- **Compact monitor:** Herdr-backed runs can ask an idle planner to run the qualitative
-  `/compact-monitor` check and can compact a completed Claude/Codex pane immediately before an
-  explicit reuse. No token threshold is used; Agy panes are skipped.
-
-- **Compaction is hook-driven per pane.** Two `Stop` hooks replace the polling watcher: the
-  advisor decides from the pane's own transcript at zero token cost, and an `async` courier
-  delivers the directed `/compact` to that pane once Herdr reports it `idle`. Opt-in with
-  `node eval/hooks/install.mjs --with-auto-compact`; it acts only on ledger-recorded `claude`/
-  `codex` panes, never on a human's own session, never on Agy. `compact-police.sh reuse` remains
-  the planner-owned path for a pane about to be reused, and the only path for Codex panes.
-  `compact-police.sh planner` and `watch` are removed — they polled `agent get` every five
-  seconds, inferred boundaries from a phase machine while discarding the `state_change_seq` in the
-  same payload, and spent a full planner turn per boundary on a check the harness does for free.
-
-- **`/compact-monitor` no longer re-derives the arithmetic.** It reads the advisor's verdict and
-  adds the one factor a script cannot see: in-flight reasoning that was never written down.
-
-- **Compactability is now visible.** The advisor emits `systemMessage` on the no→yes edge; every
-  verdict is appended to `compact-advisor.log` in the telemetry sink.
 
 - **New core skill: `self-review-loop`.** One self-review pass is the first pass, not the gate.
   Review, fix, review the fix, until a pass finds nothing, executing every verify command at `BASE`

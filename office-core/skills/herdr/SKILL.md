@@ -437,8 +437,8 @@ split because one has to run inside the turn and the other cannot:
 
 | Hook | Event | Job |
 |---|---|---|
-| `office-core/hooks/compact-advisor.mjs` | `Stop` | reads the pane's own transcript, decides, writes a request file |
-| `office-core/hooks/compact-courier.mjs` | `Stop`, `async: true` | maps session → pane via the ledger, waits for `idle`/`done`, sends the directed `/compact` |
+| `office-core/hooks/compact-advisor.mjs` | `Stop` | reads the pane's own transcript, decides, versions state/request for the boundary |
+| `office-core/hooks/compact-courier.mjs` | `Stop`, `async: true` | waits for the matching advisor boundary, maps session → pane, waits for `idle`/`done`, and sends the directed `/compact` |
 
 ```bash
 node eval/hooks/install.mjs --with-auto-compact    # opt-in, Herdr-only
@@ -461,10 +461,26 @@ Why this shape and not a watcher:
   ledger, so it is never sent anything: it gets the advisor's `systemMessage` and decides for
   itself. Agy is skipped — no interactive `/compact`.
 - **The verdict is arithmetic, not a vibe, and it costs no tokens.** Held context against the
-  window, tier-weighted re-read cost against turns saved, plus a required state-file-on-disk check
-  and a sha-staleness check. A pane model never spends a turn deciding. The advisor surfaces
-  `compact: yes` as a `systemMessage` on the no→yes edge only; every verdict lands in
-  `compact-advisor.log` in the telemetry sink.
+- **Advisor→courier ordering is explicit.** Hook registration order is not a contract. Both hooks
+  derive a key from the same session/input/transcript boundary; the advisor writes the request before
+  the matching state marker, and the courier waits for that marker before it can act. State and
+  requests also carry a monotonic boundary sequence, so a later `no` invalidates an earlier `yes`.
+- **Automatic delivery keeps the in-flight-reasoning judgment.** The arithmetic still covers held
+  context against the window, tier-weighted re-read cost against turns saved, a state-file-on-disk
+  check, and sha-staleness. A pane model must additionally end its final response with the exact
+  `COMPACT-SAFE: yes` line before the advisor authorizes the courier; otherwise the advisor may say
+  `yes` for a human decision, but no `/compact` request is delivered.
+- **Window sizing is conservative.** The advisor uses a context-window value from the hook/transcript
+  metadata or an explicit environment hint when available. If the model/window is ambiguous, it uses
+  a 1M fallback rather than treating a 1M session below 190k as a 200k session.
+- **Delivery has two race guards.** Stale lock recovery atomically quarantines and reacquires the lock,
+  so only one courier owns a request. Immediately before prompting, the courier rechecks the current
+  boundary state and request. It invokes `herdr agent prompt <name> <prompt> --wait --until working
+  --timeout 20000` and only removes the retry request after the returned `agent_status: working`
+  receipt is present. CLI acceptance alone is not delivery evidence.
+- The advisor surfaces `compact: yes` as a `systemMessage` on the no→yes edge only; every verdict
+  lands in `compact-advisor.log` in the telemetry sink. `/compact-monitor` reads the current session's
+  `compact-state/<session>.json`, never a tail of the global log.
 - **A Codex pane cannot self-compact.** Codex has no turn-boundary hook event and its rollout files
   are not the transcript format the advisor parses. Codex panes stay on `reuse`, below.
 

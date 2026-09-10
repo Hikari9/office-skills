@@ -101,7 +101,8 @@ function claude() {
   // Removing it is `--uninstall`, which is explicit in the other direction.
   const hadPanes = JSON.stringify(s.hooks.Stop || []).includes("close-finished-panes.mjs");
   if (panes || uninstall) setEvent(s.hooks, "Stop", cmd("close-finished-panes.mjs"));
-  // Delivery, opt-in and separate from the decision. `async` is not a tuning
+  // Delivery, opt-in and separate from the decision. The advisor/courier share
+  // a per-boundary handshake, so registration order is not relied on. `async` is not a tuning
   // choice: the courier waits for this pane's own Herdr status to leave
   // `working`, which cannot happen until the turn this hook is running in has
   // ended. A synchronous courier would wait on itself.

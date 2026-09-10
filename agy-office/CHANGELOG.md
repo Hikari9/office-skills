@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 16.4.0 — 2026-09-10
+
+Core `17.7.0`.
+
 - Core `17.7.0`: vendored `compact-monitor`, the `compact-advisor`/`compact-courier` `Stop` hook
   pair, and `compact-police.sh reuse`. Agy panes are intentionally not targeted by any of them
   because they have no interactive `/compact` command.

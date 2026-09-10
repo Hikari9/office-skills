@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 16.4.0 — 2026-09-10
+
+Core `17.7.0`.
+
 - Core `17.7.0`: vendored `compact-monitor`, the `compact-advisor`/`compact-courier` `Stop` hook
   pair, and `compact-police.sh reuse`. A Codex pane cannot self-compact — Codex fires no
   turn-boundary hook event and its rollout files are not the transcript format the advisor parses —
