@@ -115,12 +115,12 @@ triple, or an explicit caller override.
 
 | Policy value | Harness | Model | Effort |
 |---|---|---|---|
-| Default | `claude` | `opus-5` (Claude Opus 5) | `medium` |
-| Conditional default *(claude orchestrator, generous codex headroom)* | `codex` | `gpt-6-astra` | `low` |
+| Default *(claude orchestrator, codex headroom NOT generous — or orchestrator isn't claude)* | `claude` | `opus-5` (Claude Opus 5) | `medium` |
+| Conditional default *(claude orchestrator, codex headroom generous)* | `codex` | `gpt-6-astra` | `low` |
 | Candidate | `claude` | `claude-fable-5.1` (Claude Fable 5.1) | `low` |
 | Candidate | `claude` | `claude-fable-5.1` | `medium` |
 | Candidate | `claude` | `claude-fable-5.1` | `high` |
-| Required fallback | `codex` | `gpt-6-astra` (GPT-6 Astra) | `low` |
+| Required fallback *(whichever of the two rows above wasn't the default just tried)* | `codex` or `claude` | `gpt-6-astra` or `opus-5` | `low` or `medium` |
 | Candidate | `codex` | `gpt-6-astra` | `medium` |
 
 **The default is conditional, not fixed**: when the orchestrator's harness is `claude` and codex

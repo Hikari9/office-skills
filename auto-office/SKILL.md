@@ -55,8 +55,10 @@ or widen blast radius implicitly.
 ## Fit test — first
 
 Before planning, probe all three quota tools and choose the gear; re-probe before executor/reviewer
-dispatch. Use `python3 auto-office/scripts/{codex,claude,agy}-usage.py`. Ask whether the run has
-irreversible risk, real size/breadth, unresolved ambiguity, or likely independent-review yield.
+dispatch. Run each of `auto-office/scripts/{codex,claude,agy}-usage.py` as a separate `python3`
+invocation — not one combined command; see [`quota-probe.md`](references/quota-probe.md). Ask
+whether the run has irreversible risk, real size/breadth, unresolved ambiguity, or likely
+independent-review yield.
 
 | Condition | Gear |
 |---|---|

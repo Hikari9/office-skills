@@ -125,11 +125,17 @@ selected drafter, never at "no drafter selected":
    `required`, reuse the orchestrator's own planning step (record
    `reused_from_orchestrator: true`) and make no call; otherwise try it as a
    live dedicated call.
-5. If that attempt is unavailable, try whichever of `claude/opus-5@medium` /
-   `codex/gpt-6-astra@low` was **not** the rule-4 default — one of the two is
-   always the required dedicated fallback for the other, so a caller who
-   supplied neither always sees both tried before anything else.
-6. If both are unavailable, try the remaining declared candidates in list
+5. **This rule applies after ANY rule-4 attempt fails — an explicit caller
+   choice exactly as much as the default or conditional default.** If the
+   triple just attempted is not already one of `claude/opus-5@medium` /
+   `codex/gpt-6-astra@low`, try whichever of that pair the conditional-default
+   check (rule 4) would have picked first; if the triple just attempted *is*
+   one of the two, try the other one. Either way, exactly one member of the
+   pair gets tried here if it wasn't already the rule-4 attempt — this pair is
+   the required dedicated fallback regardless of what rule 4 was.
+6. If the pair from rule 5 is exhausted (both unavailable, or both already
+   attempted as the rule-4 choice), try the remaining declared candidates —
+   whichever of `planner_candidates` has not yet been attempted — in list
    order. Record every attempted triple and its reason.
 7. Use orchestrator-as-drafter only when it was explicitly selected, the auto
    prompt chose inline, or after every dedicated candidate is unusable and the
