@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 16.5.0 — 2026-09-10
+
+Core `17.8.0`.
+
+- Core `17.8.0`: the Herdr skill's agent-watcher guidance gains the four-exit rule — a watcher that
+  only tests for success cannot tell a dropped dispatch from work still in progress, because both
+  look like an idle agent with no artifact. Watchers now distinguish **done**, **blocked**,
+  **never-started**, and **stalled**. Observed 2026-09-09: a review round was watched for an hour's
+  timeout after a `--text` misuse and the watcher emitted nothing the whole time.
+
 ## 16.4.0 — 2026-09-10
 
 Core `17.7.0`.
