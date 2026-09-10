@@ -95,7 +95,7 @@ rule: `office-core/protocol/roles-and-authority.md` → *Fit test*.
 
 ## Protocol version
 
-Implements office-core **`9.0.0`**, vendored at `office-core/` here. Mandatory read:
+Implements office-core **`18.0.0`**, vendored at `office-core/` here. Mandatory read:
 [`roles-and-authority.md`](office-core/protocol/roles-and-authority.md) — vendored copy
 authoritative once installed; repo-root `office-core/` is the dev source. Exception:
 `agy-phase-2b` (`COMPATIBILITY.md`).

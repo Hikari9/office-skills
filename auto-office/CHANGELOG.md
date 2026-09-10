@@ -1,5 +1,57 @@
 # Changelog — auto-office
 
+## 18.0.0 — 2026-09-10
+
+Core `18.0.0`. **Breaking: the orchestrator and the planner are now separate roles, and the office
+runs the v3 architecture from issue #77 (plus its phase-boundary compaction addendum), not a spec
+for it.**
+
+- **The planner interviews the user.** The orchestrator gathers only provisional intent, files the
+  tracking issue, routes, and hands an *initial-intent packet* labelled as a hypothesis. The planner
+  does repo recon first, then talks to the user directly, may reshape any pre-freeze requirement —
+  goal, scope, done criteria, blast radius, named actions, non-goals, interfaces, milestones, the
+  problem statement — and **freezes** the requirements at the end of discovery. This overturns the
+  earlier rule that a planner never speaks to the user.
+- **The orchestrator does not re-review the returned plan.** It validates the packet's shape
+  (`base_sha`, sections, `requirements_freeze`, no undisposed `plan_review` finding, metadata, the
+  three versions) and takes the single user approval. The plan is gated by the planner's own
+  adversary and by the user.
+- **The producer disposes; the adversary challenges.** Each finding gets `accepted_fixed`,
+  `rejected_with_evidence`, or `unresolved` from the executor, which is the final local technical
+  decision-maker for its own implementation. `APPROVED` from the adversary is still the only exit
+  from review, so an evidenced rejection is an argument, not a bypass. Conflicting evidence the
+  producer cannot resolve becomes `TRUE_CONFLICT`, which the orchestrator puts to the user.
+- **The executor launches its own code adversary — it never chooses it.** Tier, triple, effort, and
+  brief stay the control plane's, at the current `routing_version`.
+- **Review tiers.** `review=inline` (self-review plus the plan's validation commands, no adversary)
+  is available for cheap, reversible, low-risk work only, and never for the run's main correctness
+  or security risk. Adversarial stays the default.
+- **No final adversary over a single-executor family.** An integration adversary runs only when two
+  or more executors produce **dependent or merging** landings; the trigger is the integration
+  boundary, not executor count. Its findings route structurally: code defect → executor, plan defect
+  → wake the planner, user-owned requirement → the user, cross-executor conflict → the orchestrator.
+- **Landing packets, not transcripts.** Executors return a compact structured packet (family,
+  scope, status, the three versions, tasks, change summary, interfaces, validation, review mode and
+  round dispositions, deviations, artifacts, downstream impacts, blockers).
+- **Review checkpoint before review** (issue #77 addendum). `EXECUTOR-STATE.md` doubles as the
+  checkpoint: bring it current, read it back, **then** compact, then launch the adversary. Serialize
+  first — proof is re-derivable from the repo, the reasoning behind a choice is not. Conditional, not
+  mandatory; skipped on the inline tier and small tasks.
+- **Independent versions.** `requirements_version`, `plan_version`, `routing_version`. A
+  routing-only amendment never wakes the planner; a requirement that fits the plan goes out as a
+  delta packet; a plan-contract change pauses only affected work and wakes the planner for
+  interactive delta-planning.
+- **Multiple families, most-recent sticky focus.** New
+  [`references/family-registry.md`](references/family-registry.md): the durable registry, focus
+  rules, amendment classes, routing precedence, and soft quota projections. Unqualified commands
+  apply to the current focus until the user overrides it; irreversible acts echo the family in the
+  line that announces them. Child transcripts are never orchestrator state.
+- `references/planner-handoff.md` is now the interactive-planner contract and plan packet;
+  `planner_mode=inline` remains the single-session path and still may not gate its own plan.
+- Routing ledger gains `planner`, `review_tier`, `integration_adversary`, `versions`, and
+  `families_live`, with the cost of a multi-family orchestrator recorded as an open question rather
+  than an assumed saving.
+
 ## 17.11.0 — 2026-09-10
 
 Core `17.9.0`.

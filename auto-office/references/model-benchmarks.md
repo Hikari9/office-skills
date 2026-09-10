@@ -32,16 +32,16 @@ you argue on; it is still not the argument. See [auto-routing](../skills/auto-ro
 Read [routing-outcomes.md](routing-outcomes.md) before this file — local outcomes outrank the
 leaderboard.
 
-## v2 dedicated plan-drafter note
+## Dedicated planner note
 
-This snapshot does **not** choose the v2 dedicated plan drafter (an added role,
-never the Planner). The maintained policy is conditional on the orchestrator,
-not benchmark-derived — canonical definition, resolution order, and fallback
-semantics: [`planner-handoff.md`](planner-handoff.md#v2-selection-policy). In
+This snapshot does **not** choose the dedicated planner. The maintained policy
+is maintainer-owned, not benchmark-derived — canonical definition, resolution
+order, and fallback semantics:
+[`planner-handoff.md`](planner-handoff.md#selection-policy). In
 short: **Claude Opus 5 medium, unconditionally**, with GPT-6 Astra low as the
 fallback when Opus is unavailable. The former orchestrator/headroom-conditional
 Astra default was revoked 2026-09-10. A benchmark refresh may update this
-evidence file, but it must not silently change those drafter defaults or
+evidence file, but it must not silently change those planner defaults or
 fallbacks.
 
 ## Intelligence Index and output speed

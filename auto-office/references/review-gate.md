@@ -1,5 +1,15 @@
 # Phase 3 — Adversarial Review (detail)
 
+**Who does what here.** The orchestrator *declares* the tier, the adversary's triple and effort, the
+brief, and whether to fund the next round. The **executor launches** that adversary — after bringing
+`EXECUTOR-STATE.md` current as its review checkpoint and, on substantial implementation history,
+compacting — and **disposes of each finding** (`accepted_fixed`, `rejected_with_evidence`,
+`unresolved`). Launching is mechanics; choosing would be self-approval with extra steps, and a
+producer that cannot launch the declared adversary reports that rather than substituting a cheaper
+one. On the `review=inline` tier no adversary is spawned at all: the producer self-reviews and runs
+the plan's validation commands, and that tier is available only for cheap, reversible, low-risk work.
+Read the whole file as "the party running the gate", not necessarily the control plane.
+
 When `HERDR_ENV=1`, do not use the in-session `Agent(...)` invocation below. Load
 [`../office-core/skills/herdr/SKILL.md`](../office-core/skills/herdr/SKILL.md), place the fresh
 reviewer in the required Herdr pane, send the brief with `herdr agent prompt`, and close only the
@@ -90,7 +100,7 @@ review gets a PR comment: a short summary naming the reviewer, final `HEAD`, rou
 changes required across the rounds, and why each change was required — or why none were.
 
 Before triage or a follow-up, the planner also records a disposition for every finding: accepted,
-contested, deferred, or escalated; a recommendation of `FIX_AND_REVIEW`, `REPLAN`, `WAIVE_AND_STOP`,
+dispositioned `accepted_fixed`, `rejected_with_evidence`, or `unresolved`; a recommendation of `FIX_AND_REVIEW`, `REPLAN`, `WAIVE_AND_STOP`,
 or `STOP`; the concrete failure scenario and expected outcome; and a pre-fix reflection. If the fix
 changes assumptions, scope, or risk, the planner pauses for a mid-fix checkpoint. The planner may
 decline to fund another round, but an accepted change to a gated surface requires independent

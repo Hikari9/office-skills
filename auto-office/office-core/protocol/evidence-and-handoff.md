@@ -177,6 +177,87 @@ Required sections:
   `[needs-user]`, or `[decided]` per
   [`roles-and-authority.md`](roles-and-authority.md).
 
+### The landing packet
+
+The handoff file is the executor's detail record. What travels **up** to the orchestrator is a
+compact **landing packet**, not the executor's transcript or context — that is what lets one
+cheaper control plane supervise several technically deep workers at once. It carries, at minimum:
+
+```yaml
+family_id: <family/project id>
+executor: <id and scope>
+status: <landed|blocked|true_conflict>
+requirements_version: <n>
+plan_version: <n>
+routing_version: <n>
+tasks_completed: [<plan task numbers>]
+change_summary: <a few lines, not a diff>
+interfaces_changed: [<name — file:line>]
+validation: [<command — real result>]
+review_mode: <inline|adversarial>
+review_rounds:
+  - round: <n>
+    dispositions: [<accepted_fixed|rejected_with_evidence|unresolved>, ...]
+deviations: [<plan deviation + rationale + plan hash>]
+artifacts: [<PR / commit range / path>]
+downstream_impacts: [<what other executors or families must know>]
+blockers: [<blocker or conflict, with owner label>]
+```
+
+The packet **points at** the handoff file, review files, and PR for anything deeper. An orchestrator
+that finds itself reading a child's full transcript to know whether the work landed is missing a
+field the packet should have carried.
+
+### The review checkpoint — compact at a phase boundary, after serializing
+
+**A long-lived role may compact at a semantic phase boundary once it has serialized the state the
+next phase needs.** The clearest case is the executor crossing into adversarial review: carrying a
+full implementation transcript — exploratory reads, abandoned attempts, routine tool history —
+through a review loop is a context bill paid to answer questions the repository, the diff, and the
+checkpoint already answer.
+
+```text
+implement → test → self-review → serialize checkpoint → compact → adversary reviews
+   → findings → same executor resumes from the checkpoint → fix / reject-with-evidence / finish
+```
+
+**The checkpoint is the existing executor state file, not a second ledger.** Where an office already
+requires one (auto-office's `EXECUTOR-STATE.md`), the checkpoint is that file brought current and
+read back; it gains fields, never a parallel artifact. It keeps only what the executor needs to
+**defend or modify** its work: the three
+versions, its task scope, the current commit/diff and changed files, the implementation decisions
+and tradeoffs that are not obvious from the diff, validation already run, interfaces touched,
+deviations from plan, unresolved concerns, and the current review round and state. The repository,
+the diff, the tests, and the serialized packets remain the source of truth.
+
+**Serialize first, then compact — never the other way round.** A compacted executor that must later
+defend a `rejected_with_evidence` disposition with evidence it never wrote down is worse off than
+one that never compacted at all. If a checkpoint field cannot be filled from what is on disk and in
+context *now*, the compaction does not happen; the field is not reconstructed from memory
+afterwards. Read the checkpoint back before compacting.
+
+This is a hardening, not a new dependency: a resumed executor can always re-derive proof from the
+repository, the diff, and its own commits. What it cannot re-derive is *why* it chose one approach
+over another — so the decisions and tradeoffs field is the one that actually has to be written down
+before the transcript goes.
+
+**The adversary gets a fresh independent packet, not the executor's transcript**: the frozen
+requirements and plan, the repository and diff, the validation evidence, and its review scope. This
+is what keeps the review adversarial — a reviewer handed the producer's narrative inherits the
+producer's framing.
+
+Compaction here is **conditional**:
+
+| Situation | Do |
+|---|---|
+| inline-review tier, or a small task | nothing |
+| adversarial review, executor context still small | optional — apply the *worth it* arithmetic below |
+| adversarial review after substantial implementation history | checkpoint, then compact, before the adversary launches |
+| a long review/fix loop | checkpoint and compact again at later phase boundaries |
+
+The **safe** and **worth it** tests below both still apply; this section says *when the boundary
+exists*, not that crossing one is free.
+
 When a Tester contributed tests, the handoff also identifies the Tester report, every test/config
 commit, the checkpoint/base used for each result, and the Executor's token/time fast-lane decision.
 
@@ -263,6 +344,12 @@ separate tests, and both must pass.
    in flight.
 2. Its evidence is **on disk**: handoff file, verdict record, plan amendment. Not only in chat.
 3. What comes next is a file, not a memory.
+
+For an orchestrator supervising more than one family, condition 2 means the **family registry** —
+each family's phase, repo/issue, the three versions, active ownership, dependencies, latest landing
+packet, and pending user decisions. A child agent's transcript is never orchestrator state, so the
+registry plus the landing packets must be sufficient to resume every family after a compaction or
+restart. If resuming would require re-reading a child, the registry is missing a field.
 
 **Worth it** is arithmetic, not vibes. Compaction is not free: the summary itself costs tokens, and
 the agent then **re-reads** the files, plans, and outputs it just dropped — at the *current* model's

@@ -242,7 +242,15 @@ Triggered by: spec ❌, any Critical or Important finding, or a cross-task gap y
 - **Between rounds 3 and 4, this is a real decision, not an automatic clock.** If round 3's fix is cheap to resume and clearly converging, resuming once more into what would be "round 4" is a defensible call — but the same-role reviewer version of this same rubric ([`office-core/protocol/review-states.md`](../office-core/protocol/review-states.md#resume-vs-fresh--a-cost-decision-not-a-default)) applies here too: weigh measured cost, round count, and relatedness, and declare which you chose and why in the round log.
 - **Every round:** the implementer re-runs the tests covering the amended code, appends its fix report to the same report file, and returns the short contract. Name the covering test files in the fix message — a one-line fix does not need the whole suite. Before you re-review, confirm the fix report contains the covering tests, the command, and the output.
 - **Re-review is scoped:** diff `PREV_HEAD..HEAD` only. Verdict each finding ADDRESSED or NOT ADDRESSED, and flag new breakage in the fix diff. New Critical/Important breakage joins the open list. Out-of-scope observations go to the ledger as deferred minors — they never extend the loop.
-- **A finding that conflicts with the plan's text** is the planner's decision. Report the finding beside the plan text and ask which governs. Do not dispatch a fix that contradicts the plan.
+- **You dispose of every finding, and you own the call.** `accepted_fixed`, `rejected_with_evidence`,
+  or `unresolved` — one per numbered finding, recorded in the report file. The adversary challenges
+  your work; it is not your superior, and a rejection stands when it carries evidence of the kind the
+  gate itself demands (real output, a read file, a run). Confidence is not evidence: a rejection
+  without it is `unresolved`. `APPROVED` from the adversary is still the only exit from review, so a
+  rejection is an argument it has to accept, not a bypass. When the evidence is genuinely conflicting
+  and you cannot responsibly decide, return `TRUE_CONFLICT` with both cases and stop that thread —
+  the orchestrator puts it to the user. That is exceptional.
+- **A finding that conflicts with the plan's text** is the orchestrator's decision. Report the finding beside the plan text and ask which governs. Do not dispatch a fix that contradicts the plan.
 - **Log every round:** `Task <N>: fix round <R>/5 (<X> addressed, <Y> open — <one-liners>; commits <a7>..<b7>)`
 
 **At the cap,** stop dispatching and adjudicate each still-open finding yourself:
@@ -268,7 +276,14 @@ When every task is complete:
    earlier task's assumption a later task broke. Grade findings the same way; Critical/Important ones
    go through the fix loop before you hand off. This never replaces the reviewer's gate — it finds
    what the author knows it hand-waved, while the fresh gate finds what the author could not see.
-4. Write `<workspace>/handoff.md`:
+4. **Bring `EXECUTOR-STATE.md` current as the review checkpoint** before an adversarial round on
+   substantial implementation history: the three versions, task scope, current commit/diff and
+   changed files, the decisions and tradeoffs the diff does not show, validation already run,
+   interfaces touched, deviations, unresolved concerns, review round and state. Read it back, **then**
+   compact, then launch the adversary. Serialize first, always — proof can be re-derived from the
+   repo, but *why one approach beat another* cannot. Skip the compaction on the inline tier or a
+   small task.
+5. Write `<workspace>/handoff.md`:
 
 ```markdown
 # Executor handoff — <plan slug>
@@ -305,6 +320,15 @@ graded Critical / Important / Minor — including work you implemented inline.
 Then once over the whole `BASE..HEAD` diff after the gate is green.
 <one line per finding: grade — what — fixed (<commit>) | deferred (minor) | parked (<ruling>)>
 <"none" is a valid finding list; an absent or empty section is not.>
+
+## Landing packet
+family_id · executor + scope · status (`landed` | `blocked` | `true_conflict`) ·
+requirements_version / plan_version / routing_version · tasks completed · change summary (a few
+lines, not a diff) · interfaces changed · validation results · review mode and each round's
+dispositions · deviations · PR/commit/artifact refs · downstream impacts · blockers.
+This is what travels up — the orchestrator reads it, not your transcript. Point at this handoff, the
+review files, and the PR for anything deeper. Contract:
+`office-core/protocol/evidence-and-handoff.md` → *The landing packet*.
 
 ## Gate evidence
 $ <command>

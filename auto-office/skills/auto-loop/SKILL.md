@@ -5,24 +5,20 @@ description: Phase 2–3 — the goal-locked autonomous loop that runs draft-PR 
 
 # Auto Loop
 
-## v2 Planner / plan-drafter boundary
+## Orchestrator / planner boundary
 
-In `planner_mode=auto`, the detector and any user drafter-choice prompt have
-already resolved before this loop begins; the loop receives the resulting
-serialized handoff. In `planner_mode=dedicated`, the Planner (orchestrator) has
-already invoked the dedicated plan drafter and validated its serialized handoff
-before this loop begins. The plan-drafter call is an added role with no
-lifecycle, dispatch, approval, reviewer, or closeout state; it returns the
-draft artifact and exits. The Planner (orchestrator) is the control-plane
-owner for every step below, including planner-held actions and executor/
-reviewer dispatch. In `planner_mode=inline`, the same session drafts the plan
-directly, which is the existing v2 compatibility path.
+By the time this loop begins the planner has interviewed the user, **frozen the
+requirements**, run its self-review and its own plan adversary, and returned a
+plan packet the orchestrator validated for shape and the user approved. The
+planner holds no lifecycle, dispatch, review, or closeout state and has exited.
 
-After the handoff, references to "the planner" in this loop mean the Planner's
-control-plane authority (the invoking session), never the plan drafter — the
-drafter has already exited and holds no further state. Executor and reviewer
-routing and the loop itself are otherwise unchanged. This is the v2 bridge to
-the more fundamental separation described for v3, not v3 implementation.
+References to "the planner" below mean the **orchestrator** — the invoking
+session's control-plane authority. The planner is woken again only for a
+plan-contract amendment (see *Live amendments* below).
+
+Every brief, packet, and landing in this loop cites `requirements_version`,
+`plan_version`, and `routing_version`. A landing whose versions do not match the
+family registry is stale and is not merged on its own authority.
 
 After approval the run is **end-to-end**. No go-aheads, no "shall I continue," no summarizing and
 waiting. Report progress and keep moving until closeout or a stop condition.
@@ -42,14 +38,20 @@ for each task the executor completes and hands back:
     verify independently      (mandatory extra pass if agy executed)
     executor returns BRIEF DEFECT → stop this task, do not implement, do not consume a round
                                     → planner (technical) or user (scope)
-    fresh Opus review         (resumed reviewer, same session across rounds)
+    review checkpoint         (executor serializes; compact before an adversarial round — see below)
+    review, at the funded tier:
+        inline tier      → executor self-review + the plan's validation commands, no adversary
+        adversarial tier → the declared Opus adversary, launched by the executor at the
+                           orchestrator's declared triple (resumed across rounds)
     while verdict == CHANGES REQUIRED and round < cap:
-        planner disposition checkpoint
+        executor disposes per finding: accepted_fixed | rejected_with_evidence | unresolved
+        orchestrator disposition checkpoint (fund another round, replan, waive, stop)
         if FIX_AND_REVIEW → triage → fix → re-review
         if REPLAN → PLAN DEFECT route
         if WAIVE_AND_STOP or STOP → preserve the open finding and stop/escalate
     verdict == PLAN DEFECT    → exits the loop for this task, does not consume a round
-    verdict == APPROVED       → milestone check, then next task
+    TRUE_CONFLICT             → stop this thread, orchestrator surfaces both cases to the user
+    verdict == APPROVED       → landing packet, milestone check, then next task
 
     milestone check: every done-criterion in this task's milestone green?
         → RECORD IT: gate → commit → local run state
@@ -117,6 +119,13 @@ any question it needs the planner to answer. It is not a status report — it is
   wrong role. (Agy: 3.)
 - **No state file is a stop.** A missing or stale `EXECUTOR-STATE.md` means the run has no re-entry
   point, and that failure must be loud rather than discovered at the cap.
+- **It doubles as the review checkpoint.** Before an adversarial round on substantial implementation
+  history, bring it current — the three versions, task scope, current commit/diff and changed files,
+  the decisions and tradeoffs the diff does not show, validation already run, interfaces touched,
+  deviations, unresolved concerns, review round and state — read it back, **then** compact, then
+  launch the adversary. Serialize first, always: proof can be re-derived from the repo, but *why one
+  approach beat another* cannot. Skip the compaction for inline-tier or small tasks; see core's
+  [review checkpoint](../../office-core/protocol/evidence-and-handoff.md#the-review-checkpoint--compact-at-a-phase-boundary-after-serializing).
 - **It is NEVER committed.** It is a run artifact, not a deliverable: it lives at the worktree root,
   is added to `.git/info/exclude` (never to the repo's `.gitignore` — that *is* a committed file),
   and dies with the worktree. The brief must say so **and must forbid `git add -A` / `git commit -a`**,
@@ -308,12 +317,12 @@ A cap is a signal, not an obstacle. Do not raise a cap to make a run finish.
 The planner keeps only what is structurally not the executor's: things the **user** must see, the
 **anti-self-gating** gate, and **irreversible outward** actions.
 
-| Planner-held | Executor-owned |
+| Orchestrator-held | Executor-owned |
 |---|---|
-| Interview, plan, GOAL, approval, all `AskUserQuestion` stops | Every numbered task, start to finish, in dependency order |
+| Provisional intent, approval, amendment classification, all `AskUserQuestion` stops (the *planner* holds the requirements interview) | Every numbered task, start to finish, in dependency order |
 | Read-only Phase 1 scouts (no plan and no executor exist yet) | Ordering within the graph; when and how to fan out workers |
-| **Dispatching the code reviewer**; triaging findings | Resolving branch points the plan already anticipated |
-| **Contesting** a review finding on the executor's behalf | **Implementing** every finding the reviewer raises |
+| **Declaring** the review tier, adversary triple, effort, and brief; funding the next round | **Launching** the declared adversary; **disposing** of each finding it raises |
+| Surfacing a `TRUE_CONFLICT` to the user | **Implementing or rejecting-with-evidence** every finding the adversary raises |
 | **Production and irreversible applies**; deploys | **All preview/staging writes and all live reads** |
 | External sends — never delegable, ever | Bootstrap commit, pushing its named branch, opening the draft PR, and the two executor event comments |
 | **Plan removal, ready-for-review, and merging into any base branch** | Implementation commits; the planner owns the final approval summary |
@@ -322,15 +331,20 @@ The planner keeps only what is structurally not the executor's: things the **use
 
 ### Who performs a fix
 
-**Every fix goes back to the executor**, including a one-liner. The planner triages — decides what a
-finding means and whether to contest it — and the executor implements. Round-trip cost is the only
+**Every fix goes back to the executor**, including a one-liner. The executor disposes of each finding
+— `accepted_fixed`, `rejected_with_evidence`, or `unresolved` — and implements what it accepts. Round-trip cost is the only
 pivot, and it bites in exactly one place: **the executor has already retired.** Then the planner
 discerns — apply it inline (core §35's live range: the brief would exceed the edit), or relaunch an
 executor if the fix set is large enough to be worth a process. Either way the fresh reviewer still
 gates it.
 
-Contesting a finding is the planner's, not the executor's: an executor arguing a finding down is
-arguing about its own work.
+**Contesting a finding is now the executor's**, because it is the one holding the evidence. That is
+not self-approval: `APPROVED` from the adversary remains the only exit from review, so a rejection is
+an argument the adversary still has to accept. A rejection carries evidence of the kind the gate
+demands — real output, a read file, a run — and one without it is `unresolved`. When the evidence is
+genuinely conflicting and the executor cannot responsibly decide, it emits `TRUE_CONFLICT` and the
+orchestrator puts both cases to the user. That is exceptional; routine use is an executor declining
+to decide.
 
 ### The executor may amend the plan — and must show its work
 
@@ -373,6 +387,51 @@ cannot become approval.
 
 Evidence: one task burned 829k tokens over three review rounds. The loop now stops funding at round 2
 instead of 5.
+
+## Live amendments, mid-run
+
+The user talks to the orchestrator while executors run. Classify, then act — do not solve it
+technically yourself. Full table:
+[family-registry.md](../../references/family-registry.md#live-amendments).
+
+- **Routing-only** (reviewer model, remaining-executor model, review tier, parallelism, a worker
+  added or dropped): bump `routing_version`, tell the affected workers, **do not wake the planner**.
+  A not-yet-started dispatch takes the new route now; a running worker finishes its current atomic
+  unit or review round first unless the user asks for immediate replacement.
+- **Requirement that still fits the plan**: bump `requirements_version` and send a delta packet to
+  the affected executors only. No planner wake-up while the dependency graph, architecture,
+  interfaces, milestones, and done criteria stay valid.
+- **Plan-contract change** (architecture, interfaces, dependency ordering, milestones, done criteria,
+  or an invalidated assumption): pause **only** the affected work, wake the planner for interactive
+  delta-planning with the user, take its self-review and plan adversary, emit a new `plan_version`,
+  and redistribute only what changed.
+
+When the class is unclear, treat it as the next class up and say why.
+
+## Landing, and when an integration adversary runs
+
+Each executor returns a **landing packet** — the compact structured record in core's
+[evidence-and-handoff.md](../../office-core/protocol/evidence-and-handoff.md#the-landing-packet) —
+not its transcript. Read the packet; open the handoff file, review files, or PR only for what the
+packet points at. An orchestrator reading a child's full transcript to learn whether work landed is
+missing a packet field.
+
+```text
+1 executor                                         → its local review → landing/merge
+2+ executors, independent, no integration coupling → no mandatory final adversary
+2+ executors with dependent or merging landings    → integration adversary → merge
+```
+
+**Do not spawn a final adversary over a single-executor family.** Its local loop already gated that
+diff, and a second reader of the same landing buys no independence. The trigger is the integration
+boundary, not executor count.
+
+When one does run, it asks whether the combined landings satisfy the frozen requirements as a whole,
+compose across shared interfaces and dependencies, conflict despite each executor being locally
+correct, omit work at the seams between scopes, and are ready for the requested merge — not another
+line-by-line pass. Its findings route by kind: local code defect → the responsible executor; plan or
+spec defect → wake the planner; user-owned requirement → the user, via the orchestrator;
+cross-executor conflict → the orchestrator coordinates the family.
 
 ## The two user-stop conditions and the planner stop
 

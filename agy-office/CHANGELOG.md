@@ -1,5 +1,22 @@
 # Changelog — agy-office
 
+## 17.0.0 — 2026-09-10
+
+Core `18.0.0` (breaking, issue #77). This office keeps one session wearing both the Orchestrator and
+Planner hats, which core explicitly permits — the two-hats rule binds it to both rows and still
+forbids gating its own writing. What changes here is inherited from the vendored protocol:
+
+- The producer disposes of each review finding (`accepted_fixed`, `rejected_with_evidence`,
+  `unresolved`) and may reject on evidence of the kind the gate demands; `APPROVED` remains the only
+  exit from review, and unresolvable conflicting evidence becomes `TRUE_CONFLICT` for the user.
+- An inline-review tier exists for cheap, reversible, low-risk work; the adversarial default and
+  every floor are unchanged, and this office's own narrowings still bind.
+- A final adversary is integration-scoped: it runs only when two or more executors produce dependent
+  or merging landings.
+- Executors return a landing packet, and may checkpoint-then-compact at the review boundary after
+  serializing the state the next phase needs.
+- Requirements, plan, and routing are versioned independently.
+
 ## Unreleased
 
 ## 16.6.0 — 2026-09-10

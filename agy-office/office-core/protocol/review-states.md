@@ -1,5 +1,17 @@
 # Review states and the fix loop (core protocol)
 
+## Which tier is funded
+
+Adversarial review is the default. The
+[inline-review tier](roles-and-authority.md#three-review-tiers) — the producer self-reviewing and
+running the plan's validation commands with no adversary spawned — is available only for cheap,
+reversible, low-risk work, is chosen at routing time, and never covers the run's main correctness
+or security risk. An **integration adversary** runs only when two or more executors produce
+dependent or merging landings; a single-executor family does not get a second reviewer over the
+landing its own local loop already gated.
+
+Everything below describes a funded adversarial round.
+
 ## The reviewer
 
 Fresh, and never the agent that did the work. The planner is the **worst** available reviewer
@@ -116,14 +128,31 @@ A verdict returned with no self-review goes back to the reviewer to complete, an
 re-consume the round.** Schema:
 [`../schemas/review-verdict.schema.json`](../schemas/review-verdict.schema.json).
 
-## Planner disposition after `CHANGES REQUIRED`
+## Disposition after `CHANGES REQUIRED`
+
+Two dispositions, held by two different agents:
+
+- **Per finding, the producer disposes.** The executor (or whoever wrote the gated artifact) records
+  `accepted_fixed`, `rejected_with_evidence`, or `unresolved` for each numbered finding. The
+  reviewer is an adversary, not its superior: a rejection stands when it carries evidence of the
+  kind the gate itself demands — real output, a read file, a run. Confidence is not evidence, and a
+  rejection without it is `unresolved`. The reviewer then judges the resulting `HEAD` on
+  correctness, never on whether its suggestion was adopted.
+- **Per round, the control plane disposes.** Whether to fund another round, replan, waive, or stop
+  is the orchestrator's, below.
+
+Where the producer genuinely cannot resolve conflicting evidence, it emits `TRUE_CONFLICT` /
+`USER_DECISION_REQUIRED` instead of guessing. That state stops the thread, and the orchestrator
+surfaces both cases plus a recommendation to the user. It is exceptional; routine use of it is a
+producer declining to decide.
 
 `CHANGES REQUIRED` is the reviewer's gate state, not an instruction to launch another fix wave.
-The planner owns the next transition and must pause for a written disposition before fixing,
+The orchestrator owns the next transition and must pause for a written disposition before fixing,
 re-dispatching the reviewer, or deciding that no further round is warranted. The disposition is
 recorded in the review files and planner run state and includes:
 
-- each finding's status: accepted, contested, deferred, or escalated;
+- each finding's producer disposition (`accepted_fixed`, `rejected_with_evidence`, `unresolved`)
+  and, where the control plane differs, its own read of that finding;
 - the planner's recommendation: `FIX_AND_REVIEW`, `REPLAN`, `WAIVE_AND_STOP`, or `STOP`;
 - the concrete failure scenario and expected outcome that justify the choice;
 - a **pre-fix reflection**: whether the finding is material, whether the plan is at fault, and

@@ -29,7 +29,8 @@ Announce before doing anything else:
 auto-office · gear: <express|full> (<the fit-test reason, one clause>)
 executors: <n> (<brand(s)>, <fit reason>) · milestones: <n>
 reviewer: codex-luna xhigh (opus low fallback) · plan-reviewer: <brand> <model> low   [full only]
-plan drafter: <auto→prompt|orchestrator-as-drafter|dedicated <harness/model@effort>> · reuse: <yes|no> · fallback: <none|reason→triple>
+planner: <auto→prompt|orchestrator-as-planner|dedicated <harness/model@effort>> · reuse: <yes|no> · fallback: <none|reason→triple>
+families: <n> (<focus family_id>) · versions: req <n> / plan <n> / routing <n>
 headroom: <per window, with reset times, UNKNOWN where a probe failed>
 loop: on · overrides: <none|…>
 ```
@@ -37,37 +38,54 @@ loop: on · overrides: <none|…>
 **The gear line is the important one.** It tells the user what they are about to pay for. Report
 all headroom windows with reset times; a single-number delta is not evidence.
 
-## v2 orchestrator/plan-drafter boundary
+## Orchestrator / planner boundary
 
-The invoking session holds the core Planner role
-([roles-and-authority.md](../../office-core/protocol/roles-and-authority.md))
-and is called "orchestrator" here only for its control-plane behavior in this
-mechanic — v2 does not reassign the Planner role. It runs the fit test and
-user interview, resolves `planner_mode`, and dispatches a dedicated **plan
-drafter** (an added role, not the Planner) when selected. In `planner_mode=auto`,
-it detects whether a plan is needed and compares the actual orchestrator triple
-with the declared drafter candidates; unsupported or unknown triples trigger
-the user drafter-choice prompt before planning (unless `planner_isolation=required`
-suppressed it — see [planner-handoff.md](../../references/planner-handoff.md)).
-The plan drafter receives the clarified request and repository facts, produces
-a *draft* plan plus the serialized
-[`planner-handoff.md`](../../references/planner-handoff.md), and returns; it
-cannot ask the user, dispatch executors, or own any lifecycle state or gate.
+The invoking session is the **orchestrator**
+([roles-and-authority.md](../../office-core/protocol/roles-and-authority.md)).
+In Phase 1 it does four things and stops: run the fit test, gather only the
+intent needed to decide that planning is required, create or identify the
+tracking issue, and resolve `planner_mode` and the planner triple. **It does not
+interview to 95% clarity.** What it hands over is an *initial-intent packet*,
+labelled provisional.
 
-The Planner reads back and validates the draft artifact (`base_sha`, required
-plan sections, drafter metadata, and actual model/effort) before continuing the
-existing self-review, plan-review, approval, executor, reviewer, and closeout
-steps — the draft is never adopted unread. `planner_mode=inline` keeps the
-current same-call behavior, with the Planner drafting directly as it always
-has. No v3 routing architecture is introduced.
+In `planner_mode=auto` it detects whether a plan is needed and compares the
+actual orchestrator triple with the declared planner candidates; unsupported or
+unknown triples trigger the user planner-choice prompt before planning (unless
+`planner_isolation=required` suppressed it — see
+[planner-handoff.md](../../references/planner-handoff.md)).
+
+**The planner then owns Phase 1.** It reconnoiters the repository, interviews the
+user directly (a Herdr pane is the preferred surface), and may reshape any
+pre-freeze requirement — goal, scope, done criteria, blast radius, named
+actions, non-goals, interfaces, milestones, even the problem statement — when
+repository evidence shows the initial framing was wrong. It then **freezes the
+requirements**, writes the plan, self-reviews it (7.4), spawns and disposes of
+its own plan adversary (7.5), and returns the plan packet.
+
+The orchestrator validates the packet's **shape** — `base_sha`, required plan
+sections, a present `requirements_freeze`, no undisposed `plan_review` finding,
+planner metadata matching the actual call, the three versions — and then takes
+the single user approval. It is **not** a second technical plan reviewer: the
+plan was gated by the planner's adversary and is about to be gated by the user.
+A packet is never adopted unread; its engineering is never re-argued.
+
+`planner_mode=inline` keeps planning in the invoking session. The same steps
+still run — recon, interview, freeze, self-review, plan adversary, packet — and
+the session still may not gate its own plan.
 
 ## Order of operations
 
 1. **Run the fit test, probe CLI headroom, and state the gear** (hub). Express skips the tracking-issue
    step, plan-review, and most of what follows; the checklist below is the **full** gear unless a step says otherwise.
-2. **File the tracking issue** by default, before exploring.
-3. **Interview to clarity.** Ask in batches, not one at a time. The floor below is not optional in
-   full; in express, interview only until a remaining unknown would not change the implementation.
+2. **File the tracking issue** by default, before exploring, and register the family
+   ([family-registry.md](../../references/family-registry.md)).
+3. **Gather provisional intent only — the interview is the planner's.** The orchestrator asks just
+   enough to understand the request and decide that planning is required, then hands an
+   *initial-intent packet* labelled provisional. The planner does recon first and interviews after,
+   because the questions worth asking are the ones the repository reveals; it may reshape any
+   pre-freeze requirement and **freezes** them at the end of discovery. The floor below binds the
+   planner in full; in express, interview only until a remaining unknown would not change the
+   implementation.
 4. **Recon with low-effort Phase 1 scouts, in parallel.** Probe agy immediately before dispatch.
    When it is available (installed, authenticated, and launchable), use the low-effort model
    resolved by `agy-office/scripts/agy-model.sh low` — currently `gemini-3.7-flash-low` — and
@@ -86,13 +104,14 @@ has. No v3 routing architecture is introduced.
    failure: a scout with no such line skipped straight to implementation, wrote 130 lines of
    unapproved code, and reported that none existed.
    Verify their claims cheaply before building on them. A scout claim you cannot verify is dropped.
-4.5. **Resolve the plan drafter before writing the plan — runs in both gears.** Unlike
+4.5. **Resolve the planner before planning — runs in both gears.** Unlike
    plan-review, express does not skip this: express still needs a plan to
-   dispatch, so drafter resolution runs the same way in both. The only added
+   dispatch, so planner resolution runs the same way in both. The only added
    cost is conditional — the `AskUserQuestion` round-trip fires only for an
-   unsupported/unknown orchestrator triple, not by default. Apply the v2 detector/policy from
+   unsupported/unknown orchestrator triple, not by default. Apply the detector/policy from
    [auto-routing](../auto-routing/SKILL.md): if `auto` sees a supported exact triple, reuse it;
-   otherwise ask the user to choose Opus Medium, Fable, Astra, or inline before calling a drafter.
+   otherwise ask the user to choose Opus Medium, Fable, Astra, or inline before calling a planner.
+   Steps 3 and 4 above then belong to the resolved planner, not to the orchestrator.
    The dedicated default is `claude/opus-5@medium` unconditionally, with Astra Low as the first
    fallback. Record detection, prompt choice, actual
    triple, reuse, fallback, and reason.
@@ -100,10 +119,11 @@ has. No v3 routing architecture is introduced.
    executors the run needs. Model and effort are fixed by role, so they are filled in, not decided.
    Do not leave routing "to be decided during execution"; an unassigned task is an unreviewable cost.
    Headroom was probed during the fit-test; weigh it as a cost, never a gate.
-6. **Write and validate the plan artifact.** In dedicated mode, read back the serialized drafter
-   handoff, verify its `base_sha`, actual drafter triple, required sections, and GOAL fields, then
-   copy/commit the plan to `docs/plans/<slug>.md` in the target repo. In compatibility mode, write
-   that same tracked plan directly from the existing planning step. Include the tracking issue and
+6. **Write and validate the plan packet.** In dedicated mode, read back the returned packet, verify
+   its `base_sha`, actual planner triple, required sections, GOAL fields, the `requirements_freeze`
+   block, and that no `plan_review` finding is undisposed, then copy/commit the plan to
+   `docs/plans/<slug>.md` in the target repo. This is a **shape** check; the orchestrator does not
+   re-argue the engineering. In inline mode, write that same tracked plan directly. Include the tracking issue and
    immutable GitHub blob deeplink requirement for the draft PR body — see *Where a run's files live*.
    The five required sections are core's
    ([`plan-contract.md`](../../office-core/protocol/plan-contract.md)) and none may be dropped:
@@ -163,9 +183,10 @@ Goes in the plan, next to the tasks. The planner fills every cell before approva
 
 **Read this before you fill it in.** This table is the planner's **dispatch design, handed to the
 executor** — it is *not* a list of processes the planner will launch. In an approved run the
-orchestrator launches the dedicated plan drafter only during Phase 1 when that mode is selected; after
-that it launches exactly three kinds of process: **one executor per repo**, the code reviewer, and
-(Phase 1 only) read-only scouts. Every row below tells the executor how to run that task. The table
+orchestrator launches the dedicated planner during Phase 1, and after that exactly three kinds of
+process: **one executor per repo**, an integration adversary when two or more executors produce
+dependent or merging landings, and (Phase 1 only) read-only scouts. The code adversary is the
+executor's own to launch. Every row below tells the executor how to run that task. The table
 exists because the planner has read the whole codebase and the executor should not have to re-derive
 which task deserves a subagent — not because the planner is the one dispatching.
 
@@ -347,26 +368,28 @@ and may not be used to skip it.** Measured: self-review found 10 findings, the f
 overlapping on only 4. Self-review finds what the author knows it hand-waved; the fresh gate finds what
 the author could not see.
 
-## Step 7.5 — one adversarial plan-review (full gear only)
+## Step 7.5 — the planner's own plan adversary (full gear only)
 
 **Express does not run this gate**, which is most of what makes express cheap. Everything below is
 the full gear.
 
-Between self-review and user approval. The plan-reviewer is a **fresh agent on the existing
-orchestrator/control-plane Planner's own route** (the invoking session's brand — never the plan
-drafter's), at that route's plan-review row in
-[auto-routing](../auto-routing/SKILL.md) — Opus-tier, **low** effort. A dedicated plan drafter's
-model choice never overrides this reviewer route. Spoke paths: [delegation-map.md](../../references/delegation-map.md).
+Between self-review and the returned packet — **the planner spawns it, not the orchestrator**, and
+disposes of its findings before handing the plan back. It is a **fresh agent on the orchestrator's
+control-plane route** (the invoking session's brand — never the planner's own), at that route's
+plan-review row in [auto-routing](../auto-routing/SKILL.md) — Opus-tier, **low** effort. A dedicated
+planner's model choice never overrides this reviewer route: the adversary must not be the producer's
+own brand. Spoke paths: [delegation-map.md](../../references/delegation-map.md).
 
 **This gate stays because it is the best-value item in every run that has recorded one** — 14 vs 4,
 22 vs 8, 24 vs 6 findings against self-review, overlap near zero each time, blockers that were real.
 When the fit test picks express it is betting the run is small enough not to need this pass; a
-second `CHANGES REQUIRED` forces a planner disposition. If that disposition recommends another
+second `CHANGES REQUIRED` forces an orchestrator disposition. If that disposition recommends another
 review, the run promotes to full and runs this pass; it does not promote automatically.
 
 It receives: the **plan file path**, the GOAL block, and the task assignment table. It returns
-**numbered findings**. **One pass, no rounds.** The planner applies the findings, records which it
-rejected and why, and moves on.
+**numbered findings**. **One pass, no rounds.** The planner disposes of each finding —
+`accepted_fixed`, `rejected_with_evidence`, or `unresolved` — records the dispositions in the
+packet's `plan_review` block, and moves on. A rejection carries evidence, not confidence.
 
 Each finding carries `Fix:` (the plan change, 1–2 sentences), `Where:` (the plan line or task row),
 and `Rejected:` (the plausible-but-wrong change and why it fails) — free at `low` effort, and it is
@@ -377,7 +400,7 @@ edits the plan, and the planner may reject a `Fix:` on the record.
   self-review findings into its brief. That anchors the gate and converts an independent pass into a
   confirming one. Merge the two lists *after* the verdict returns.
 - **It retires permanently** after that single pass. It is never recalled, never distributes work,
-  and holds no later gate. Distribution is the planner's.
+  and holds no later gate. Distribution is the orchestrator's.
 - Why one pass and not a loop: user approval is the scarcest thing in the run and must not be spent
   on an unreviewed plan — but a plan-review *loop* is itself the kind of cost the plan-review exists
   to prevent.

@@ -3,6 +3,20 @@
 What every office's plan must contain before it can be approved or dispatched. Offices add
 fields (Agy adds pinned interface signatures; Claude adds an effort tag); none may drop one.
 
+## The interview belongs to the planner, after reconnaissance
+
+The orchestrator's initial intent is **provisional**: enough to understand the request, decide
+whether planning is required, open the tracking issue, and route. The planner performs repository
+reconnaissance first and *then* interviews, because the questions worth asking are the ones the
+repository reveals. Before the freeze the planner may revise any requirement — goal, scope, done
+criteria, blast radius, named actions, non-goals, interfaces, milestones, the problem statement.
+
+**The freeze is a distinct, announced moment**: it ends discovery and fixes
+`requirements_version: 1`. Everything after it is an amendment with a version bump, classified by
+the orchestrator per
+[`roles-and-authority.md`](roles-and-authority.md#independent-versions-requirements-plan-routing).
+A plan whose requirements were never explicitly frozen is not approvable.
+
 ## Interview floor
 
 Interview until **95% clear** — clear enough that a stranger with no access to the conversation
@@ -31,6 +45,20 @@ issue reference is a plan defect.
 If the approved plan is amended after PR creation, the planner updates the PR body to add or replace
 the deeplink with the full SHA of the commit containing the latest approved plan before dispatching
 or resuming work, then reads the body back. The original first-commit link may remain as history.
+
+## Version block
+
+Every plan carries, at the top of its metadata:
+
+```yaml
+requirements_version: <n>   # bumped by a requirements amendment
+plan_version: <n>           # bumped by a plan-contract change
+routing_version: <n>        # bumped by a routing-only amendment; forces no other bump
+```
+
+Every downstream brief, plan packet, and landing packet cites all three verbatim. A landing whose
+versions do not match the family registry's current values is stale and is not merged on its own
+authority.
 
 ## Required sections
 
