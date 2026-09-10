@@ -85,7 +85,11 @@ has. No v3 routing architecture is introduced.
    failure: a scout with no such line skipped straight to implementation, wrote 130 lines of
    unapproved code, and reported that none existed.
    Verify their claims cheaply before building on them. A scout claim you cannot verify is dropped.
-4.5. **Resolve the plan drafter before writing the plan.** Apply the v2 detector/policy from
+4.5. **Resolve the plan drafter before writing the plan — runs in both gears.** Unlike
+   plan-review, express does not skip this: express still needs a plan to
+   dispatch, so drafter resolution runs the same way in both. The only added
+   cost is conditional — the `AskUserQuestion` round-trip fires only for an
+   unsupported/unknown orchestrator triple, not by default. Apply the v2 detector/policy from
    [auto-routing](../auto-routing/SKILL.md): if `auto` sees a supported exact triple, reuse it;
    otherwise ask the user to choose Opus Medium, Fable, Astra, or inline before calling a drafter.
    Dedicated choices use Astra Low as the first fallback. Record detection, prompt choice, actual

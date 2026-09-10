@@ -38,7 +38,8 @@ that the drafter holds the Planner role.
 
 ```yaml
 planner_mode: auto              # auto, dedicated, or inline
-planner_default: claude/opus-5@medium
+planner_default: claude/opus-5@medium       # used unless the conditional below picks the other
+planner_conditional_default: codex/gpt-6-astra@low  # used when orchestrator=claude and codex headroom is generous
 planner_fallback: codex/gpt-6-astra@low
 planner_candidates:
   - claude/opus-5@medium
@@ -49,6 +50,15 @@ planner_candidates:
   - codex/gpt-6-astra@medium
 planner_isolation: allow-reuse  # or required
 ```
+
+**`planner_default` is conditional, not a fixed value** (see rule 4 below): when the orchestrator's
+harness is `claude` and codex headroom is comfortably available, the default attempt is
+`planner_conditional_default` (`codex/gpt-6-astra@low`) instead of `planner_default`. When the
+orchestrator is not `claude`, or codex headroom is not comfortably available, `planner_default`
+(`claude/opus-5@medium`) applies as before. This keeps a claude orchestrator from spending its own
+account's rate on a redundant Opus call when codex has room to spare, without ever leaving the
+resolution undefined — whichever of the two is not chosen as the default is still the required
+fallback if the default is unavailable.
 
 The harness prefix is part of the triple. See *Canonical model identity*
 below before comparing any two triples for equality. These are explicit v2
@@ -68,9 +78,11 @@ is needed:
 - If the triple is unsupported or unknown, use `AskUserQuestion` before
   planning — **unless `planner_isolation=required` was also given explicitly**,
   in which case skip straight to dedicated resolution below with no prompt
-  (see rule 3). When the prompt does run, recommend **Opus Medium** first
-  (with Astra Low fallback), then offer **Fable 5.1**, **GPT-6 Astra**, or
-  **inline with this orchestrator**. A Fable/Astra choice is followed by an
+  (see rule 3). When the prompt does run, recommend the conditional default
+  from rule 4 first — **Opus Medium**, or **Astra Low** when the orchestrator's
+  harness is `claude` and codex headroom is comfortably available — with the
+  other of the two named as the fallback, then offer **Fable 5.1**, **GPT-6
+  Astra**, or **inline with this orchestrator**. A Fable/Astra choice is followed by an
   effort choice from the declared candidates for that family. `inline`
   resolves to the compatibility `planner_mode=inline` path; silence is not
   permission to choose it.
@@ -100,12 +112,25 @@ selected drafter, never at "no drafter selected":
    resolution (4-6) using the declared default — this is the same branch a
    caller reaches by setting `planner_mode=dedicated` outright, so it is
    never undefined.
-4. Dedicated mode (reached directly, or via rule 3) tries the explicit
-   planner choice, or `claude/opus-5@medium` when no choice was supplied.
-5. If that choice is unavailable, try the required dedicated fallback
-   `codex/gpt-6-astra@low` before trying any other candidate.
-6. If the fallback is also unavailable, try the remaining declared candidates
-   in list order. Record every attempted triple and its reason.
+4. Dedicated mode (reached directly, or via rule 3) resolves to the explicit
+   planner choice when one was supplied. When none was supplied, resolve the
+   **conditional default** first: if the orchestrator's harness is `claude`
+   *and* codex headroom is comfortably available (the same fit-test/
+   pre-dispatch probe used everywhere else in this office —
+   [quota-probe.md](quota-probe.md); no hardcoded threshold, a case-by-case
+   call, never a gate), the default attempt is `codex/gpt-6-astra@low`;
+   otherwise the default attempt is `claude/opus-5@medium`. **Check this
+   resolved triple against the orchestrator's canonicalized triple before
+   launching anything**: if they match and `planner_isolation` is not
+   `required`, reuse the orchestrator's own planning step (record
+   `reused_from_orchestrator: true`) and make no call; otherwise try it as a
+   live dedicated call.
+5. If that attempt is unavailable, try whichever of `claude/opus-5@medium` /
+   `codex/gpt-6-astra@low` was **not** the rule-4 default — one of the two is
+   always the required dedicated fallback for the other, so a caller who
+   supplied neither always sees both tried before anything else.
+6. If both are unavailable, try the remaining declared candidates in list
+   order. Record every attempted triple and its reason.
 7. Use orchestrator-as-drafter only when it was explicitly selected, the auto
    prompt chose inline, or after every dedicated candidate is unusable and the
    v2 run needs a graceful compatibility fallback. Never silently substitute
@@ -134,10 +159,10 @@ this run: not installed, unauthenticated, model or effort unsupported, quota
 unavailable, launch error, or planner failure. The reason is part of the
 handoff metadata.
 
-If the resolved dedicated triple exactly matches the orchestrator's
-harness/model/effort and `planner_isolation` is not `required`, reuse the
-orchestrator's planning step. This is a deterministic no-duplicate-call
-optimization, and the handoff records `reused_from_orchestrator: true`.
+The no-duplicate-call reuse check is folded into rule 4 above, not a separate
+step — it is the same deterministic optimization for both the "reuse a
+supported orchestrator triple" path (rule 2) and the "dedicated resolution
+happens to land back on the orchestrator's own triple" path (rule 4).
 
 ## Dispatch mechanics — Planner → plan drafter
 
@@ -152,6 +177,11 @@ never in-session or inline.
 - **Launch mechanism**: the sibling CLI skill for the drafter's brand
   (`claude-cli`, `codex-cli`, or the `agy` CLI route), exactly as the executor
   and reviewer legs already use — no new launch mechanism is introduced.
+- **First-line role tag**: core's fixed enum
+  ([roles-and-authority.md](../office-core/protocol/roles-and-authority.md))
+  has no dedicated tag for this role. Use `WORKER`, the same tag Phase-1
+  scouts already use for a bounded, single-deliverable dispatch that isn't one
+  of the five other fixed roles: `[WORKER] <repo> — plan drafter: <task>`.
 - **Working directory**: a dedicated worktree of the target repo at `BASE`,
   read/write scoped to `docs/plans/<slug>.md` only; the drafter does not touch
   application code.

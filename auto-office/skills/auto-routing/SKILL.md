@@ -105,19 +105,36 @@ drafter candidate, prompt the user with `AskUserQuestion` — unless
 and goes straight to dedicated resolution using the declared default (see
 resolution step 3 below; the gap this closes is detailed in
 [`planner-handoff.md`](../../references/planner-handoff.md)). When the prompt
-runs: recommend **Opus Medium** (Astra Low fallback), then offer **Fable 5.1**,
-**GPT-6 Astra**, or **inline**. Family choices resolve to an exact declared
-effort; silence does not select inline. No prompt is shown for direct (no-plan)
-work, a supported exact triple, or an explicit caller override.
+runs: recommend the same conditional default described below first (**Opus
+Medium**, or **Astra Low** when the orchestrator's harness is `claude` and
+codex headroom is comfortably available), with the other of the two as the
+stated fallback, then offer **Fable 5.1**, **GPT-6 Astra**, or **inline**.
+Family choices resolve to an exact declared effort; silence does not select
+inline. No prompt is shown for direct (no-plan) work, a supported exact
+triple, or an explicit caller override.
 
 | Policy value | Harness | Model | Effort |
 |---|---|---|---|
 | Default | `claude` | `opus-5` (Claude Opus 5) | `medium` |
+| Conditional default *(claude orchestrator, generous codex headroom)* | `codex` | `gpt-6-astra` | `low` |
 | Candidate | `claude` | `claude-fable-5.1` (Claude Fable 5.1) | `low` |
 | Candidate | `claude` | `claude-fable-5.1` | `medium` |
 | Candidate | `claude` | `claude-fable-5.1` | `high` |
 | Required fallback | `codex` | `gpt-6-astra` (GPT-6 Astra) | `low` |
 | Candidate | `codex` | `gpt-6-astra` | `medium` |
+
+**The default is conditional, not fixed**: when the orchestrator's harness is `claude` and codex
+headroom is comfortably available (the standing fit-test/pre-dispatch probe, never a hardcoded
+threshold), the default attempt is `codex/gpt-6-astra@low` instead of `claude/opus-5@medium` — this
+avoids spending the orchestrator's own account on a redundant Opus call when codex has room to
+spare. Whichever of the two is not the default is still the required fallback if the default is
+unavailable, so resolution never leaves a run with no drafter selected. Full rule:
+[`planner-handoff.md`](../../references/planner-handoff.md#v2-selection-policy).
+
+This table mirrors the `planner_candidates` YAML in
+[`planner-handoff.md`](../../references/planner-handoff.md#v2-selection-policy),
+which is **canonical** — if the two ever disagree, that file wins and this
+table is stale and must be updated to match.
 
 Use the exact, **canonicalized** `harness/model@effort` triple — normalize launch
 aliases and runtime/read-back strings (`opus`, `claude-opus-5` → `opus-5`) before
@@ -126,38 +143,19 @@ any equality check; see *Canonical model identity* in
 fallback are maintainer-owned v2 policy, not a score-based choice. An explicit
 drafter triple is a caller override and must be echoed.
 
-Resolution order is fixed and total — every combination below terminates at a
-selected drafter, never at "none selected":
-
-1. Explicit `planner_mode=inline`, or `planner_mode=auto` with the user
-   choosing **inline**, uses the old same-call behavior. Record
-   `reused_from_orchestrator: true` and no fallback.
-2. `planner_mode=auto` with a supported exact orchestrator triple reuses that
-   triple when isolation is allowed and makes no duplicate call.
-3. `planner_mode=auto` with an unsupported/unknown triple, and a prompt choice
-   was collected, uses the exact family/effort selected, then follows
-   dedicated resolution (4-6). **If `planner_isolation=required` suppressed
-   the prompt so no choice exists, skip straight to dedicated resolution (4-6)
-   using the declared default** — the same branch reached by
-   `planner_mode=dedicated` outright.
-4. Dedicated mode (reached directly, or via rule 3) tries the explicit
-   drafter triple, or `claude/opus-5@medium` when none was supplied.
-5. If it is unavailable or fails, try **`codex/gpt-6-astra@low` first**. Do
-   not fall back to the orchestrator before this attempt.
-6. If that fallback is unavailable, try the remaining declared candidates in
-   their listed order. Only when no dedicated candidate is usable may the
-   existing orchestrator-as-drafter path be used as graceful fallback.
-
-Record every failed attempt and its reason (`not-installed`, `unauthenticated`,
-`unsupported-model`, `unsupported-effort`, `quota-unavailable`, `launch-error`,
-or `planner-failure`). A preferred drafter's failure never changes executor or
-reviewer routing.
-
-If the selected drafter triple exactly equals the orchestrator's canonicalized
-harness/model/effort, reuse the orchestrator's own inline drafting step when
-isolation was not explicitly requested. Record `reused_from_orchestrator: true`
-and make no duplicate call. `planner_isolation=required` always makes a
-separate call.
+**The full 7-rule resolution order — including the `planner_isolation=required`
+isolation-gap fix and where the no-duplicate-call reuse check folds in — is
+defined once, canonically, in [`planner-handoff.md`](../../references/planner-handoff.md#v2-selection-policy).
+Do not re-derive or re-state it here; a second copy is exactly the kind of
+drift this note exists to prevent.** In short: `inline` never dispatches a
+drafter; a supported/reused triple or an explicit override skips the prompt;
+an unsupported/unknown triple prompts unless isolation was already required;
+and dedicated resolution always terminates at a selected drafter — default,
+then required fallback, then remaining candidates, then orchestrator-as-drafter
+as the last resort. Record every failed attempt and its reason
+(`not-installed`, `unauthenticated`, `unsupported-model`, `unsupported-effort`,
+`quota-unavailable`, `launch-error`, or `planner-failure`). A preferred
+drafter's failure never changes executor or reviewer routing.
 
 The orchestrator kickoff, serialized handoff, run report, and routing outcome
 record the detector verdict, plan-needed flag, orchestrator triple, prompt

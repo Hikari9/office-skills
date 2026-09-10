@@ -35,9 +35,11 @@ leaderboard.
 ## v2 dedicated plan-drafter note
 
 This snapshot does **not** choose the v2 dedicated plan drafter (an added role,
-never the Planner). The maintained policy is explicit: Claude Opus 5 medium by
-default, GPT-6 Astra low as the required fallback, with the Fable 5.1 and Astra
-candidate triples documented in
+never the Planner). The maintained policy is explicit and conditional on the
+orchestrator, not benchmark-derived: Claude Opus 5 medium by default, except
+GPT-6 Astra low when the orchestrator's harness is claude and codex headroom
+is comfortably available — the other of the two is always the required
+fallback — with the Fable 5.1 and Astra candidate triples documented in
 [`auto-routing`](../skills/auto-routing/SKILL.md). A benchmark refresh may update
 this evidence file, but it must not silently change those drafter defaults or
 fallbacks.

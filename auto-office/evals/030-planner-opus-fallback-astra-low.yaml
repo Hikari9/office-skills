@@ -1,9 +1,11 @@
 name: v2 planner uses Astra Low before orchestrator fallback
 prompt: |
-  /auto-office planner_mode=dedicated Use this deterministic availability fixture: the dedicated
-  claude/opus-5@medium launch is unavailable because the model is not available, while
-  codex/gpt-6-astra@low is installed, authenticated, and launchable. Resolve the planner and state
-  what happens to the orchestrator, executor, and reviewer routes.
+  /auto-office planner_mode=dedicated Use this deterministic availability fixture: the orchestrator
+  is codex/luna@high (so the conditional Astra-Low default does not apply — that path is only for a
+  claude orchestrator with generous codex headroom), the dedicated claude/opus-5@medium launch is
+  unavailable because the model is not available, and codex/gpt-6-astra@low is installed,
+  authenticated, and launchable. Resolve the planner and state what happens to the orchestrator,
+  executor, and reviewer routes.
 expect_skill: true
 criteria:
   - "Records why claude/opus-5@medium was unavailable"

@@ -4,8 +4,11 @@
 
 **v2 can use a dedicated plan drafter without reassigning the Planner role or changing executor/reviewer
 routes.** The invoking model keeps core's Planner role throughout ("orchestrator" only describes its
-control-plane behavior). Dedicated drafting defaults to Claude Opus 5 medium, falls back to GPT-6 Astra
-low before any compatibility fallback, and accepts the explicit Fable 5.1 and Astra candidates. The
+control-plane behavior). Dedicated drafting's default is conditional: Claude Opus 5 medium, except
+GPT-6 Astra low when the orchestrator's harness is claude and codex headroom is comfortably
+available — the other of the two is always the required fallback if the default is unavailable, so
+resolution never leaves a run with no drafter selected. Accepts the explicit Fable 5.1 and Astra
+candidates. The
 plan drafter — an added role holding no gate — returns a serialized draft handoff; the Planner
 validates it before adopting it and continues the existing lifecycle. `planner_mode=auto` detects
 whether a plan is needed and whether the invoking triple is supported; unsupported orchestrators get an
