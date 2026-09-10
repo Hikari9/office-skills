@@ -87,9 +87,31 @@ Not derived from the benchmark table, and a leaderboard movement does not change
 |---|---|---|---|---|
 | Planner (compatibility path — invoking session, drafts inline) | `opus` (invoking session) | `codex-luna` | `agy` | fixed for the existing same-call path |
 | **Plan-reviewer** (full gear only) | Existing orchestrator/control-plane Planner's own route at `opus` **low** | `codex-luna` **xhigh** | `agy` **high** | unchanged; a dedicated plan drafter's choice does not override |
+| **Phase 1 scout** | `haiku` or `sonnet` **low** *(orchestrator chooses)* | `gpt-5.6-luna` **medium** *(fallback ceiling)* | `gemini-3.7-flash-low` **low** *(resolve at dispatch)* | **bounded** |
 | Executor | `sonnet` **high** | **`gpt-5.6-luna` `high`** | **Flash latest `high`** | **fixed** |
 | Worker | `sonnet` high *default* | `gpt-5.6-luna` high *default* | Flash latest `high` *default* | **ANY brand/model/effort the Planner declares** |
 | **Reviewer (code)** | `opus` **low** | `codex-luna` **xhigh** default, **`high`** floor *(only when Codex is the orchestrator/control-plane Planner)* | never reviews | claude fixed; **codex priced by blast radius** — see *Reviewer selection* |
+
+## Phase 1 scout policy
+
+Phase 1 scouts are a distinct read-only breadth role. They never inherit the executor, worker, or
+reviewer route, and they may not run at `high`, `xhigh`, or `max` effort.
+
+Resolve availability immediately before the fan-out:
+
+1. **Agy available:** use `agy` with the low-effort model resolved by
+   `agy-office/scripts/agy-model.sh low`. The expected current slug is
+   `gemini-3.7-flash-low`; the resolver remains canonical because agy publishes no `latest` alias.
+   The slug carries the `low` effort, so record `model: gemini-3.7-flash-low` (or the resolver's
+   current matching slug) and `effort: low` in the dispatch receipt.
+2. **Agy unavailable:** the orchestrator chooses the cheapest suitable available fallback and
+   names it before dispatch: Codex `gpt-5.6-luna` at `medium`, or Claude `haiku` / `sonnet` at
+   `low`. Codex `medium` is the explicit Luna fallback ceiling; Claude fallbacks must use
+   `--effort low`. The choice may cross brands when that is what availability and the task fit
+   require, but it may not promote a scout to planner, executor, reviewer, `opus`, `high`,
+   `xhigh`, or `max`.
+3. Echo the availability result, selected model, and effort in the kickoff line. Never omit the
+   model or effort flag and allow a scout to inherit the orchestrator's settings.
 
 ## v2 dedicated plan-drafter policy
 
@@ -213,8 +235,8 @@ figures are in [model-benchmarks.md](../../references/model-benchmarks.md), and 
 
 | Kind of sub-task | Reach for | Because |
 |---|---|---|
-| Bulk mechanical edit, rename sweep, file-by-file application | `haiku`, Flash latest `low` | Index barely moves the outcome; speed and price do |
-| Read-only recon, breadth-first search across many files | Flash latest `high` | Highest index available at flash speed — N in parallel beat one deep read |
+| Bulk mechanical edit, rename sweep, file-by-file application | `haiku`, `gemini-3.7-flash-low` | Index barely moves the outcome; speed and price do |
+| Read-only recon, breadth-first search across many files | `gemini-3.7-flash-low`; if agy is unavailable, orchestrator-selected `gpt-5.6-luna` medium or `haiku`/`sonnet` low | N low-effort scouts beat one deep read |
 | Ordinary implementation inside a clear brief | executor's own tier | The default; a bigger model implements a wrong brief more convincingly |
 | Long backend/data chain, terminal-heavy | `gpt-5.6-luna` high (47) or `gpt-5.6-terra` (55) | Agentic-coding strength and per-token price, not raw index |
 | Arbitration, conflicting invariants, unconfirmed diagnosis | `opus` high (59) | A different *kind* of question — the only case that reliably repays the tier |
@@ -275,7 +297,7 @@ Inline work remains inline. When Herdr is absent, the table below is unchanged.
 | Planner → dedicated **plan drafter**, **Phase 1 only, `planner_mode=dedicated`** | **CLI, own worktree scoped to `docs/plans/<slug>.md`** — see *Dispatch mechanics* in [`planner-handoff.md`](../../references/planner-handoff.md) | A different model call producing the draft, with no gate and no write access outside the plan artifact |
 | Planner → executor, **one per repo, whole plan** | **CLI, own worktree** | Isolation, unattended running, and a ~6× cheaper writer that already holds the reviewed plan |
 | Planner → code reviewer | **CLI / fresh agent** | Independence — the executor may never launch its own gate |
-| Planner → read-only scout, **Phase 1 only** | **CLI, `agy` by default**; if agy is unavailable, the planner's own brand at its **lower** tier (`haiku` in-session for claude, `gpt-5.6-luna` for codex) — **never planner tier** | Breadth before a plan or an executor exists |
+| Planner → read-only scout, **Phase 1 only** | **CLI, `agy` at resolved `gemini-3.7-flash-low` when available**; otherwise the orchestrator chooses Codex `gpt-5.6-luna` medium or Claude `haiku`/`sonnet` low — **never planner tier or high effort** | Breadth before a plan or an executor exists |
 | Executor → worker | **in-session / inline** | Reuse of the executor's live context — the value being spent |
 | Executor → worker of a **different brand** | **CLI**, necessarily | The only exception in the table |
 | Planner → itself, for a review fix **whose brief would exceed the edit** | **inline** | Nothing — which is the point |
@@ -301,11 +323,17 @@ the process runs medium, and nothing in the output says so.
 --model sonnet --effort high      # executor
 --model opus   --effort low       # code reviewer
 --model opus   --effort low       # plan reviewer
+--model haiku  --effort low       # Phase 1 scout fallback
+--model sonnet --effort low       # Phase 1 scout fallback, if chosen
 
 # codex — there is NO --effort flag; effort is a config override
 -m gpt-5.6-luna -c model_reasoning_effort="high"   # executor
 -m gpt-5.6-luna -c model_reasoning_effort="xhigh"    # code reviewer (codex-as-planner); "high" for a low-blast-radius leg
 -m gpt-5.6-luna -c model_reasoning_effort="xhigh"    # plan reviewer
+-m gpt-5.6-luna -c model_reasoning_effort="medium"  # Phase 1 scout fallback
+
+# agy — the low effort is encoded in the resolved slug
+--model "$(agy-office/scripts/agy-model.sh low)"       # Phase 1 scout; currently gemini-3.7-flash-low
 ```
 
 **The codex form is the one this rule was written for.** Verified 2026-08-25: no office was passing
@@ -441,7 +469,7 @@ is labelled as one.
 The default, most cost-efficient shape:
 
 ```
-agy scouts (parallel, read-only)  →  planner picks the approach
+agy low-effort scouts (parallel, read-only)  →  planner picks the approach
                                   →  codex or claude implements
                                   →  fresh Opus reviewer gates
 ```
@@ -449,7 +477,8 @@ agy scouts (parallel, read-only)  →  planner picks the approach
 Rules that make this safe:
 
 - **Read-only fan-out is the delegation worth making.** Recon, "where is X", "does this pattern exist
-  elsewhere", doc lookups: agy, in parallel, every time. N scouts finish in one scout's wall-clock.
+  elsewhere", doc lookups: agy at resolved `gemini-3.7-flash-low` when available, in parallel;
+  otherwise use the bounded fallback above. N scouts finish in one scout's wall-clock.
 - **Live-system work is delegated WITH its access, never kept because a delegate "can't reach it".**
   Enumerate the MCP/API tools the task needs in the launch — the scoped allowlist form omits every
   MCP tool unless you name it, which is a dispatch bug that has been misread as a capability limit.

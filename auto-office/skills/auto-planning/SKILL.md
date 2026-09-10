@@ -68,17 +68,18 @@ has. No v3 routing architecture is introduced.
 2. **File the tracking issue** by default, before exploring.
 3. **Interview to clarity.** Ask in batches, not one at a time. The floor below is not optional in
    full; in express, interview only until a remaining unknown would not change the implementation.
-4. **Recon with agy scouts, in parallel — `agy` is the default scout brand and you need a reason to
-   pick another.** Read-only, each returning file paths and line numbers. It is the one role where
-   agy is unambiguously right: breadth-first reading at ~340 tok/s, N in parallel finishing before a
-   deeper single pass starts producing, and no evidence-authoring involved (§18 of the ledger — agy
-   is wrong where the *deliverable* is evidence, and a scout's deliverable is locations).
-   **If agy is unavailable — quota, outage, not installed — fall back to the planner's own brand at
-   its LOWER tier**, never at planner tier: `haiku` in-session for a claude planner,
-   `gpt-5.6-luna` for a codex planner. Scouting is breadth-first reading, so the fallback preserves
-   the cheap-and-parallel property that made agy right; falling back to planner tier would spend
-   Decider rates on locating files. Say in the kickoff line that agy was unavailable and what
-   replaced it.
+4. **Recon with low-effort Phase 1 scouts, in parallel.** Probe agy immediately before dispatch.
+   When it is available (installed, authenticated, and launchable), use the low-effort model
+   resolved by `agy-office/scripts/agy-model.sh low` — currently `gemini-3.7-flash-low` — and
+   record the resolved slug plus `effort: low`. Agy remains the preferred scout brand because
+   breadth-first reading at ~340 tok/s lets N scouts finish before a deeper single pass starts
+   producing, and no evidence-authoring is involved (§18 of the ledger — a scout's deliverable is
+   locations).
+   **If agy is unavailable — quota, outage, or not installed — the orchestrator chooses an allowed
+   fallback before dispatch:** Codex `gpt-5.6-luna` at `medium`, or Claude `haiku` / `sonnet` at
+   `low`. Codex `medium` is the explicit Luna fallback ceiling; Claude must carry `--effort low`.
+   No scout may inherit planner settings or run at `high`, `xhigh`, or `max`. State in the kickoff
+   line that agy was unavailable, what replaced it, and the exact model+effort selected.
    Every scout dispatch states, verbatim: *"Phase 1 is PLAN ONLY. `HEAD` must not move. Read and
    report locations; do not create, edit, or delete files."* Also name which worktree/checkout the
    scout is reading in — explicit ownership, not an assumption it will infer the right tree. Observed
@@ -185,7 +186,7 @@ Then the per-task rows — **instructions to that executor**, not launches:
 
 | # | Task | Worker brand | Model+effort | Dispatch | Diagnosis | Why this dispatch form |
 |---|---|---|---|---|---|---|
-| 1 | Locate every call site of `sendReceipt` | agy | `agy` high | **cli ×3** (different brand) | settled | Read-only breadth; 3 parallel scouts beat one deep read, and a different brand needs its own process |
+| 1 | Locate every call site of `sendReceipt` | agy | `gemini-3.7-flash-low` | **cli ×3** (different brand) | settled | Read-only breadth at low effort; 3 parallel scouts beat one deep read, and a different brand needs its own process |
 | 2 | Add the queue column + migration | — | executor itself | **inline** | settled | The executor is the backend specialist here; a brief would restate the whole task |
 | 3 | Wire the retry flag through the config | — | executor itself | **inline** | settled | Two files the executor already has loaded — a brief costs more than the edit |
 | 4 | Reconcile the two conflicting invariants | claude | `opus` high — **worker upgrade** | **in-session** | **unverified** | Arbitration, not implementation: a different *kind* of question. Declared here, recorded in telemetry |
