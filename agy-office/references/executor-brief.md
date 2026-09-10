@@ -239,7 +239,9 @@ validation:
   - command: <the command>
     result: <its real output — an exit code is not evidence>
 review_mode: inline | adversarial   # your local gate only; integration review is the orchestrator's, not a landing mode
-review_rounds: <n, with each round's dispositions>
+review_rounds:
+  - round: <n>
+    dispositions: [<accepted_fixed|rejected_with_evidence|unresolved>, ...]
 deviations: [<deviation>]
 artifacts: [<PR/commit/artifact ref>]
 downstream_impacts: [<impact>]

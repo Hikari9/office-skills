@@ -90,9 +90,14 @@ have created the one draft PR.
 
 - **No PR:** this is a bootstrap defect in a normal executor run. Stop and report unless this is
   standalone closeout and the caller explicitly authorized creating one.
-- **Draft PR before reviewer approval:** keep it draft; add no milestone or intermediate-review comment.
-- **Draft PR after final reviewer approval:** after the plan-removal commit is pushed and read back,
-  run `gh pr ready <number>`, then `gh pr merge --auto` (or the repository's approved merge form).
+- **Draft PR before the review tier's exit state:** keep it draft; add no milestone or
+  intermediate-review comment.
+- **Draft PR after the review tier's exit state** — the final reviewer's `APPROVED` for an
+  adversarial or integration round, or the recorded inline pass for an inline-routed task: after the
+  plan-removal commit is pushed and read back, run `gh pr ready <number>`, then `gh pr merge --auto`
+  (or the repository's approved merge form). **Never treat a missing exit state as an inline pass** —
+  inline is a tier the orchestrator declared at dispatch, not a fallback for review that did not
+  happen.
 - **PR exists but not merged:** reuse it; do not create a second PR.
 
 Before marking the PR ready, read the local review files and the orchestrator's run state and confirm that every
@@ -180,7 +185,9 @@ Check merge state once with `gh pr view <n> --json state,mergedAt`. Do not poll.
 | Gate red | Commit + document only; no PR |
 | No PR after executor dispatch | Stop and report bootstrap failure |
 | Draft PR during run | Keep draft; post only the three allowed event comments |
-| Final reviewer approved | Remove plan, `gh pr ready`, then merge |
+| Final reviewer approved (adversarial / integration) | Remove plan, `gh pr ready`, then merge |
+| Inline pass recorded, inline tier declared at dispatch | Remove plan, `gh pr ready`, then merge |
+| No exit state, or inline claimed but not declared at dispatch | Stop — this is not review that happened |
 | PR merged | Sync local main, verify `main` == `origin/main`, then worktree + branch |
 | PR pending | Leave worktree, don't poll, report status |
 | Worktree not under `.worktrees/`/`worktrees/` | Not yours — don't remove it |

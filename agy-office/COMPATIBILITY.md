@@ -26,6 +26,17 @@ exceptions:
       it does not relax any gate in roles-and-authority.md or evidence-and-handoff.md; it exists
       because this executor cannot be trusted to supply the evidence those files already require.
     widens_core_authority: false
+  - id: agy-no-inline-tier
+    owner: agy-office
+    reason: >
+      Core 18.0.0 permits an inline review tier — producer self-review plus green validation, with no
+      adversary — for cheap, reversible, low-risk work. This office declines it for every task. The
+      inline tier is priced on the producer's self-assessment being informative, and this executor's
+      characteristic failure is self-consistently wrong work that passes its own tests, so an inline
+      pass here would certify exactly the case the tier cannot see. Every agy task therefore takes the
+      adversarial tier and exits only on a reviewer `APPROVED`. Declining a permitted tier removes a
+      cheaper path; it widens nothing.
+    widens_core_authority: false
   - id: agy-non-agy-reviewer
     owner: agy-office
     reason: >

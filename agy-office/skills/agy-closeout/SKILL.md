@@ -7,6 +7,9 @@ description: Remove the plan, ready and merge the draft PR, sync, close loops, a
 
 Loaded by: the orchestrator (the planner-held control plane), at Phase 4.
 Assumes: the Office Kernel is already in the packet, and the reviewer has returned `APPROVED`.
+**agy-office does not use core's inline review tier**, so a reviewer `APPROVED` is the only exit
+state here — see the `agy-no-inline-tier` exception in `COMPATIBILITY.md`. Declining a permitted
+tier is a narrowing.
 
 The procedure is core: `office-core/protocol/closeout.md`. This office's additions are in
 [`../../references/closeout.md`](../../references/closeout.md). In order: verify the project's real
