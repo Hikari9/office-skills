@@ -1,38 +1,28 @@
 # Model benchmark snapshot
 
 ```yaml
-captured: 2026-09-11
-source: artificialanalysis.ai (Intelligence Index v4.3, Coding Agent Index v1.5)
+captured: 2026-08-14
+source: artificialanalysis.ai (Intelligence Index v4.1.1, Coding Index, Coding Agent Index v1.1)
 staleness_horizon_days: 30
-last_move: Intelligence Index v4.3 replaced Terminal-Bench v2.1 with v4.0 and τ³-Banking with
-           AutomationBench-AA. Gemini 3.8 Flash is the current Gemini family; explicit maintainer
-           defaults now prefer Gemini for executor work and Codex Luna for scouts and review.
+last_move: Gemini 3.7 Flash shipped and takes the flash tier (high 56, up from 3.6's 50) — now
+           the highest-index non-frontier model in the catalog; agy uses the newer 3.8 Flash medium
+           slug as the executor default.
+           Luna variants added with their real ordering (max 52 > xhigh 50 > high 47).
 ```
 
-**Intelligence Index v4.3 is 10 evaluations**: AA-Briefcase, GDPval-AA v2, AutomationBench-AA,
-Terminal-Bench v4.0, SciCode, Humanity's Last Exam, GDP.pdf, CritPt, AA-Omniscience, and
-AA-LCR v1.1. Category weights are Agents 30%, Coding 20%, General 30%, and Scientific Reasoning
-20%; private-test-set tasks account for 45%. Quote the index version whenever you quote a score —
-v4.x numbers are not comparable across index versions.
+**Intelligence Index v4.1.1 is 9 evaluations**: GDPval-AA v2, τ³-Banking, Terminal-Bench v2.1,
+SciCode, Humanity's Last Exam, GPQA Diamond, CritPt, AA-Omniscience, AA-LCR. Quote the index
+version whenever you quote a score — v4.x numbers are not comparable to earlier captures.
 
 **This file is data, not doctrine.** Route from the capability roles in
 [auto-routing](../skills/auto-routing/SKILL.md); this table only says who currently occupies each
 role. Refresh it when `captured` is older than the horizon, or immediately when a new frontier
 model ships.
 
-## Role-relevant v4.3 components
-
-| Role | Primary public evidence | Weight/context |
-|---|---|---|
-| Planner / knowledge worker | AA-Briefcase + GDPval-AA v2 | Agents, 15% + 10% |
-| Tool/workflow worker | AutomationBench-AA | Agents, 5%; guardrail violations zero the task |
-| Repo/terminal executor | Terminal-Bench v4.0 + Coding Agent Index | Coding, 10%; use harness pairing evidence |
-| Document worker | GDP.pdf + AA-LCR v1.1 | General, 10% + 5% |
-| Research scout | Model capability plus search/provider quality | No single composite proxy; treat search quality separately |
-
-**The snapshot is evidence only — it never silently changes a default or promotes a role at run time.**
-Public benchmark movement can inform a future maintainer decision, but it cannot raise an effort level
-mid-run or let the Planner substitute a higher-scoring variant merely because it appears here.
+**The snapshot selects brand and executor-default only — it never promotes a role at run time.** A
+leaderboard movement can change *which brand* holds a capability role and can update a standing
+executor default at plan time; it can **never** raise an effort level mid-run or let you substitute a
+higher-scoring variant because you read it here. Reading a bigger number is not a reason to call it.
 
 **Workers are the exception, and a deliberate one.** The planner may assign a worker **any** brand,
 model, and effort in this table — above the executor's tier, below it, or across brands — because
@@ -43,66 +33,74 @@ you argue on; it is still not the argument. See [auto-routing](../skills/auto-ro
 Read [routing-outcomes.md](routing-outcomes.md) before this file — local outcomes outrank the
 leaderboard.
 
-## v2 dedicated plan-drafter note
-
-This snapshot does **not** choose the v2 dedicated plan drafter (an added role,
-never the Planner). The maintained policy is conditional on the orchestrator,
-not benchmark-derived — canonical definition, resolution order, and fallback
-semantics: [`planner-handoff.md`](planner-handoff.md#v2-selection-policy). In
-short: **Claude Opus 5 medium, unconditionally**, with GPT-6 Astra low as the
-fallback when Opus is unavailable. The former orchestrator/headroom-conditional
-Astra default was revoked 2026-09-10. A benchmark refresh may update this
-evidence file, but it must not silently change those drafter defaults or
-fallbacks.
-
 ## Intelligence Index and output speed
 
 | Model | Intelligence | Output tok/s | ~$/M tokens | Office role |
 |---|---|---|---|---|
-| **Gemini 3.8 Flash (high)** | **41** | 272.9 | 1.24 | Agy reviewer default (latest high) |
-| **Gemini 3.8 Flash (medium)** | **40** | — | 0.93 | Agy executor default |
-| **Claude Opus 5 (low)** | **40** | 49.2 | 1.10 | Reviewer fallback |
-| **GPT-5.6 Luna (xhigh)** | **35** | 106.1 | 0.09 | Codex reviewer and plan-review default; executor fallback |
-| **Gemini 3.8 Flash (low)** | **34** | — | — | Current Gemini low evidence |
-| **Claude Sonnet 5 (high)** | **32** | 59.5 | 1.79 | Executor fallback |
-| Gemini 3.7 Flash (low) | 37* | — | — | Scout fallback |
+| Claude Opus 5 (max) | 61 | 54 | 2.34 | — |
+| Claude Opus 5 (xhigh) | 60 | 52 | 1.80 | — |
+| Claude Fable 5 | 60 | 66 | 3.15 | — |
+| GPT-5.6 Sol (max) | 59 | 63 | 1.86 | — (no longer a routing option) |
+| **Claude Opus 5 (high)** | **59** | 53 | 1.23 | **planner** |
+| **Gemini 3.7 Flash (high)** | **56** | **340** | 0.58 | **agy executor default — via Flash latest, not this slug** |
+| Claude Opus 5 (medium) | 56 | 53 | 0.72 | — |
+| GPT-5.6 Terra (max) | 55 | 126 | 0.73 | — |
+| Claude Sonnet 5 (max) | 53 | 74 | 1.72 | — |
+| Gemini 3.7 Flash (medium) | 53 | — | — | — |
+| GPT-5.6 Luna (max) | 52 | 172 | 0.07 | — |
+| Claude Opus 5 (low) | 51 | 51 | 0.43 | **plan-review gate; Claude code-review fallback** |
+| Gemini 3.7 Flash (low) | 51 | — | — | bulk mechanical work |
+| Gemini 3.6 Flash (high) | 50 | 217–304 | 0.56 | superseded by 3.7 |
+| Gemini 3.5 Flash | 50 | 171 | 0.69 | — |
+| **GPT-5.6 Luna (xhigh)** | **50** | 140 | **0.17** | **codex plan review; default codex code review; final executor fallback** |
+| GPT-5.6 Luna (high) | 47 | — | — | codex code review of a low-blast-radius leg |
 
-\* Estimated by the current Artificial Analysis comparison page; do not treat an estimate as a
-measured score. Output speed and cost are weighted per-task figures where Artificial Analysis
-publishes them; `—` means the current page did not expose a stable value.
-
-**This table is evidence, not a selector.** Artificial Analysis v4.3 now measures more realistic
-agentic and knowledge-work behaviour, but the Planner gives live usage, launchability, repeated
-failures, and local routing outcomes more weight than these public scores. Effort labels are not a
-universal quality ordering; use the exact model+effort row.
+**Two orderings in this table are counter-intuitive and are the reason it exists.** Luna **max (52)
+outscores Luna xhigh (50)** — effort labels do not rank monotonically, so read the row rather than
+the flag name. And Gemini 3.7 Flash (high) at **56** now outscores Terra max (55) and matches Opus
+medium, at a sixth of Terra's price and ~2.7× its speed; the flash tier is no longer only a speed
+play. Luna xhigh also carries a **~50s time-to-first-token** — irrelevant for a long executor run,
+badly wrong for a short interactive one.
 
 ## Agentic coding — harness + model, not model alone
 
-The Coding Agent Index methodology is now v1.5 and uses the current Terminal-Bench v4.0 direction,
-reward-hacking detection, and revised token accounting. It scores the **harness+model pairing**,
-which remains the right unit here since each office is a harness. Refresh live pairing scores from
-the [official Coding Agent Index leaderboard](https://artificialanalysis.ai/leaderboards/coding-agents)
-before making a new maintainer default.
+Coding Agent Index v1.1 = mean pass@1 over DeepSWE, Terminal-Bench v2, SWE-Atlas-QnA. It scores
+the **pairing**, which is the right unit here since each office is a harness.
 
 | Pairing | Coding Agent Index |
 |---|---|
-| Current live pairing score | See official leaderboard | Do not copy a model-only score into this table |
+| GPT-5.6 Sol (max) in Codex | 80 — leads all three component evals |
+| field average (4 evaluated) | 77 |
+| Opus 4.7 in Cursor CLI | 61 |
+| GPT-5.5 in Codex / Opus 4.7 in Claude Code | 60 |
 
-Terminal-Bench remains the most predictive public component for agents that edit files and run
-terminal commands, but local routing outcomes and live quota are stronger evidence for this office.
+Coding Index (Terminal-Bench v2.1 + SciCode): GPT-5.6 Sol (xhigh) 78, Claude Opus 5 (adaptive,
+max effort) 78, GPT-5.6 Sol (max) 77.
+
+Terminal-Bench is the most predictive component for agents that edit files and run terminal
+commands — weight it above LiveCodeBench-style scores when judging executor fitness.
 
 ## What the numbers mean for routing
 
-- **Gemini Flash is the executor default** because it is fast and retains strong current capability;
-  the Planner should prefer it even for frontend work and when quota is UNKNOWN.
-- **Sonnet high is the quality fallback**, not the frontend default. Use it when Gemini usage is
-  dire, Gemini cannot launch, or repeated failures justify moving down the ladder.
-- **Codex Luna xhigh is the review default** and the final executor fallback. Review effort is
-  intentionally higher than executor effort because the gate is where independent defect detection
-  pays for itself.
-- **Usage is not a hard threshold.** The Planner records the measured or UNKNOWN state and makes a
-  semi-deterministic choice based on availability, remaining window, task shape, local outcomes,
-  and then public benchmark evidence.
+- **Opus 5 is the intelligence ceiling** (61) and therefore the Decider and the reviewer. Its
+  ~54 tok/s is the price of that; do not spend it on bulk typing. Both review gates run Opus at
+  **low** — a review gate's yield comes from independence and a pointed brief, and the index gap
+  between Opus low (51) and Opus high (59) has not been the thing that catches findings.
+- **Codex leads agentic coding** (80 vs a 77 field average) at roughly a third of Opus's per-token
+  cost — a strong fit-selected alternative for backend and data work. Its constraint is the weekly
+  window, not capability.
+- **Gemini 3.7 Flash changed the flash tier's argument.** At **56** it is ~6× Opus's output speed
+  (340 vs 54 tok/s) at half the cost and only 3 points below Opus high — where 3.6 Flash sat 9 points
+  back. It still does not own *decisions* (56 vs 61 is a real gap on arbitration and ambiguity), but
+  "flash is for speed, not smarts" is no longer true and should not be repeated in a brief.
+- **Luna is the price play, not the capability play.** xhigh at **50** for **$0.17/M** is a sixth of
+  Terra's cost; it remains the Codex executor's final fallback because an executor implements an
+  already-reviewed plan, which is the task least sensitive to the top of the index. Gemini
+  `gemini-3.8-flash-medium` is the office's standing executor default, with Claude Sonnet high as
+  the next rung when Gemini is unavailable or quota-poor.
+- **Speed is a real axis, not a tiebreak.** On read-heavy fan-out, N parallel Flash scouts finish
+  before one Opus pass starts producing. On a single long ambiguous chain, that advantage inverts
+  completely.
 
 ## Refresh procedure
 
@@ -110,17 +108,17 @@ terminal commands, but local routing outcomes and live quota are stronger eviden
    Index (harness pairings), and output tokens/sec for the current Claude / GPT / Gemini flagships.
 2. Rewrite the numbers above. Bump `captured`. Note in one line what moved.
 3. If a capability role changed hands, **say so in the run's kickoff line** and route the new way.
-4. Leave locally-observed behavior alone unless an explicit maintainer decision changes the policy;
-   this refresh explicitly changes Auto Office's old Agy-first executor rule, while Agy Office's
-   own harness-specific constraints remain in its sibling skill.
+4. Leave locally-observed behavior alone — the agy 3-task drift cap is workspace experience, not a
+   benchmark, and a leaderboard cannot overturn it.
 
-Sources: [Intelligence Index v4.3 announcement](https://artificialanalysis.ai/articles/artificial-analysis-intelligence-index-v4-3),
-[Intelligence Index methodology](https://artificialanalysis.ai/methodology/intelligence-benchmarking),
+Sources: [Artificial Analysis models leaderboard](https://artificialanalysis.ai/leaderboards/models),
+[coding capabilities](https://artificialanalysis.ai/models/capabilities/coding),
+[coding agents](https://artificialanalysis.ai/agents/coding-agents),
 [Coding Agent Index methodology](https://artificialanalysis.ai/methodology/coding-agents-benchmarking),
-[Gemini 3.8 Flash high](https://artificialanalysis.ai/models/gemini-3-8-flash),
-[Gemini 3.8 Flash medium](https://artificialanalysis.ai/models/gemini-3-8-flash-medium),
-[Gemini 3.8 Flash low](https://artificialanalysis.ai/models/gemini-3-8-flash-low),
-[GPT-5.6 Luna xhigh](https://artificialanalysis.ai/models/gpt-5-6-luna-xhigh),
-[Claude Sonnet 5 high](https://artificialanalysis.ai/models/claude-sonnet-5-high),
-[Claude Opus 5 low](https://artificialanalysis.ai/models/claude-opus-5-low),
-[Gemini 3.7 Flash low comparison](https://artificialanalysis.ai/models/comparisons/gemini-3-8-flash-vs-gemini-3-7-flash-low).
+[Coding Agent Index v1.1 leaderboard](https://llm-stats.com/benchmarks/artificial-analysis-coding-agent-index-v1.1),
+[Gemini 3.7 Flash (high)](https://artificialanalysis.ai/models/gemini-3-7-flash),
+[Gemini 3.7 Flash (medium)](https://artificialanalysis.ai/models/gemini-3-7-flash-medium),
+[Gemini 3.7 Flash (low)](https://artificialanalysis.ai/models/gemini-3-7-flash-low),
+[GPT-5.6 Luna (xhigh)](https://artificialanalysis.ai/models/gpt-5-6-luna-xhigh),
+[GPT-5.6 Luna (max)](https://artificialanalysis.ai/models/gpt-5-6-luna),
+[Gemini 3.6 Flash analysis](https://artificialanalysis.ai/models/gemini-3-6-flash).

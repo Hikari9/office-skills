@@ -1,6 +1,6 @@
 ---
 name: agy-reviewer
-description: The adversarial Phase 3 gate — default reviewer is Gemini Flash latest high (currently gemini-3.8-flash-high; or caller override), three verdicts, 5-round cap. Loaded by the agy-office hub; not invoked directly.
+description: The adversarial Phase 3 gate — default reviewer is gemini-3.7-flash-high (or caller override), three verdicts, 5-round cap. Loaded by the agy-office hub; not invoked directly.
 ---
 
 # Agy Reviewer
@@ -8,7 +8,7 @@ description: The adversarial Phase 3 gate — default reviewer is Gemini Flash l
 Loaded by: reviewer, at Phase 3.
 Assumes: the Office Kernel is already in the packet.
 
-When `HERDR_ENV=1`, the fresh Gemini Flash reviewer is hosted in a right-side Herdr pane, and any
+When `HERDR_ENV=1`, the fresh Claude reviewer is hosted in a right-side Herdr pane, and any
 further reviewer child goes below its parent. Load [`herdr`](../../office-core/skills/herdr/SKILL.md)
 and close each pane created for the dispatch after reading its final verdict and completing any
 needed review rounds; never use an
@@ -18,10 +18,9 @@ Points at [`../../references/review-gate.md`](../../references/review-gate.md) (
 loop) and [`../../references/reviewer-brief.md`](../../references/reviewer-brief.md) (the prompt
 template) for full detail. This spoke restates what cannot be compressed away.
 
-## Code review defaults to Gemini Flash latest high
+## Code review defaults to gemini-3.7-flash-high
 
-**The code-review gate defaults to Gemini Flash latest high, currently `gemini-3.8-flash-high`
-(fresh reviewer separate from the executor).** Resolve/verify the exact live slug before dispatch.
+**The code-review gate defaults to `gemini-3.7-flash-high` (fresh reviewer separate from the executor).**
 A caller tweak may override the reviewer model (e.g. `reviewer: opus` or `reviewer: sonnet`).
 The reviewer never reviews its own work; the executor never approves its own work.
 

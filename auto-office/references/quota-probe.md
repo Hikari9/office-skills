@@ -1,7 +1,7 @@
 # Usage headroom — how to measure it
 
 auto-office probes CLI headroom at **two mandatory checkpoints**: the fit-test, before interviewing
-or planning, and again immediately before every scout, executor, or reviewer dispatch. Routing must never
+or planning, and again immediately before every executor or reviewer dispatch. Routing must never
 guess whether a tool has quota left, and a fit-test reading is not valid evidence for a dispatch
 that happens after other tasks already spent that window. Each probe is one stdlib HTTP call —
 cheap enough that skipping the second checkpoint saves nothing.
@@ -118,11 +118,11 @@ programmatic — no browser, no Chrome automation, no model tokens consumed, sta
 | Exit | Meaning | Routing action |
 |---|---|---|
 | `0` | Headroom read | Weigh the number against what the run needs, when it resets, and what a worse route would cost. **No threshold is hardcoded** — a low number can still be the right spend. State the number and the reasoning. |
-| `2` | UNKNOWN — no credential, no token, or the API refused | **Unknown, not zero.** Record the probe failure; prefer Gemini as the safe default while it remains launchable, and let the Planner move down the ordered ladder only when launch/quota/repeated-failure evidence makes fallback necessary. |
+| `2` | UNKNOWN — no credential, no token, or the API refused | **Unavailable, not low.** Say which probe failed and why, and route around it unless the user says otherwise. |
 
-An UNKNOWN reading is not evidence that the model is unusable. Record the missing measurement, prefer
-Gemini as the safe default, and let the Planner fall back when a real launch/quota/repeated-failure
-signal appears. A malformed Planner tool call should be corrected and retried at the same rung.
+Never spend a run discovering that a tool was never usable. An optimistic route on an UNKNOWN
+reading burns the run's wall-clock and lands you mid-plan with no executor — which is a different
+and worse problem than knowingly spending a thin quota window.
 
 ## Failure modes
 

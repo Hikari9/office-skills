@@ -4,9 +4,9 @@ auto-office owns routing, the loop, **and the claude route's mechanics**. For th
 routes it owns nothing: each phase loads that sibling office's spoke, so a fix to the `agy` launch
 form or the `codex exec` background-launch rule lands in one place and this office inherits it.
 
-The claude route lives here because it is the always-available fallback for the default Codex
-code-review gate. A gate every run depends on does not belong in a plugin a run might not have
-installed.
+The codex route holds the default code-review gate for **every** route, whoever executed. The Claude
+route remains the always-available Opus-low fallback; a gate every run depends on does not belong in
+a plugin a run might not have installed.
 
 Sibling paths (`agy-office/`, `codex-office/`) are installed plugin roots. Claude paths are local to
 this plugin.
@@ -19,16 +19,8 @@ because it holds no authority of its own. **Plan-reviewer** is an added role, le
 `office-core/protocol/roles-and-authority.md` because it *adds* a gate rather than absorbing one; it
 runs in the **full** gear only.
 
-**The v2 orchestrator is the invoking model — the core Planner — never an auto-routed model.** It
-drafts the plan itself in compatibility mode, same as before v2. In dedicated mode it invokes the
-plan-drafter policy from `auto-routing`; that dedicated call is an **added role**, produces a
-serialized draft artifact, and holds no executor, reviewer, approval, or closeout authority. After
-the handoff, the invoking session remains the sole control-plane Planner for the existing lifecycle.
-See [`planner-handoff.md`](planner-handoff.md).
-
-There is no PM. When the graph has ≥2 executor lanes, the Planner (orchestrator) distributes,
-monitors, and collates eligible handoffs. Multiple lanes may target one repo, but each has its own
-worktree and branch.
+**There is no PM.** Core permits a coordinator; this office declines to use one. At ≥2 executors the
+planner distributes and monitors.
 
 Keep emitting `executor` as the role id in schema fields (`office-kernel`, `run-event`,
 `capability-manifest`), and keep the sibling spoke names (`codex-executor`, `claude-executor`,
@@ -41,7 +33,7 @@ Keep emitting `executor` as the role id in schema fields (`office-kernel`, `run-
 | CLI launch mechanics | `codex-office/skills/codex-cli` | `auto-office/skills/claude-cli` | `agy-office/skills/agy-cli` |
 | Executor packet / brief contract | `codex-office/skills/codex-executor` | `auto-office/skills/claude-executor` | `agy-office/skills/agy-executor` |
 | Independent verification pass | — | — | `agy-office/skills/agy-verification` (**mandatory**) |
-| **Plan-review** gate | `codex-office/skills/codex-reviewer` at `codex-luna` **xhigh** | `auto-office/skills/claude-reviewer` at `opus` **low** fallback | `agy-office/skills/agy-reviewer` at `agy` **high** |
+| **Plan-review** gate | `codex-office/skills/codex-reviewer` at `codex-luna` **xhigh** | `auto-office/skills/claude-reviewer` at `opus` **low** | `agy-office/skills/agy-reviewer` at `agy` **high** |
 | **Code-review** gate — **default holder: codex** | `codex-office/skills/codex-reviewer` at `codex-luna` **`high` floor / `xhigh` standing default**, priced by blast radius | `auto-office/skills/claude-reviewer` at `opus` **low** — the **fallback** holder | **never** — agy does not hold this gate |
 | Answering a blocked background agent | — | `auto-office/skills/claude-cli-send-message` | — |
 | Closeout mechanics | `codex-office/skills/codex-closeout` | `auto-office/skills/claude-closeout` | `agy-office/skills/agy-closeout` |
@@ -55,10 +47,9 @@ so it needs no diff package and no gate output — and it runs exactly once.
 
 - **Load only the spoke for the brand you are dispatching.** A role never receives another office's
   material, and never the whole corpus.
-- **`codex-office/skills/codex-reviewer` holds code review by default** (standing default,
-  2026-09-10: `codex-luna` `xhigh`, priced by blast radius). Load
-  `auto-office/skills/claude-reviewer` when the Opus low fallback takes the chair — codex
-  unavailable, a caller naming claude, or a codex executor needing a different-brand reviewer.
+- **`codex-office/skills/codex-reviewer` holds code review by default** at Luna xhigh. Load
+  `auto-office/skills/claude-reviewer` only when the Opus-low fallback takes the chair — codex is
+  unavailable, a caller names Claude, or a codex executor needs a different-brand reviewer.
   `agy-reviewer` is loaded only for a **plan** review.
 - **Two floors, declared separately, per brand.** On the claude route both are `opus` low. On the
   codex route the **plan**-review floor is `codex-luna` **xhigh**, and the **code**-review floor is
