@@ -1,15 +1,16 @@
-name: Phase 1 scouts use resolved Gemini Flash low when agy is available
+name: Phase 1 scouts default to Codex Luna medium when usage is measurable
 prompt: |
   /auto-office Phase 1 scout routing. The availability probe reports that agy is installed,
-  authenticated, and launchable, and `agy-office/scripts/agy-model.sh low` resolves
-  `gemini-3.7-flash-low`. State the exact model and effort for the read-only scouts, the required
-  prompt safety line, and the fallback policy if agy becomes unavailable before a later wave.
+  authenticated, and launchable, while Codex is also available with measurable headroom. State the
+  exact model and effort for the read-only scouts, the required prompt safety line, and the fallback
+  policy if Codex becomes unavailable before a later wave.
 expect_skill: true
 criteria:
-  - "Selects agy with gemini-3.7-flash-low and records low effort"
-  - "Uses the resolver at dispatch rather than a bare agy command or a high-effort Flash model"
+  - "Selects Codex gpt-5.6-luna at medium effort"
+  - "Treats Codex Luna medium as the nominal scout default when usage is measurable"
   - "Includes the exact Phase 1 PLAN ONLY and no-write safety instruction"
-  - "States the unavailable-agy fallback as Codex gpt-5.6-luna at medium or Claude haiku/sonnet at low"
-  - "Forbids inheriting planner settings or escalating a scout to high, xhigh, or max"
+  - "States Gemini gemini-3.7-flash-low as the usage-unknown or thin-Codex fallback, then Claude haiku low"
+  - "Uses the same Herdr/same-brand-in-session/cross-brand-CLI dispatch contract as executors"
+  - "Forbids inheriting planner settings or escalating a scout above medium"
 allowed_tools: ["Read", "Grep", "Glob"]
 timeout: 220

@@ -7,8 +7,8 @@ description: The discernment engine — which brand is the executor, which brand
 
 **The invoking model holds the core Planner role and is never auto-routed** ("orchestrator" below
 names only its control-plane behavior, not a new role). In existing v2 it also drafts the plan
-directly for compatibility. This ticket adds one narrow plan-drafter-call decision; executor, worker,
-and reviewer routing remain the decisions below and are not changed.
+   directly for compatibility. The plan drafter remains optional and user-selectable; the current
+   scout, executor, plan-review, and code-review defaults are explicit policy below.
 
 ### Orchestrator advice — not a route
 
@@ -28,8 +28,9 @@ decision and this section is not it.
 
 **Three existing decisions, all made at plan time, stay separate:**
 
-1. **Which brand is the executor** — one per repo. Owns the working tree. The only writer. Its
-   model and effort are **fixed** by the table below.
+1. **Which brand, slice, and worktree each executor lane gets** — one or more lanes per repo when
+   the Planner's graph benefits from parallelism or independent coverage. Each lane owns its
+   worktree and is the only writer there. Its model and effort are **fixed** by the table below.
 2. **Which brand, model, and effort each worker gets** — per task. Routed by fit, and **not pinned
    to the executor's tier.** A worker may be a different brand, a bigger model, or both.
 3. **How each unit of work is dispatched** — Herdr, CLI, in-session, or inline. **Derived**, not
@@ -62,7 +63,7 @@ row, and refresh it when stale — never route from memory of a leaderboard.
 |---|---|---|---|
 | **Decider** | claude (Opus) | Plans, arbitration, gate-holding, resolving contradictions, ambiguous cross-cutting work | Slow and expensive per token — spend it on decisions, not typing |
 | **Backend builder** | codex | Backend, data, migrations, infra, refactors, long-horizon implementation | Weekly quota is finite — price it in, don't ignore it |
-| **Fast scout / bulk hand** | agy | Web search, docs research, codebase recon, high-volume mechanical edits, frontend/UI | Drifts off-instruction past 3 chained tasks — a hard cap, not an estimate; can be confidently wrong and internally consistent |
+| **Fast scout / bulk hand** | codex | Web search, docs research, codebase recon, high-volume mechanical edits | Medium Luna is the standing scout default; Gemini remains the unknown-usage fallback |
 
 Agy's weakness is **duration**, not capability. So give it breadth, never depth: many parallel
 single-shot tasks, each returning a cheaply verifiable artifact. Give claude the opposite shape —
@@ -79,17 +80,21 @@ review rounds, and the fix lane sent to repair it introduced two page-blanking b
 
 ## Brand selection
 
-Pick on **fit** first. CLI headroom is always probed during fit-test ([quota-probe.md](../../references/quota-probe.md)); weigh it as a cost afterwards, never as a gate:
+Pick from the ordered defaults, then exercise Planner discernment. CLI headroom is always probed during
+fit-test ([quota-probe.md](../../references/quota-probe.md)) and immediately before launch. Usage,
+availability, and launch history now weigh more than benchmark/task-fit scores; there is deliberately
+no hardcoded percentage threshold:
 
 ```
 caller named a brand?  → use it, echo the override, stop here
 
-best-fit brand, ignoring quota:
-    irreversible-prod, gnarly ambiguity, cross-cutting, correctness-over-speed  → claude
-    backend / data / infra / migrations / long-horizon, or a mixed plan         → codex
-    frontend-heavy, short, speed-bound, or bulk mechanical                      → agy
+nominal executor/scout ladder:
+    executor → gemini-3.8-flash-medium → claude-sonnet-5 high → gpt-5.6-luna xhigh
+    scout    → gpt-5.6-luna medium → gemini-3.7-flash-low → claude-haiku low
 
-then weigh headroom on that brand (see below), and either commit or shift.
+then weigh current headroom, launchability, task shape, and local/public scores. Gemini remains the
+preferred frontend model and the safe choice when usage cannot be measured. The Planner may select a
+later rung when the earlier one has little remaining usage, is unavailable, or has repeatedly failed.
 ```
 
 The operator's stated preference is **Claude Sonnet in general**, with codex or agy when the fit test
@@ -103,30 +108,29 @@ Not derived from the benchmark table, and a leaderboard movement does not change
 |---|---|---|---|---|
 | Planner (compatibility path — invoking session, drafts inline) | `opus` (invoking session) | `codex-luna` | `agy` | fixed for the existing same-call path |
 | **Plan-reviewer** (full gear only) | Existing orchestrator/control-plane Planner's own route at `opus` **low** | `codex-luna` **xhigh** | `agy` **high** | unchanged; a dedicated plan drafter's choice does not override |
-| **Phase 1 scout** | `haiku` or `sonnet` **low** *(orchestrator chooses)* | `gpt-5.6-luna` **medium** *(fallback ceiling)* | `gemini-3.7-flash-low` **low** *(resolve at dispatch)* | **bounded** |
-| Executor | `sonnet` **high** *(rung 2)* | **`gpt-5.6-sol` `low`** *(rung 3, last pick)* | **Flash latest `medium`, max 3 tasks** *(rung 1)* | **fixed ladder — see *Executor ladder*** |
+| **Phase 1 scout** | `haiku` **low** *(last fallback)* | **`gpt-5.6-luna` `medium`** *(nominal first pick)* | `gemini-3.7-flash-low` **low** *(nominal fallback)* | **ordered, usage-aware** |
+| Executor | `sonnet` **high** *(rung 2)* | `gpt-5.6-luna` **xhigh** *(rung 3)* | **`gemini-3.8-flash-medium`** *(rung 1)* | **ordered, usage-aware** |
 | Worker | `sonnet` high *default* | `gpt-5.6-luna` high *default* | Flash latest `high` *default* | **ANY brand/model/effort the Planner declares**, never above its dispatcher's tier |
 | **Reviewer (code)** | `opus` **low** *(fallback)* | **`codex-luna` `xhigh` default, `high` floor — the standing default holder** | never reviews | **codex first, priced by blast radius; claude fixed at `opus` low** — see *Reviewer selection* |
 
 ## Phase 1 scout policy
 
-Phase 1 scouts are a distinct read-only breadth role. They never inherit the executor, worker, or
-reviewer route, and they may not run at `high`, `xhigh`, or `max` effort.
+Phase 1 scouts are a distinct read-only breadth role. They launch through the same dispatch contract as
+executors: a visible Herdr pane when `HERDR_ENV=1`; otherwise same-brand scouts may use an in-session
+child and cross-brand scouts use the brand CLI. They are fresh independent agents and may not write to
+the target tree. They may not run above medium effort.
 
 Resolve availability immediately before the fan-out:
 
-1. **Agy available:** use `agy` with the low-effort model resolved by
-   `agy-office/scripts/agy-model.sh low`. The expected current slug is
-   `gemini-3.7-flash-low`; the resolver remains canonical because agy publishes no `latest` alias.
-   The slug carries the `low` effort, so record `model: gemini-3.7-flash-low` (or the resolver's
-   current matching slug) and `effort: low` in the dispatch receipt.
-2. **Agy unavailable:** the orchestrator chooses the cheapest suitable available fallback and
-   names it before dispatch: Codex `gpt-5.6-luna` at `medium`, or Claude `haiku` / `sonnet` at
-   `low`. Codex `medium` is the explicit Luna fallback ceiling; Claude fallbacks must use
-   `--effort low`. The choice may cross brands when that is what availability and the task fit
-   require, but it may not promote a scout to planner, executor, reviewer, `opus`, `high`,
-   `xhigh`, or `max`.
-3. Echo the availability result, selected model, and effort in the kickoff line. Never omit the
+1. **Nominal default:** use Codex `gpt-5.6-luna` at `medium`.
+2. **Usage-safe/default-unknown path:** if usage cannot be measured, prefer Gemini
+   `gemini-3.7-flash-low` at `low`; this is the safe default for an unknown quota state.
+3. **Fallback path:** when the selected rung is unavailable, quota-exhausted, or has repeatedly
+   failed, continue to Gemini low and then Claude `haiku` low. A single launch failure permits the
+   next rung. If the Planner caused the failure through a malformed tool call, correct and retry the
+   same rung instead. No scout may promote itself to planner, executor, reviewer, `high`, `xhigh`, or
+   `max`.
+4. Echo the usage/availability result, selected model, and effort in the kickoff line. Never omit the
    model or effort flag and allow a scout to inherit the orchestrator's settings.
 
 ## v2 dedicated plan-drafter policy
@@ -209,38 +213,31 @@ just wrote; same-brand is an advantage there, not the conflict of interest it wo
 Executor and worker brand *is*
 routed by fit, exactly as before.
 
-**The executor is an availability ladder, tried in order — first available brand wins, unless the
-fit test or a caller override names one.** Standing office default, set 2026-09-10.
+**The executor is an ordered default ladder, with Planner discernment over usage and fit.** Standing
+office default, updated 2026-09-11. The list is ordered, but there is no hardcoded usage threshold:
+the Planner chooses Gemini whenever it has usable headroom or when usage is UNKNOWN, and may move to a
+later rung when Gemini is nearly exhausted, unavailable, or repeatedly fails.
 
 | # | Executor brand | Model + effort | Task cap | Status |
 |---|---|---|---|---|
-| **1** | **agy** | **Flash latest `medium`** — resolve with `agy-office/scripts/agy-model.sh medium` | **3 tasks, hard** | first pick when available and the plan fits in 3 tasks |
-| **2** | **claude** | **`sonnet` high** | any number | the workhorse — take it whenever the plan exceeds 3 tasks |
-| **3** | codex | **`gpt-5.6-sol` `low`** | any number | **last pick, unvalidated in this office** — see the caveat below |
+| **1** | **agy** | **`gemini-3.8-flash-medium`** | any number | default when usage is usable or UNKNOWN; fastest quality-preserving choice |
+| **2** | **claude** | **`sonnet` high** | any number | fallback when Gemini usage is dire, unavailable, or repeatedly fails; stronger quality at higher latency |
+| **3** | codex | **`gpt-5.6-luna` `xhigh`** | any number | final fallback when Gemini and Sonnet are unavailable or have repeatedly failed |
 
-**Take rung 2, not rung 1, the moment the approved plan has more than 3 tasks.** Agy's cap is
-observed drift past 3 chained tasks, not an estimate, and a 4-task agy executor is the failure this
-ladder exists to prevent. Splitting a 5-task plan into two agy runs to stay "under the cap" does
-not clear it — the cap is per executor chain, not per launch.
+**Task shape no longer mechanically disqualifies Gemini.** Frontend, fullstack, and backend scores are
+still considered, but usage/availability and the ordered defaults weigh more. Gemini remains the
+preferred frontend executor; Sonnet is not a frontend override, only a usage/availability fallback.
 
-**Rung 3 is a fallback, not a recommendation.** `gpt-5.6-sol` at `low` has **not been run as an
-executor in this office**; it is placed above Luna on the maintainer's read that Luna at executor
-duty has been the weaker performer in practice, and that read is untested. Record the outcome in
-[routing-outcomes.md](../../references/routing-outcomes.md) the first time it runs, and treat a
-first-run failure as evidence about the rung, not about the plan.
+**Launch failures and quota failures permit immediate fallback.** A malformed tool call caused by the
+Planner is not an agent failure: repair the call and retry the same rung. Repeated agent failures,
+quality failures, or a clearly dire remaining quota permit the Planner to move down the ladder, with
+the reason recorded in the dispatch receipt and local outcomes.
 
-**`gpt-5.6-luna` is no longer an executor.** It keeps its reviewer roles (plan review at `xhigh`,
-code review priced by blast radius) and remains available as a *worker* the planner may declare.
+Codex Luna is again an executor fallback at **xhigh**, and remains the plan/code review default.
 
-**Effort still goes to the gates, not to the implementation.** No rung on this ladder runs above
-`high`; a bigger executor does not fix a wrong brief, it implements it more convincingly.
-
-Read the index before treating either number as a ranking. Luna is **52 / 50 / 47** across
-max / xhigh / high, so the executor gives up 3 points and the plan reviewer gains 3. A code review
-priced at `high` sits level with the executor, which is the point of pricing it. Both remain far under
-Terra max's **55**, at **$0.17/M vs $0.73/M** — the whole codex row is a deliberate cost-and-speed
-trade the user owns. Do not "correct" any of it mid-run, and do not cite it as licence to raise
-anything else.
+Read the v4.3 index as supporting evidence, not as a mechanical selector. Gemini Flash is the
+speed/quality default; Sonnet's local quality evidence and Luna's review strength remain relevant
+when usage or repeated failures make a fallback necessary.
 
 Both are **caller overrides made durable**, not self-escalations. That is the one legitimate way a
 non-`high` effort becomes a default, since the ceiling rule below binds the *office*, never the user.
@@ -263,8 +260,8 @@ figures are in [model-benchmarks.md](../../references/model-benchmarks.md), and 
 
 | Kind of sub-task | Reach for | Because |
 |---|---|---|
-| Bulk mechanical edit, rename sweep, file-by-file application | `haiku`, `gemini-3.7-flash-low` | Index barely moves the outcome; speed and price do |
-| Read-only recon, breadth-first search across many files | `gemini-3.7-flash-low`; if agy is unavailable, orchestrator-selected `gpt-5.6-luna` medium or `haiku`/`sonnet` low | N low-effort scouts beat one deep read |
+| Bulk mechanical edit, rename sweep, file-by-file application | `gemini-3.7-flash-low`, `haiku` | Index barely moves the outcome; speed and price do |
+| Read-only recon, breadth-first search across many files | `gpt-5.6-luna` medium; Gemini low when usage is unknown or Luna is thin; Haiku last | N medium/low scouts beat one deep read |
 | Ordinary implementation inside a clear brief | executor's own tier | The default; a bigger model implements a wrong brief more convincingly |
 | Long backend/data chain, terminal-heavy | `gpt-5.6-luna` high (47) or `gpt-5.6-terra` (55) | Agentic-coding strength and per-token price, not raw index |
 | Arbitration, conflicting invariants, unconfirmed diagnosis | `opus` high (59) | A different *kind* of question — the only case that reliably repays the tier |
@@ -290,13 +287,11 @@ Three conditions on any worker that is not the executor's default, all binding:
 task is hard" produced the last run's silent over-provisioning. "This needs a judgement the executor's
 tier cannot make" is the real distinction, and the plan is where you argue it.
 
-**Two floors, declared separately, and per brand.** On the claude route `opus` low is the floor for
-the **code**-review gate and `opus` low is the floor for the **plan**-review gate. On the codex
-route — now the default holder of the code gate — the code floor is `codex-luna` `high` and the
-plan floor is `codex-luna` `xhigh`. They remain separate declarations: [delegation-map.md](../../references/delegation-map.md)'s "stricter rule wins" clause
-resolves conflicting rules *within* one gate and never promotes one gate to the other's tier. A floor
-binds the gate it was declared for. Reviewer strength comes from independence, freshness, and a
-pointed brief — not from effort tier.
+**Two floors, declared separately, and per brand.** The default holder for both plan and code review
+is Codex Luna xhigh. Claude Opus low is the only fallback. They remain separate declarations:
+[delegation-map.md](../../references/delegation-map.md)'s "stricter rule wins" clause resolves
+conflicting rules within one gate and never promotes one gate to the other's tier. Reviewer strength
+comes from independence, freshness, and a pointed brief — not from effort tier.
 
 **High is the ceiling *for the office*. `xhigh`, `ultra`, and `max` are user-invoked only** — which
 is exactly what the codex reviewers' standing `xhigh` default is: user-invoked once, durably, and
@@ -324,9 +319,9 @@ Inline work remains inline. When Herdr is absent, the table below is unchanged.
 |---|---|---|
 | Any real delegation while `HERDR_ENV=1` | **Herdr pane** | Visible topology, prompt/read/wait control, and no hidden in-session child |
 | Planner → dedicated **plan drafter**, **Phase 1 only, `planner_mode=dedicated`** | **CLI, own worktree scoped to `docs/plans/<slug>.md`** — see *Dispatch mechanics* in [`planner-handoff.md`](../../references/planner-handoff.md) | A different model call producing the draft, with no gate and no write access outside the plan artifact |
-| Planner → executor, **one per repo, whole plan** | **CLI, own worktree** | Isolation, unattended running, and a ~6× cheaper writer that already holds the reviewed plan |
+| Planner → executor lane, **one or more per repo** | **CLI, own worktree** | Isolation, unattended running, parallel wall-clock progress, and a ~6× cheaper writer holding its reviewed plan slice |
 | Planner → code reviewer | **CLI / fresh agent** | Independence — the executor may never launch its own gate |
-| Planner → read-only scout, **Phase 1 only** | **CLI, `agy` at resolved `gemini-3.7-flash-low` when available**; otherwise the orchestrator chooses Codex `gpt-5.6-luna` medium or Claude `haiku`/`sonnet` low — **never planner tier or high effort** | Breadth before a plan or an executor exists |
+| Planner → read-only scout, **Phase 1 only** | **Herdr pane when available**; otherwise same-brand in-session or cross-brand CLI. Nominally Codex `gpt-5.6-luna` medium → Gemini `gemini-3.7-flash-low` → Claude `haiku` low; UNKNOWN usage prefers Gemini | Breadth before a plan or an executor exists |
 | Executor → worker | **in-session / inline** | Reuse of the executor's live context — the value being spent |
 | Executor → worker of a **different brand** | **CLI**, necessarily | The only exception in the table |
 | Planner → itself, for a review fix **whose brief would exceed the edit** | **inline** | Nothing — which is the point |
@@ -337,9 +332,30 @@ to launch a process for task *n* of an approved plan, you are executing the exec
 rates. The planner *designs* every task's dispatch form in the assignment table, with a reason; the
 executor *performs* every one of them.
 
-**At ≥2 executors the planner distributes and monitors.** There is no coordinator role. The run that
-spawned one recorded it dispatching three lanes for about an hour, after which every lane was a
-single process the planner drove directly — so the role was deleted rather than repaired.
+**At ≥2 executor lanes the Planner distributes, monitors, and collates.** There is no coordinator
+role. The run that spawned one recorded it dispatching three lanes for about an hour, after which
+every lane was a single process the planner drove directly — so the role was deleted rather than
+repaired. That does not limit the number of declared executor lanes; it only keeps the Planner as
+the owner of the graph and arrival-order collation.
+
+### Planner-owned executor graph
+
+The Planner is the scheduler for executor lanes, not a passive router. Before approval, engineer the
+task graph for wall-clock time and effectiveness coverage: identify independent slices, the evidence
+each slice must produce, the dependencies that block it, and the integration order. A repo may have
+one lane or several; the count is a graph decision, never a per-repo quota.
+
+Every lane in the approved plan names its repository, lane id, exact task slice, `Depends on:`,
+`Touches:`, branch, dedicated worktree, handoff path, validation commands, and integration target.
+Two lanes targeting the same repo are valid only when they use separate worktrees and branches;
+one writer per worktree remains binding. If the graph cannot keep their writes independent, merge the
+slices before dispatch or serialize them.
+
+Dispatch every ready lane after approval. As handoffs arrive, the Planner collates the first eligible
+result instead of waiting for the slowest sibling, then verifies and reviews that slice before
+integrating it or unlocking its dependents. Arrival order never overrides a dependency, a `Touches:`
+conflict, or the independent review gate. Executors may not edit sibling worktrees, merge lanes, or
+choose which result wins; the Planner owns collation and integration.
 
 ### State the effort flag explicitly on every CLI launch
 
@@ -356,14 +372,14 @@ the process runs medium, and nothing in the output says so.
 --model sonnet --effort low       # Phase 1 scout fallback, if chosen
 
 # codex — there is NO --effort flag; effort is a config override
--m gpt-5.6-sol  -c model_reasoning_effort="low"     # executor (ladder rung 3, last pick)
+-m gpt-5.6-luna -c model_reasoning_effort="xhigh"   # executor (ladder rung 3, fallback)
 -m gpt-5.6-luna -c model_reasoning_effort="xhigh"   # code reviewer, standing default; "high" for a low-blast-radius leg
 -m gpt-5.6-luna -c model_reasoning_effort="xhigh"   # plan reviewer
--m gpt-5.6-luna -c model_reasoning_effort="medium"  # Phase 1 scout fallback
+-m gpt-5.6-luna -c model_reasoning_effort="medium"  # Phase 1 scout default
 
 # agy — the effort is encoded in the resolved slug
---model "$(agy-office/scripts/agy-model.sh medium)"    # executor (ladder rung 1, max 3 tasks)
---model "$(agy-office/scripts/agy-model.sh low)"       # Phase 1 scout; currently gemini-3.7-flash-low
+--model "gemini-3.8-flash-medium"                    # executor (ladder rung 1)
+--model "gemini-3.7-flash-low"                      # Phase 1 scout fallback
 ```
 
 **The codex form is the one this rule was written for.** Verified 2026-08-25: no office was passing
@@ -377,7 +393,7 @@ actual model **and** effort back before reporting a dispatch, exactly as you wou
 live-system write — for codex that is the launch banner's `model:` / `reasoning effort:` lines,
 which echo an unrecognised value rather than rejecting it.
 
-### Probe headroom immediately before every CLI launch
+### Probe headroom immediately before every scout, executor, or reviewer launch
 
 **A fit-test reading is not current by the time task 3 dispatches.** Immediately before each
 executor or reviewer launch, run that one brand's probe again — bare invocation, one HTTP call
@@ -450,7 +466,7 @@ cap is how a cap gets broken by accident.
 
 ## Headroom is a cost, not a gate — probed at fit-test and before every dispatch
 
-**CLI headroom is ALWAYS probed at fit-test, and again immediately before every executor or
+**CLI headroom is ALWAYS probed at fit-test, and again immediately before every scout, executor, or
 reviewer dispatch** ([quota-probe.md](../../references/quota-probe.md)). Fit-test probes all three
 brands, before planning or routing begins; a pre-dispatch probe checks only the brand about to
 launch. Each is one cheap HTTP call — there is no cost excuse to skip the second checkpoint, and a
@@ -492,9 +508,9 @@ If a run drains the tool it is depending on mid-flight, that is a reroute, not a
 is a reroute you should have predicted, so predict it: name the fallback at plan time.
 
 **A headroom reading of UNKNOWN (exit 2) is not the same as low.** It means the probe is broken or
-the tool is not logged in. Treat it as *unavailable* unless the user says otherwise, say which
-probe failed and why, and route around it — never spend a run discovering that a tool was never
-usable.
+the tool is not logged in. Record which probe failed and why, but prefer Gemini as the safe default
+while it remains launchable. A real launch/quota/repeated-failure signal permits fallback; a malformed
+Planner tool call is corrected and retried at the same rung.
 
 ## Per-task brand choice
 
@@ -506,16 +522,16 @@ is labelled as one.
 The default, most cost-efficient shape:
 
 ```
-agy low-effort scouts (parallel, read-only)  →  planner picks the approach
-                                  →  codex or claude implements
+  Luna medium scouts (parallel, read-only)  →  planner picks the approach
+                                  →  Gemini medium / Sonnet high / Luna xhigh implements
                                   →  fresh Luna xhigh reviewer gates (Opus low fallback)
 ```
 
 Rules that make this safe:
 
 - **Read-only fan-out is the delegation worth making.** Recon, "where is X", "does this pattern exist
-  elsewhere", doc lookups: agy at resolved `gemini-3.7-flash-low` when available, in parallel;
-  otherwise use the bounded fallback above. N scouts finish in one scout's wall-clock.
+  elsewhere", doc lookups: Codex `gpt-5.6-luna` medium by default, Gemini `gemini-3.7-flash-low`
+  when usage is unknown or Luna is thin, then Claude `haiku` low. N fresh scouts finish in parallel.
 - **Live-system work is delegated WITH its access, never kept because a delegate "can't reach it".**
   Enumerate the MCP/API tools the task needs in the launch — the scoped allowlist form omits every
   MCP tool unless you name it, which is a dispatch bug that has been misread as a capability limit.
@@ -613,8 +629,9 @@ The snapshot in [model-benchmarks.md](../../references/model-benchmarks.md) carr
    way. The roles are stable; their occupants are not.
 4. **The snapshot selects brand only — never model or effort**, both of which are fixed by the table
    above. A leaderboard cannot promote an executor.
-5. Local experience outranks a leaderboard where they conflict — the agy 3-task cap is observed
-   behavior in this workspace and stays until observed otherwise.
+5. Local experience outranks a leaderboard where they conflict. The old Agy-first executor rule is
+   superseded here by the explicit Gemini-first maintainer decision; sibling Agy Office constraints
+   remain owned by that office.
 
 6. **Model slugs are resolved, never written down.** agy publishes no `latest` alias, so
    `agy-office/scripts/agy-model.sh` resolves Flash latest at dispatch. A slug in prose is pinned to

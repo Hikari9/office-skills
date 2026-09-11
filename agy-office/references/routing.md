@@ -14,7 +14,7 @@ not review itself per task. There are only three places work can land:
 | Landing spot | What it is |
 |---|---|
 | **INLINE** | The planner edits it directly. No brief, no dispatch. |
-| **One agy dispatch** | An `agy --print` run scoped to a slice of the plan, at a chosen model. |
+| **One agy dispatch** | A native Herdr Agy session, or a non-Herdr `agy --print` run, scoped to a slice of the plan at a chosen model. |
 | **PLANNER-HELD** | Kept out of every brief; the planner runs it after the gate, or the user does. |
 
 So "how many agents" means **how many `agy` dispatches**, and the default is *one for the whole plan*.

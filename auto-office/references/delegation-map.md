@@ -4,9 +4,9 @@ auto-office owns routing, the loop, **and the claude route's mechanics**. For th
 routes it owns nothing: each phase loads that sibling office's spoke, so a fix to the `agy` launch
 form or the `codex exec` background-launch rule lands in one place and this office inherits it.
 
-The claude route lives here because `claude-reviewer` is the default code-review gate for **every**
-route, whoever executed. A gate every run depends on does not belong in a plugin a run might not
-have installed.
+The claude route lives here because it is the always-available fallback for the default Codex
+code-review gate. A gate every run depends on does not belong in a plugin a run might not have
+installed.
 
 Sibling paths (`agy-office/`, `codex-office/`) are installed plugin roots. Claude paths are local to
 this plugin.
@@ -26,7 +26,9 @@ serialized draft artifact, and holds no executor, reviewer, approval, or closeou
 the handoff, the invoking session remains the sole control-plane Planner for the existing lifecycle.
 See [`planner-handoff.md`](planner-handoff.md).
 
-There is no PM. At ≥2 executors the Planner (orchestrator) distributes and monitors.
+There is no PM. When the graph has ≥2 executor lanes, the Planner (orchestrator) distributes,
+monitors, and collates eligible handoffs. Multiple lanes may target one repo, but each has its own
+worktree and branch.
 
 Keep emitting `executor` as the role id in schema fields (`office-kernel`, `run-event`,
 `capability-manifest`), and keep the sibling spoke names (`codex-executor`, `claude-executor`,
@@ -39,7 +41,7 @@ Keep emitting `executor` as the role id in schema fields (`office-kernel`, `run-
 | CLI launch mechanics | `codex-office/skills/codex-cli` | `auto-office/skills/claude-cli` | `agy-office/skills/agy-cli` |
 | Executor packet / brief contract | `codex-office/skills/codex-executor` | `auto-office/skills/claude-executor` | `agy-office/skills/agy-executor` |
 | Independent verification pass | — | — | `agy-office/skills/agy-verification` (**mandatory**) |
-| **Plan-review** gate | `codex-office/skills/codex-reviewer` at `codex-luna` **xhigh** | `auto-office/skills/claude-reviewer` at `opus` **low** | `agy-office/skills/agy-reviewer` at `agy` **high** |
+| **Plan-review** gate | `codex-office/skills/codex-reviewer` at `codex-luna` **xhigh** | `auto-office/skills/claude-reviewer` at `opus` **low** fallback | `agy-office/skills/agy-reviewer` at `agy` **high** |
 | **Code-review** gate — **default holder: codex** | `codex-office/skills/codex-reviewer` at `codex-luna` **`high` floor / `xhigh` standing default**, priced by blast radius | `auto-office/skills/claude-reviewer` at `opus` **low** — the **fallback** holder | **never** — agy does not hold this gate |
 | Answering a blocked background agent | — | `auto-office/skills/claude-cli-send-message` | — |
 | Closeout mechanics | `codex-office/skills/codex-closeout` | `auto-office/skills/claude-closeout` | `agy-office/skills/agy-closeout` |

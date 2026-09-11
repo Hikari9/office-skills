@@ -57,12 +57,15 @@ done
 command -v herdr >/dev/null 2>&1 || die "herdr is not on PATH"
 [ "${HERDR_ENV:-}" = 1 ] || echo "office-spawn: warning: HERDR_ENV is not 1" >&2
 
-# Effort: required where the flag is verified, refused where it is not.
+# Effort: required where the flag is verified, refused where the selected model does not support it.
 case "$KIND" in
   claude|codex)
     [ -n "$EFFORT" ] || die "--effort is required for kind $KIND" ;;
   agy)
-    [ -z "$EFFORT" ] || die "no effort flag is verified for agy; omit --effort" ;;
+    case "$MODEL" in
+      gemini-*) [ -n "$EFFORT" ] || die "--effort is required for Gemini-backed agy" ;;
+      *)        [ -z "$EFFORT" ] || die "--effort is only valid for Gemini-backed agy" ;;
+    esac ;;
   *) die "unknown kind: $KIND (claude|codex|agy)" ;;
 esac
 
@@ -76,8 +79,8 @@ fi
 PANE_ID="$(printf '%s' "$SPLIT_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["result"]["pane"]["pane_id"])')"
 [ -n "$PANE_ID" ] || die "could not read pane_id from: $SPLIT_JSON"
 
-# Native arguments after `--` differ per kind. Effort is a flag for claude, a config key
-# for codex, and unverified for agy.
+# Native arguments after `--` differ per kind. Effort is a flag for claude and Gemini-backed agy,
+# and a config key for codex.
 # Conditional appends use if/fi rather than `[ ... ] && arr+=(...)`: the &&-list form leaves the
 # branch's exit status at 1 whenever RESUME is empty, which is harmless here but breaks the moment
 # this block is moved into a function or made the script's last statement.
@@ -86,8 +89,9 @@ case "$KIND" in
           if [ -n "$RESUME" ]; then NATIVE+=(--resume "$RESUME"); fi ;;
   codex)  NATIVE=(-m "$MODEL" -c "model_reasoning_effort=\"$EFFORT\"")
           if [ -n "$RESUME" ]; then NATIVE+=(resume "$RESUME"); fi ;;
-  agy)    NATIVE=(--model "$MODEL")
-          if [ -n "$RESUME" ]; then NATIVE+=(--resume "$RESUME"); fi ;;
+  agy)    NATIVE=(--dangerously-skip-permissions --print-timeout 45m --model "$MODEL" --add-dir "$CWD")
+          case "$MODEL" in gemini-*) NATIVE+=(--effort "$EFFORT");; esac
+          if [ -n "$RESUME" ]; then NATIVE+=(--conversation "$RESUME"); fi ;;
 esac
 
 # Assert the launched argv from the `agent start` response itself, in the same step, before

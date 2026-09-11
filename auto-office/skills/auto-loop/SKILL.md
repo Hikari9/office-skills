@@ -33,16 +33,16 @@ waiting. Report progress and keep moving until closeout or a stop condition.
 before the loop:
     planner self-review of the plan               (auto-planning 7.4)
     full gear only: one adversarial plan-review, then it retires   (auto-planning 7.5)
-    ≥2 executors?  → the planner distributes and monitors. There is no PM.
+    ≥2 executor lanes? → the planner distributes, monitors, and collates arrivals. There is no PM.
 load GOAL block
-dispatch ONE EXECUTOR per repo, with the WHOLE plan   ← the only work launch the planner makes
+dispatch every READY EXECUTOR LANE, one or more per repo, with its approved graph slice
                           (CLI, own worktree; executor bootstraps draft PR; sibling office spoke)
-for each task the executor completes and hands back:
+for each eligible lane handoff that arrives:
     liveness check            (see below — no output means confirm dead before re-dispatch)
     verify independently      (mandatory extra pass if agy executed)
     executor returns BRIEF DEFECT → stop this task, do not implement, do not consume a round
                                     → planner (technical) or user (scope)
-    fresh Opus review         (resumed reviewer, same session across rounds)
+    fresh Codex Luna xhigh review (Opus low fallback; resumed reviewer, same session across rounds)
     while verdict == CHANGES REQUIRED and round < cap:
         planner disposition checkpoint
         if FIX_AND_REVIEW → triage → fix → re-review
@@ -60,11 +60,12 @@ re-read GOAL:
     caps exhausted?           → stop and report the deadlock
 ```
 
-**The loop iterates over the executor's returns, not over your dispatches.** You launch the executor
-once per repo and then hold the gate — verify, review, triage, answer consults, perform the
-planner-held actions. If you find yourself launching a process for task *n*, stop: that is the
-executor's job and you have become a scheduler. The exceptions are the code reviewer (which the
-executor must never launch for itself) and, in Phase 1 only, read-only scouts.
+**The loop iterates over lane returns, not over task-level launches.** The Planner engineers the
+graph, launches every declared ready lane, and then holds the gate — verify, review, triage, answer
+consults, collate whichever eligible handoff arrives first, and perform planner-held actions. If you
+find yourself launching a process for task *n* that was not declared as its own executor lane, stop:
+that is the executor's job and you have become a scheduler. The exceptions are the code reviewer
+(which an executor must never launch for itself) and, in Phase 1 only, read-only scouts.
 
 **The executor is expected to hand back per task, not per run.** Its brief requires it to stop at
 each task boundary, write `EXECUTOR-STATE.md`, and wait — so review happens per task, as it always
@@ -236,7 +237,6 @@ they are what keeps an autonomous run honest:
    failed, you stop for the user.
 5. **Which milestone does this task belong to, and did the previous one get recorded?** An
    unrecorded milestone behind you is a lost re-entry point.
-6. **Agy consecutive-task count** — at 3, re-brief with full context restated or re-route.
 7. **`git rev-parse --abbrev-ref HEAD` before every commit and every push.** Read it; do not assume
    the branch you created is still checked out.
 8. **Any finished pane still open?** Under `HERDR_ENV=1`, read `/tmp/office/panes.jsonl` and close
@@ -292,7 +292,6 @@ planner commits and a `git push … HEAD` landed there and deployed in 59 second
 | Cap | Value | On exhaustion |
 |---|---|---|
 | Review rounds per task | **5 full / 2 express** | Full: stop, the failure is structural — report the deadlock with the last verdict. Express: **promote the run to full** and re-plan the task with a plan-review pass. |
-| Agy consecutive tasks | 3 | Re-brief from scratch, or re-route the next task. |
 | Loop iterations | as set in GOAL | Stop and report which criteria are still red. |
 | Planner disposition after `CHANGES REQUIRED` | Every finding round | Record finding statuses, a recommendation, pre-fix reflection, and any mid-fix change of course before fixing or re-reviewing. |
 
@@ -519,8 +518,8 @@ surface, and split on surface boundaries, never on file count.
 ## Safety rules the loop cannot relax
 
 - One independent implementation writer per working tree. The only in-tree exception is one
-  Executor-owned Tester with disjoint test/config paths under the core contract; **≥2 executors
-  means ≥2 worktrees, always.**
+  Executor-owned Tester with disjoint test/config paths under the core contract; **every executor
+  lane gets its own worktree, including sibling lanes targeting the same repo.**
 - **The planner may implement and fix inline** — and it **still never approves its own work**. An
   inline fix goes back through the same fresh reviewer as everything else.
 - **Precondition on a planner inline write: no executor may be live in that tree.** Core already

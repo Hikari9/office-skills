@@ -1,7 +1,8 @@
 # agy task-prompt contract
 
-Every prompt handed to `agy --print` (Agy Office Phase 2, a Phase 3b fix wave, or any ad hoc agy
-delegation) MUST specify all of the following. A prompt missing any of these is not ready to dispatch.
+Every prompt handed to Agy — through native Herdr `agent prompt` or non-Herdr `agy --print` —
+(Agy Office Phase 2, a Phase 3b fix wave, or any ad hoc agy delegation) MUST specify all of the
+following. A prompt missing any of these is not ready to dispatch.
 
 **Load the `agy` skill before your first dispatch.** It is the living record of the CLI's sharp edges —
 flag ordering, workspace semantics, model names, quota, live monitoring. This file covers what the

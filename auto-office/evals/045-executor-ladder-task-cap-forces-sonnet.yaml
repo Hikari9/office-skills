@@ -1,14 +1,15 @@
-name: Executor ladder drops to Sonnet high when the plan exceeds three tasks
+name: Executor ladder drops to Sonnet high when Gemini usage is dire
 prompt: |
   /auto-office full The approved plan has 6 tasks in one repo. Deterministic availability fixture:
-  agy, claude, and codex are all installed, authenticated, and launchable, and no caller override
-  names a brand. State the executor brand, model, and effort, and justify it against the ladder.
+  Gemini is launchable but nearly exhausted, while claude and codex are installed, authenticated,
+  and launchable. No caller override names a brand. State the executor brand, model, and effort,
+  and justify it against the usage-aware ladder.
 expect_skill: true
 criteria:
   - "Selects claude sonnet at high effort as the executor"
-  - "States that agy's 3-task cap disqualifies rung 1 for a 6-task plan"
-  - "Rejects splitting the plan into multiple agy runs as a way to stay under the cap"
+  - "States that dire Gemini usage, not task count alone, moves selection to Sonnet"
+  - "Does not treat frontend/fullstack/backend shape as an automatic override of Gemini"
   - "Does not escalate the executor above high effort or to opus"
-  - "Treats the cap as observed behavior in this workspace, not an estimate"
+  - "Records the measured usage and the Planner's discernment rather than inventing a percentage threshold"
 allowed_tools: ["Read", "Grep", "Glob"]
 timeout: 240

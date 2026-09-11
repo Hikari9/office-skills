@@ -232,7 +232,7 @@ lives now.
 | Claude: automatic `gh issue create` | `auto-office/skills/claude-planning/SKILL.md` |
 | Claude: routing table (spoke pointers) | `claude-office/SKILL.md` (Routing table) |
 | Claude: Phase 1, issue tracking, interview, explorer dispatch, plan sections, blast-radius ceiling, strategy/effort table, dependency graph, deploy-scoping rule, claims discipline, both 2026-08-01 plan-defect anecdotes, invariant-by-construction rule, presenting-the-plan, approval | `auto-office/skills/claude-planning/SKILL.md`; core: `office-core/protocol/plan-contract.md` |
-| Claude: Phase 2, one executor per repo, `--cli`/`--in-session` dispatch, non-conflicting prep, handoff-file reading, Upline handling | `auto-office/skills/claude-executor/SKILL.md`; core: `office-core/protocol/evidence-and-handoff.md` |
+| Claude: Phase 2, planner-designed executor lanes (one or more per repo), `--cli`/`--in-session` dispatch, one writer per worktree, non-conflicting prep, handoff-file reading, Upline handling | `auto-office/skills/claude-executor/SKILL.md`; core: `office-core/protocol/evidence-and-handoff.md` |
 | Claude: Phase 3, fresh reviewer, build-evidence reuse, live-write read-back, `PLAN DEFECT`, fix-triage matrix, 5-round cap | `auto-office/skills/claude-reviewer/SKILL.md` + `auto-office/references/review-gate.md`; core: `review-states.md` |
 | Claude: Phase 4, final plan removal/ready/merge, document/sync/close-loops sequence, ≤6-line report, "make the skill better" routing | `auto-office/skills/claude-closeout/SKILL.md` + `auto-office/references/closeout.md` |
 | Claude: composing-with-other-skills paragraph | `claude-office/SKILL.md` (Composing with other skills) |

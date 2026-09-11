@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Core `17.9.0`: Herdr dispatch now documents native Agy support and adds the bounded
+  `herdr-wait.sh` task monitor for delegated work.
+
 ## 16.5.0 — 2026-09-10
 
 Core `17.8.0`.

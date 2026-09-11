@@ -1,5 +1,28 @@
 # Changelog — auto-office
 
+## Unreleased — 2026-09-11
+
+- Core `17.9.0`: Herdr dispatch now starts Agy natively with `agent start --kind agy`, submits
+  briefs through `agent prompt`, and uses the bounded `herdr-wait.sh` task monitor instead of a
+  silent shell wrapper.
+
+**Maintainer decision: usage-aware v4.3 routing defaults** (issue #70 follow-through).
+
+- **Scouts:** Codex `gpt-5.6-luna` medium → Gemini `gemini-3.7-flash-low` → Claude `haiku` low.
+  Scouts now use the executor dispatch form: Herdr when available, same-brand in-session otherwise,
+  and cross-brand CLI otherwise; every scout is fresh and read-only.
+- **Executors:** Gemini `gemini-3.8-flash-medium` → Claude `sonnet` high → Codex
+  `gpt-5.6-luna` xhigh. Usage, launchability, and repeated failures outweigh task-shape scores;
+  there is no hardcoded quota threshold, and UNKNOWN usage prefers Gemini. Planner-caused malformed
+  calls are retried at the same rung.
+- **Review:** Codex Luna xhigh is the default for code and plan review; Claude Opus low is the only
+  fallback. Agy Office uses Gemini Flash latest high, currently `gemini-3.8-flash-high`.
+- **Executor topology:** removed the one-executor-per-repo narrowing. The Planner now engineers the
+  task graph and may dispatch multiple executor lanes for one repo, each in its own worktree and
+  branch; eligible handoffs are collated as they arrive. One writer per worktree remains binding.
+- **Benchmarks:** refreshed the snapshot from Intelligence Index v4.3 and current Coding Agent Index
+  methodology, with role-relevant component weights and explicit cross-version cautions.
+
 ## 17.10.0 — 2026-09-10
 
 Core `17.8.0`.
