@@ -4,9 +4,9 @@ auto-office owns routing, the loop, **and the claude route's mechanics**. For th
 routes it owns nothing: each phase loads that sibling office's spoke, so a fix to the `agy` launch
 form or the `codex exec` background-launch rule lands in one place and this office inherits it.
 
-The claude route lives here because `claude-reviewer` is the default code-review gate for **every**
-route, whoever executed. A gate every run depends on does not belong in a plugin a run might not
-have installed.
+The codex route holds the default code-review gate for **every** route, whoever executed. The Claude
+route remains the always-available Opus-low fallback; a gate every run depends on does not belong in
+a plugin a run might not have installed.
 
 Sibling paths (`agy-office/`, `codex-office/`) are installed plugin roots. Claude paths are local to
 this plugin.
@@ -34,7 +34,7 @@ Keep emitting `executor` as the role id in schema fields (`office-kernel`, `run-
 | Executor packet / brief contract | `codex-office/skills/codex-executor` | `auto-office/skills/claude-executor` | `agy-office/skills/agy-executor` |
 | Independent verification pass | — | — | `agy-office/skills/agy-verification` (**mandatory**) |
 | **Plan-review** gate | `codex-office/skills/codex-reviewer` at `codex-luna` **xhigh** | `auto-office/skills/claude-reviewer` at `opus` **low** | `agy-office/skills/agy-reviewer` at `agy` **high** |
-| **Code-review** gate | `codex-office/skills/codex-reviewer` at `codex-luna` **`high` floor / `xhigh` standing default**, priced by blast radius | `auto-office/skills/claude-reviewer` at `opus` **low** | **never** — agy does not hold this gate |
+| **Code-review** gate — **default holder: codex** | `codex-office/skills/codex-reviewer` at `codex-luna` **`high` floor / `xhigh` standing default**, priced by blast radius | `auto-office/skills/claude-reviewer` at `opus` **low** — the **fallback** holder | **never** — agy does not hold this gate |
 | Answering a blocked background agent | — | `auto-office/skills/claude-cli-send-message` | — |
 | Closeout mechanics | `codex-office/skills/codex-closeout` | `auto-office/skills/claude-closeout` | `agy-office/skills/agy-closeout` |
 
@@ -47,10 +47,10 @@ so it needs no diff package and no gate output — and it runs exactly once.
 
 - **Load only the spoke for the brand you are dispatching.** A role never receives another office's
   material, and never the whole corpus.
-- **Code-review mechanics come from `auto-office/skills/claude-reviewer`** whenever the reviewer is
-  Opus, which is the default regardless of who executed. The `codex-reviewer` / `agy-reviewer` spokes
-  are loaded only when a caller override, the Codex-as-planner case, or a **plan** review puts that
-  brand in the chair.
+- **`codex-office/skills/codex-reviewer` holds code review by default** at Luna xhigh. Load
+  `auto-office/skills/claude-reviewer` only when the Opus-low fallback takes the chair — codex is
+  unavailable, a caller names Claude, or a codex executor needs a different-brand reviewer.
+  `agy-reviewer` is loaded only for a **plan** review.
 - **Two floors, declared separately, per brand.** On the claude route both are `opus` low. On the
   codex route the **plan**-review floor is `codex-luna` **xhigh**, and the **code**-review floor is
   `codex-luna` **`high`** with `xhigh` as its standing default (re-declared 2026-08-29; see

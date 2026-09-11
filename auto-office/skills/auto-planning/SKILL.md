@@ -28,7 +28,7 @@ Announce before doing anything else:
 ```
 auto-office · gear: <express|full> (<the fit-test reason, one clause>)
 executors: <n> (<brand(s)>, <fit reason>) · milestones: <n>
-reviewer: opus low · plan-reviewer: <brand> <model> low   [full only]
+reviewer: codex-luna xhigh (opus low fallback) · plan-reviewer: <brand> <model> low   [full only]
 headroom: <per window, with reset times, UNKNOWN where a probe failed>
 loop: on · overrides: <none|…>
 ```
@@ -44,17 +44,11 @@ is meaningless (one run read `82% → 52% → 85%` and none of it described anyt
 2. **File the tracking issue** by default, before exploring.
 3. **Interview to clarity.** Ask in batches, not one at a time. The floor below is not optional in
    full; in express, interview only until a remaining unknown would not change the implementation.
-4. **Recon with agy scouts, in parallel — `agy` is the default scout brand and you need a reason to
-   pick another.** Read-only, each returning file paths and line numbers. It is the one role where
-   agy is unambiguously right: breadth-first reading at ~340 tok/s, N in parallel finishing before a
-   deeper single pass starts producing, and no evidence-authoring involved (§18 of the ledger — agy
-   is wrong where the *deliverable* is evidence, and a scout's deliverable is locations).
-   **If agy is unavailable — quota, outage, not installed — fall back to the planner's own brand at
-   its LOWER tier**, never at planner tier: `haiku` in-session for a claude planner,
-   `gpt-5.6-luna` for a codex planner. Scouting is breadth-first reading, so the fallback preserves
-   the cheap-and-parallel property that made agy right; falling back to planner tier would spend
-   Decider rates on locating files. Say in the kickoff line that agy was unavailable and what
-   replaced it.
+4. **Recon with fresh Phase 1 scouts, in parallel.** Read-only, each returning file paths and line
+   numbers. The nominal scout order is Codex `gpt-5.6-luna` medium, Gemini `gemini-3.7-flash-low`,
+   then Claude `haiku` low; if usage is UNKNOWN, prefer Gemini. Probe the selected brand immediately
+   before dispatch and record the fallback if launchability or quota changes. No scout may inherit
+   planner settings or run above medium effort.
    Every scout dispatch states, verbatim: *"Phase 1 is PLAN ONLY. `HEAD` must not move. Read and
    report locations; do not create, edit, or delete files."* Also name which worktree/checkout the
    scout is reading in — explicit ownership, not an assumption it will infer the right tree. Observed
@@ -148,7 +142,7 @@ Then the per-task rows — **instructions to that executor**, not launches:
 
 | # | Task | Worker brand | Model+effort | Dispatch | Diagnosis | Why this dispatch form |
 |---|---|---|---|---|---|---|
-| 1 | Locate every call site of `sendReceipt` | agy | `agy` high | **cli ×3** (different brand) | settled | Read-only breadth; 3 parallel scouts beat one deep read, and a different brand needs its own process |
+| 1 | Locate every call site of `sendReceipt` | agy | `gemini-3.7-flash-low` | **cli ×3** (different brand) | settled | Read-only breadth at low effort; 3 parallel scouts beat one deep read, and a different brand needs its own process |
 | 2 | Add the queue column + migration | — | executor itself | **inline** | settled | The executor is the backend specialist here; a brief would restate the whole task |
 | 3 | Wire the retry flag through the config | — | executor itself | **inline** | settled | Two files the executor already has loaded — a brief costs more than the edit |
 | 4 | Reconcile the two conflicting invariants | claude | `opus` high — **worker upgrade** | **in-session** | **unverified** | Arbitration, not implementation: a different *kind* of question. Declared here, recorded in telemetry |
@@ -165,7 +159,7 @@ parallel, and where the barriers are. One glance should answer "how wide does th
 ```
 PLANNER (opus, this session)
   │
-  ├─▶ EXECUTOR  sonnet high         ·  wt-retry-queue  ·  tasks 1-5 end to end
+  ├─▶ EXECUTOR  Gemini Flash medium ·  wt-retry-queue  ·  tasks 1-5 end to end
   │     │
   │     ├─ T1 ──┬─▶ worker agy (cli)   scan handlers/     ┐
   │     │       ├─▶ worker agy (cli)   scan jobs/         ├ parallel, barrier before T2
@@ -176,13 +170,13 @@ PLANNER (opus, this session)
   │     ├─ T4 ─── worker claude opus (in-sess) ─┘  arbitration, runs alongside T3
   │     └─ T5 ─── in-session --bg (blocking wait)
   │
-  ├─▶ CODE REVIEWER  opus low   (resume vs fresh per round — cost call, not a default)   ← planner-dispatched, per task
+  ├─▶ CODE REVIEWER  codex-luna xhigh / opus low fallback   (resume vs fresh per round — cost call, not a default)   ← planner-dispatched, per task
   └─▶ [Phase 1 only] read-only scouts
 ```
 
 - **`Model+effort` is pre-filled** from [auto-routing](../auto-routing/SKILL.md)'s table. The
-  **executor's** cell is fixed at sonnet-tier high; a non-default value there is a **caller override**
-  and must be labelled as one, in the cell.
+  **executor's** cell is pre-filled from the ordered Gemini → Sonnet → Codex ladder; a non-default
+  value there is a **caller override** and must be labelled as one, in the cell.
 - **A worker's cell is a real decision, and this table is where it is made.** The default is the
   executor's tier, but the planner may assign a higher tier or a different brand when the sub-task is
   a *different kind* of question — a judgement call, an arbitration, an unconfirmed diagnosis — not

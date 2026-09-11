@@ -5,7 +5,8 @@ captured: 2026-08-14
 source: artificialanalysis.ai (Intelligence Index v4.1.1, Coding Index, Coding Agent Index v1.1)
 staleness_horizon_days: 30
 last_move: Gemini 3.7 Flash shipped and takes the flash tier (high 56, up from 3.6's 50) — now
-           the highest-index non-frontier model in the catalog and agy's executor default.
+           the highest-index non-frontier model in the catalog; agy uses the newer 3.8 Flash medium
+           slug as the executor default.
            Luna variants added with their real ordering (max 52 > xhigh 50 > high 47).
 ```
 
@@ -47,12 +48,12 @@ leaderboard.
 | Claude Sonnet 5 (max) | 53 | 74 | 1.72 | — |
 | Gemini 3.7 Flash (medium) | 53 | — | — | — |
 | GPT-5.6 Luna (max) | 52 | 172 | 0.07 | — |
-| Claude Opus 5 (low) | 51 | 51 | 0.43 | **plan-review gate; code-review gate** |
+| Claude Opus 5 (low) | 51 | 51 | 0.43 | **plan-review gate; Claude code-review fallback** |
 | Gemini 3.7 Flash (low) | 51 | — | — | bulk mechanical work |
 | Gemini 3.6 Flash (high) | 50 | 217–304 | 0.56 | superseded by 3.7 |
 | Gemini 3.5 Flash | 50 | 171 | 0.69 | — |
-| **GPT-5.6 Luna (xhigh)** | **50** | 140 | **0.17** | **codex plan review; codex code review of a high-blast-radius leg; hard diagnosis** |
-| GPT-5.6 Luna (high) | 47 | — | — | **codex executor; codex code review of a low-blast-radius leg** |
+| **GPT-5.6 Luna (xhigh)** | **50** | 140 | **0.17** | **codex plan review; default codex code review; final executor fallback** |
+| GPT-5.6 Luna (high) | 47 | — | — | codex code review of a low-blast-radius leg |
 
 **Two orderings in this table are counter-intuitive and are the reason it exists.** Luna **max (52)
 outscores Luna xhigh (50)** — effort labels do not rank monotonically, so read the row rather than
@@ -93,10 +94,10 @@ commands — weight it above LiveCodeBench-style scores when judging executor fi
   back. It still does not own *decisions* (56 vs 61 is a real gap on arbitration and ambiguity), but
   "flash is for speed, not smarts" is no longer true and should not be repeated in a brief.
 - **Luna is the price play, not the capability play.** xhigh at **50** for **$0.17/M** is a sixth of
-  Terra's cost; it remains the Codex executor's fit-selected default because an executor implements
-  an already-reviewed plan, which is the task least sensitive to the top of the index. Claude Sonnet
-  high is the office's standing executor default; if a run's difficulty lives in the *implementation*
-  rather than the plan, changing that default is a user decision.
+  Terra's cost; it remains the Codex executor's final fallback because an executor implements an
+  already-reviewed plan, which is the task least sensitive to the top of the index. Gemini
+  `gemini-3.8-flash-medium` is the office's standing executor default, with Claude Sonnet high as
+  the next rung when Gemini is unavailable or quota-poor.
 - **Speed is a real axis, not a tiebreak.** On read-heavy fan-out, N parallel Flash scouts finish
   before one Opus pass starts producing. On a single long ambiguous chain, that advantage inverts
   completely.

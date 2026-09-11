@@ -47,13 +47,13 @@ exceptions:
       production-facing writes, external sends, and user-owned decisions. The loop may not raise a
       cap, remove a phase, downgrade the reviewer, or widen its declared blast radius.
     widens_core_authority: false
-  - id: auto-opus-reviewer-floor
+  - id: auto-codex-reviewer-default
     owner: auto-office
     reason: >
-      The code-review floor is a fresh Opus subagent at low regardless of which brand executed.
-      The Codex Luna reviewer path applies only when Codex is the planner. This is strictly narrower
-      than core, which permits any independent reviewer. Core 3.0.0 states that a declared floor
-      binds the gate it was declared for, so this floor is the code-review gate's alone.
+      The code-review default is a fresh Codex Luna reviewer at xhigh, with Opus low as the
+      independent fallback regardless of which brand executed. This is strictly narrower than core,
+      which permits any independent reviewer. Core 3.0.0 states that a declared floor binds the gate
+      it was declared for, so this policy is the code-review gate's alone.
     widens_core_authority: false
   - id: auto-plan-review-gate
     owner: auto-office
@@ -62,8 +62,8 @@ exceptions:
       pass over the plan document by a fresh agent of the planner's own brand, at that brand's
       Opus-tier low effort, which then retires permanently. Core 3.0.0 explicitly permits an office
       to add a plan-review gate ahead of user approval, and this one adds a gate rather than
-      absorbing any existing one — the code-review gate, its opus-low floor, and every verdict
-      are untouched. Its floor is declared separately (opus low) and binds only itself. It runs
+      absorbing any existing one — the code-review gate and every verdict are untouched. Its floor is
+      declared separately (opus low) and binds only itself. It runs
       exactly once and is never recalled, so it can never gate work it previously approved.
     widens_core_authority: false
   - id: auto-no-coordinator
@@ -79,9 +79,8 @@ exceptions:
   - id: auto-mandated-executor-tier
     owner: auto-office
     reason: >
-      Claude Sonnet high is the standing executor default. Every executor still runs at its
-      brand's fixed default tier when another brand is selected: `gpt-5.6-luna` high for codex,
-      Flash latest high for agy. No self-escalation and no model substitution without an explicit
+      Gemini `gemini-3.8-flash-medium` is the standing executor default, followed by Claude Sonnet
+      high and Codex Luna xhigh. No self-escalation and no model substitution without an explicit
       caller override. A worker's brand and tier are assigned by
       the planner in the plan and may exceed the executor's tier — which core's delegation test
       anticipates, since a delegation is allowed to buy tier — but a worker is never promoted at run

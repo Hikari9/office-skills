@@ -1,6 +1,6 @@
 ---
 name: auto-office
-description: Use ONLY when explicitly invoked via /auto-office; never self-triggered by task shape. Router office — a fit test picks the gear, then ONE codex / agy / claude executor per repo runs the approved plan end to end.
+description: Use ONLY when explicitly invoked via /auto-office; never self-triggered by task shape. Router office — a fit test picks the gear, then one usage-aware codex / agy / claude executor per repo runs the approved plan end to end.
 ---
 
 # Auto Office
@@ -19,9 +19,9 @@ Planner ─▶ Plan-reviewer ─▶ retires │ Planner ─▶ ONE Executor per 
 |---|---|---|---|
 | **Planner** | The current agent (you) | Interview → plan + GOAL → approval; **dispatch ONE executor per repo**; hold the review gate; answer consults; perform user-facing and irreversible actions | **Dispatch a per-task worker**; approve work, its own included |
 | **Plan-reviewer** | Fresh, planner's brand, Opus **low**. **Full gear only** | One adversarial pass before approval, then **retires** | Distribute work; return; hold a later gate |
-| **Executor** | **One per repo**, brand per plan, **sonnet-tier high always** | **Execute the WHOLE plan end to end** — bootstrap plan-only first commit, named-branch push, one draft PR and resume comments; then every task in dependency order; **self-review every task and the whole diff**; write `EXECUTOR-STATE.md` | Approve its own work; mark ready, remove the plan, merge, exceed the ceiling; amend a user-approved field |
+| **Executor** | **One per repo**, usage-aware ladder: Gemini Flash medium → Sonnet high → Codex Luna xhigh | **Execute the WHOLE plan end to end** — bootstrap plan-only first commit, named-branch push, one draft PR and resume comments; then every task in dependency order; **self-review every task and the whole diff**; write `EXECUTOR-STATE.md` | Approve its own work; mark ready, remove the plan, merge, exceed the ceiling; amend a user-approved field |
 | **Worker** | Per task; **any** brand/model/effort the plan declares | One task; Tester follows the core worker contract | Widen scope; be promoted mid-run |
-| **Reviewer (code)** | Fresh `opus` **low** (`codex-luna` xhigh/high when Codex *plans*) | Adversarial gate every round | Fix what it gates |
+| **Reviewer (code)** | Fresh `codex-luna` **xhigh**; Opus **low** fallback | Adversarial gate every round | Fix what it gates |
 
 **Core principle: no one gates their own work, and inline work is still reviewed.** Self-review is
 mandatory for **every** role and is a *pass*, never an approval
@@ -63,7 +63,7 @@ interview? (4) would an adversarial reader plausibly catch something?
 | Answers | Gear | What runs |
 |---|---|---|
 | Yes to **(1)** | **full** | Everything below. Irreversible risk warrants full machinery. |
-| No to (1), **2+** across (2)–(4) | **express** | Short plan → bootstrap → implement → Opus review → closeout. Allowed even for prod-facing. **Cap 2 rounds**; 2nd `CHANGES REQUIRED` requires planner disposition, then full only if continuing. |
+| No to (1), **2+** across (2)–(4) | **express** | Short plan → bootstrap → implement → Luna xhigh review (Opus low fallback) → closeout. Allowed even for prod-facing. **Cap 2 rounds**; 2nd `CHANGES REQUIRED` requires planner disposition, then full only if continuing. |
 | No to (1), **≤1** yes | **direct** | No office. Work under the normal safety rules, then stop. Allowed even for prod-facing. |
 
 **Express promotes to full before dispatch** if the run needs >1 executor, >1 repo, or more than ~3
@@ -76,8 +76,9 @@ Never downgrade for quota; that is a routing problem. Full rule:
 
 ## Routing, in one screen
 
-Brand by fit — **claude** cross-cutting ambiguity (preferred default), **codex** backend/data/infra/long-horizon,
-**agy** frontend, recon, and bulk breadth. Rubric:
+Brand by the ordered usage-aware defaults — **agy** Gemini Flash medium first, **claude** Sonnet high
+second, and **codex** Luna xhigh third. Fit, launchability, and live quota may move a run down that
+ladder; the reviewer is a fresh Codex Luna xhigh gate with Opus low as fallback. Rubric:
 [auto-routing](skills/auto-routing/SKILL.md).
 
 **Dispatch form is derived, not priced** — with `HERDR_ENV=1`, real children use [Herdr](office-core/skills/herdr/SKILL.md)
@@ -96,7 +97,7 @@ unavailable. Agy: **3 consecutive tasks**, hard cap.
 **Live-system work is delegated WITH its access** — MCP/API tools enumerated in the launch,
 production reads included, shape pinned in the brief, read-back required.
 
-**Model and effort are fixed by role**; `xhigh`/`ultra`/`max` and model substitutions are **user-invoked only**.
+**Model and effort are fixed by the routing table**; substitutions are explicit caller overrides only.
 
 ## Non-bypassable safety rules
 
@@ -108,12 +109,13 @@ production reads included, shape pinned in the brief, read-back required.
   bootstrap, the Executor may dispatch task workers and Tester under the core contract. A
   planner-launched numbered-task worker is a protocol violation.
 - **No self-approval, ever** — not the executor on its diff, not the planner on its inline fix.
-- Executor is **sonnet-tier high** always; a worker's tier is the plan's call, never raised mid-run.
+- Executor selection follows the ordered, usage-aware Gemini → Sonnet → Codex ladder; a worker's tier
+  is the plan's call, never raised mid-run.
 - A delegation buys tier, isolation, parallelism, **or price** — and **every inline row states in a
   clause what a delegation would have bought.** File and task count are never the test.
 - One final plan approval after all Phase 1 gates and amendments, before dispatch — silence is not
   approval.
-- Fresh Opus code reviewer; resume vs. fresh per round is a cost call, not a default (see
+- Fresh Codex Luna xhigh code reviewer, with Opus low only as fallback; resume vs. fresh per round is a cost call, not a default (see
   `review-states.md`). **`CHANGES REQUIRED`** sends the planner to a disposition checkpoint; no
   approval without pasted evidence; **5-round cap** (2 in express).
 - `PLAN DEFECT` and `BRIEF DEFECT` exit the loop without consuming a round; two `CHANGES REQUIRED`

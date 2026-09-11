@@ -23,7 +23,7 @@ for each task the executor completes and hands back:
     verify independently      (mandatory extra pass if agy executed)
     executor returns BRIEF DEFECT → stop this task, do not implement, do not consume a round
                                     → planner (technical) or user (scope)
-    fresh Opus review         (resumed reviewer, same session across rounds)
+    fresh Codex Luna xhigh review (Opus low fallback; resumed reviewer, same session across rounds)
     while verdict == CHANGES REQUIRED and round < cap:
         planner disposition checkpoint
         if FIX_AND_REVIEW → triage → fix → re-review

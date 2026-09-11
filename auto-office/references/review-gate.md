@@ -1,5 +1,9 @@
 # Phase 3 — Adversarial Review (detail)
 
+The default code-review route is `codex-office/skills/codex-reviewer` at `codex-luna` xhigh. This
+reference documents the `auto-office/skills/claude-reviewer` Opus-low fallback and applies only when
+that fallback is selected.
+
 When `HERDR_ENV=1`, do not use the in-session `Agent(...)` invocation below. Load
 [`../office-core/skills/herdr/SKILL.md`](../office-core/skills/herdr/SKILL.md), place the fresh
 reviewer in the required Herdr pane, send the brief with `herdr agent prompt`, and close only the
@@ -20,7 +24,7 @@ Agent(
 )
 ```
 
-**The code-review floor is `opus` low.** The gate's strength is independence, freshness, and a
+**The Claude fallback code-review floor is `opus` low.** The gate's strength is independence, freshness, and a
 pointed brief — not effort tier. In-session dispatch has no `effort` parameter, so the brief still
 carries the rigor as stated instruction: open it with *"Do not stop at the first defect you find."*
 A CLI-launched reviewer passes `--effort low` explicitly, and a missing `--effort` is a dispatch

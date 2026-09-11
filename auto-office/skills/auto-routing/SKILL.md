@@ -82,28 +82,37 @@ Not derived from the benchmark table, and a leaderboard movement does not change
 |---|---|---|---|---|
 | Planner | `opus` (the session) | `codex-luna` | `agy` | fixed |
 | **Plan-reviewer** (full gear only) | `opus` **low** | `codex-luna` **xhigh** | `agy` **high** | fixed |
-| Executor | `sonnet` **high** | **`gpt-5.6-luna` `high`** | **Flash latest `high`** | **fixed** |
+| **Executor** | `sonnet` **high** *(rung 2)* | `gpt-5.6-luna` **xhigh** *(rung 3)* | **`gemini-3.8-flash-medium`** *(rung 1)* | **ordered, usage-aware** |
 | Worker | `sonnet` high *default* | `gpt-5.6-luna` high *default* | Flash latest `high` *default* | **ANY brand/model/effort the planner declares** |
-| Reviewer (code) | `opus` **low** | `codex-luna` **xhigh** default, **`high`** floor *(only when codex is planner)* | never reviews | claude fixed; **codex priced by blast radius** — see *Reviewer selection* |
+| **Reviewer (code)** | `opus` **low** *(fallback)* | **`codex-luna` `xhigh` default, `high` floor** | never reviews | **codex first, priced by blast radius; claude is the fallback** — see *Reviewer selection* |
 
 **The plan-reviewer's brand is always the planner's brand** — it is not routed by fit. It reads one
 document the planner just wrote; same-brand is an advantage there, not the conflict of interest it
 would be on a diff. Executor and worker brand *is* routed by fit.
 
-**The executor is sonnet-tier, high effort — Claude Sonnet is the standing default, and the other
-brands remain fit-selected alternatives.**
+**The executor is an ordered default ladder, with Planner discernment over usage and fit.** The
+first available rung wins unless a caller explicitly overrides it.
 
-| Executor brand | Model + effort | Status |
-|---|---|---|
-| **claude** | **`sonnet` high** | **standing office default, set 2026-09-08** |
-| agy | **Flash latest** `high` | fit-selected alternative; resolve with `agy-office/scripts/agy-model.sh` |
-| codex | **`gpt-5.6-luna` `high`** | fit-selected alternative or caller override |
+| # | Executor brand | Model + effort | Status |
+|---|---|---|---|
+| **1** | **agy** | **`gemini-3.8-flash-medium`** | default when usable or UNKNOWN; fastest quality-preserving choice |
+| **2** | **claude** | **`sonnet` high** | fallback when Gemini is unavailable, quota-poor, or repeatedly fails |
+| **3** | **codex** | **`gpt-5.6-luna` `xhigh`** | final fallback when Gemini and Sonnet are unavailable or repeatedly fail |
 
-**Effort goes to the gates, not to the implementation.** The default executor stays at Claude
-Sonnet high because a bigger executor does not fix a wrong brief; it implements it more
-convincingly. Codex remains at Luna high when its backend/data/infra fit selects it, while the
-Codex **plan**-review gate remains at `xhigh` and the Codex **code**-review effort is still priced
-by blast radius (*Reviewer selection*).
+**Task shape no longer mechanically disqualifies Gemini.** Fit still matters, but the ordered
+defaults and real launch/quota evidence take priority. A launch or quota failure permits immediate
+fallback; repeated quality failures may move the Planner down the ladder and must be recorded.
+
+## Phase 1 scout policy
+
+Phase 1 scouts are fresh, read-only breadth agents. They never inherit planner or executor settings
+and may not run above medium effort.
+
+1. **Nominal default:** Codex `gpt-5.6-luna` at `medium`.
+2. **Unknown-usage path:** prefer Gemini `gemini-3.7-flash-low` at `low`.
+3. **Fallback:** when the selected rung is unavailable or repeatedly fails, continue to Gemini low,
+   then Claude `haiku` low. A scout may not promote itself to planner, executor, reviewer, `high`,
+   `xhigh`, or `max`.
 
 Read the index before treating either number as a ranking. Luna is **52 / 50 / 47** across
 max / xhigh / high, so the executor gives up 3 points and the plan reviewer gains 3. A code review
@@ -134,7 +143,7 @@ figures are in [model-benchmarks.md](../../references/model-benchmarks.md), and 
 | Kind of sub-task | Reach for | Because |
 |---|---|---|
 | Bulk mechanical edit, rename sweep, file-by-file application | `haiku`, Flash latest `low` | Index barely moves the outcome; speed and price do |
-| Read-only recon, breadth-first search across many files | Flash latest `high` | Highest index available at flash speed — N in parallel beat one deep read |
+| Read-only recon, breadth-first search across many files | `gpt-5.6-luna` medium; Gemini low when usage is unknown or Luna is unavailable; Haiku last | N medium/low scouts beat one deep read |
 | Ordinary implementation inside a clear brief | executor's own tier | The default; a bigger model implements a wrong brief more convincingly |
 | Long backend/data chain, terminal-heavy | `gpt-5.6-luna` high (47) or `gpt-5.6-terra` (55) | Agentic-coding strength and per-token price, not raw index |
 | Arbitration, conflicting invariants, unconfirmed diagnosis | `opus` high (59) | A different *kind* of question — the only case that reliably repays the tier |
@@ -167,10 +176,10 @@ resolves conflicting rules *within* one gate and never promotes one gate to the 
 binds the gate it was declared for. Reviewer strength comes from independence, freshness, and a
 pointed brief — not from effort tier.
 
-**High is the ceiling *for the office*. `xhigh`, `ultra`, and `max` are user-invoked only** — which
-is exactly what the codex reviewers' standing `xhigh` default is: user-invoked once, durably, and
-recorded above with its date. A standing default set by the user is not a counter-example to this
-rule; a planner reaching for `xhigh` on its own initiative still is. Never escalate an effort
+**High is the ceiling *for ordinary office choices*. `xhigh` is reserved for the standing Codex Luna
+review gate and the final Codex executor rung; `ultra` and `max` remain user-invoked only. These
+standing defaults were user-invoked once, durably recorded, and are not a licence for a planner to
+raise any other role. Never escalate an effort
 tier or substitute a bigger model on your own initiative — not to be safe, not because a task looks
 hard, not because the benchmark table shows a higher-scoring variant. If a task genuinely seems to
 need more than the table gives it, that is a recommendation to surface, not a default to change.
@@ -194,7 +203,7 @@ Inline work remains inline. When Herdr is absent, the table below is unchanged.
 | Any real delegation while `HERDR_ENV=1` | **Herdr pane** | Visible topology, prompt/read/wait control, and no hidden in-session child |
 | Planner → executor, **one per repo, whole plan** | **CLI, own worktree** | Isolation, unattended running, and a ~6× cheaper writer that already holds the reviewed plan |
 | Planner → code reviewer | **CLI / fresh agent** | Independence — the executor may never launch its own gate |
-| Planner → read-only scout, **Phase 1 only** | **CLI, `agy` by default**; if agy is unavailable, the planner's own brand at its **lower** tier (`haiku` in-session for claude, `gpt-5.6-luna` for codex) — **never planner tier** | Breadth before a plan or an executor exists |
+| Planner → read-only scout, **Phase 1 only** | **CLI, nominally Codex `gpt-5.6-luna` medium → Gemini `gemini-3.7-flash-low` → Claude `haiku` low**; UNKNOWN usage prefers Gemini — never planner tier or above medium | Breadth before a plan or an executor exists |
 | Executor → worker | **in-session / inline** | Reuse of the executor's live context — the value being spent |
 | Executor → worker of a **different brand** | **CLI**, necessarily | The only exception in the table |
 | Planner → itself, for a review fix **whose brief would exceed the edit** | **inline** | Nothing — which is the point |
@@ -216,15 +225,19 @@ passing only `--model sonnet` silently runs at the CLI's default (medium), so th
 the process runs medium, and nothing in the output says so.
 
 ```bash
-# claude
+# claude fallback
 --model sonnet --effort high      # executor
 --model opus   --effort low       # code reviewer
 --model opus   --effort low       # plan reviewer
 
 # codex — there is NO --effort flag; effort is a config override
--m gpt-5.6-luna -c model_reasoning_effort="high"   # executor
--m gpt-5.6-luna -c model_reasoning_effort="xhigh"    # code reviewer (codex-as-planner); "high" for a low-blast-radius leg
+-m gpt-5.6-luna -c model_reasoning_effort="xhigh"   # executor fallback rung
+-m gpt-5.6-luna -c model_reasoning_effort="xhigh"    # code reviewer default; "high" for a low-blast-radius leg
 -m gpt-5.6-luna -c model_reasoning_effort="xhigh"    # plan reviewer
+
+# agy
+--model "gemini-3.8-flash-medium"                 # executor rung 1
+--model "gemini-3.7-flash-low"                    # Phase 1 scout
 ```
 
 **The codex form is the one this rule was written for.** Verified 2026-08-25: no office was passing
@@ -362,7 +375,7 @@ The default, most cost-efficient shape:
 ```
 agy scouts (parallel, read-only)  →  planner picks the approach
                                   →  codex or claude implements
-                                  →  fresh Opus reviewer gates
+                                  →  fresh Codex Luna xhigh reviewer gates (Opus low fallback)
 ```
 
 Rules that make this safe:
@@ -412,11 +425,10 @@ The reviewer must explicitly check, with evidence, that agy did not:
 
 ## Reviewer selection
 
-**Code review: fresh Opus, low, by default, always.** The `codex-luna` reviewer path applies only
-when **Codex is the planner** (i.e. a Codex session invoked this workflow), not merely when codex
-executed. A caller may add a second opinion; a caller may not drop below the floor. **agy never holds
-the code-review gate** — long, adversarial, multi-round work against a diff is its documented
-weakness, and the miss-list is why.
+**Code review: fresh `codex-luna` at `xhigh` by default; fresh Opus at `low` as fallback.** The
+Codex reviewer is independent of whichever brand executed. A caller may add a second opinion but
+may not drop below the applicable floor. **agy never holds the code-review gate** — long,
+adversarial, multi-round work against a diff is its documented weakness, and the miss-list is why.
 
 ### Review effort is priced per leg, by blast radius
 
