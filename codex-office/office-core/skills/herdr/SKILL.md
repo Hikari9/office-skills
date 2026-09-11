@@ -212,41 +212,21 @@ target it with agent prompt/get/wait.`), so self and other are never resolved fr
 and effort is a defect, not a shorthand: it silently inherits whatever tier the harness defaults
 to, not the tier the office priced for that role. Both values come from the dispatching office's
 routing table — never the harness default, never the agent's own judgement — passed as native
-arguments after `--`. `--model`/`--effort` are native arguments for Gemini-backed Agy; Claude-backed
-Agy uses its model slug without effort. For `codex`, effort is a config key, not a flag:
-`-c model_reasoning_effort="<effort>"` (see `codex-office/skills/codex-cli`). The pane direction is
-the topology rule; it does not change the agent's role, worktree, scope, or authority.
+arguments after `--`. `--model`/`--effort` are verified for the `claude` kind. For `codex`, effort
+is a config key, not a flag: `-c model_reasoning_effort="<effort>"` (see
+`codex-office/skills/codex-cli`), and a dispatch missing it falls back to whatever
+`~/.codex/config.toml` says. For `agy`, only `--model` is verified in `agy-office/skills/agy-cli`;
+no effort flag is confirmed there, so this skill does not assert one. The pane direction is the
+topology rule; it does not change the agent's role, worktree, scope, or authority.
 
-### Native Agy launch
-
-Current Herdr supports Agy as a managed agent kind. Under `HERDR_ENV=1`, start Agy with
-`herdr agent start --kind agy`, pass the real Agy flags after `--`, and submit the brief through
-`herdr agent prompt`. This keeps Agy registered with Herdr and makes its terminal transcript
-available through `herdr agent read`.
-
-```bash
-MODEL=gemini-3.7-flash-low
-herdr agent start <unique-name> --kind agy --pane <pane-id> -- \
-  --dangerously-skip-permissions \
-  --print-timeout 45m \
-  --model "$MODEL" \
-  --effort low \
-  --add-dir "$PWD"
-
-herdr agent prompt <unique-name> "$(cat <absolute-brief-path>)" \
-  --wait --timeout 120000
-herdr agent read <unique-name> --source recent-unwrapped --lines 120
-```
-
-Do not pass `--print` for a managed interactive launch. `--print` is the one-shot Agy form and
-delays the response until the process exits; `agent prompt` is the safe multiline submission path
-and preserves the transcript inside the Herdr-managed pane. The native route was verified with
-Herdr 0.9.0 and `gemini-3.7-flash-low`, returning `HERDR_AGY_SMOKE_OK` through `agent read`.
-
-If `herdr agent start --kind agy` is unavailable or the `antigravity-cli` integration is not
-installed, report the capability failure and stop the Herdr dispatch. A plain `herdr pane run`
-wrapper is a deliberately degraded compatibility route, never the silent default under
-`HERDR_ENV=1`.
+**`agent start --kind agy` is for an *interactive* agy session only.** For a one-shot `agy --print`
+script, skip `agent start`: split the pane, then `herdr pane run <pane-id> <absolute-script-path>`
+against the plain shell. `agent start --kind agy -- <script>` hands the trailing arguments to the
+`agy` binary as literal CLI flags, so a script path lands as an unexpected positional argument and
+errors, and the failed call still tags the pane as an idle `agy` agent that silently stops accepting
+`pane run` / `send-keys` input (text lands, Enter does nothing, `pgrep` shows no process). Recovery is
+`herdr pane close <id>` and a fresh split, never a retry into the same pane. Observed 2026-09-03 on
+four lane workers; nothing was lost because the retry happened before any output existed.
 
 **Observed 2026-09-03:** a planner dispatched `herdr agent start m1-rocksec --kind claude --pane
 w1J:p17` with no model or effort. The pane launched at the harness default (opus, medium) for a
@@ -317,24 +297,6 @@ idle at 0k context having received nothing. `send-keys` is positional too
 louder and therefore safer than the `prompt` case). Reading the returned `agent_status` — not the
 echoed text — is what distinguishes the two.
 
-**A watcher that only tests for success is blind to a dropped dispatch.** The natural terminal
-condition — `status is idle-or-done AND the artifact exists` — never fires when the prompt did not
-land, because the agent sits `idle` at 0k with no artifact, which is indistinguishable from "not
-finished yet". Observed 2026-09-09: a review round was watched for an hour's timeout after a
-`--text` misuse, and the watcher emitted nothing the whole time; the planner found the failure by
-hand. Silence is not progress. Every agent watcher needs four exits, not one:
-
-- **done** — terminal state *and* artifact present.
-- **blocked** — herdr's own `blocked` status. An agent waiting on a permission prompt will never
-  self-recover, so this must interrupt rather than be polled past.
-- **never-started** — terminal state, no artifact, `state_change_seq` unchanged across several
-  polls, and `working` never observed. This is the dropped-prompt signature.
-- **stalled** — same, but `working` *was* observed: the agent ran and quit without writing.
-
-Distinguishing the last two is worth the extra variable, because they have different fixes: re-send
-the prompt versus read the pane for why it gave up. A reference implementation lives at
-`.office/watch-agent.sh` in the rock-preview-sync run and is worth copying rather than re-deriving.
-
 **`agent_status` read on its own is not receipt.** `working` observed right after `agent start` is
 frequently startup churn, not the brief being accepted — that is why the bounded `--wait --until
 working` above is stronger than a bare `herdr agent get`: it asserts a state *change* caused by
@@ -385,38 +347,9 @@ When the wait returns:
 - `unknown` or `agent_not_found`: diagnose pane/session loss before considering a re-dispatch.
 
 **Agy is the explicit exception.** Agy's `agent_status` flaps to `idle`/`done` between turns, so
-`agent wait` is not a progress signal for an Agy task. For Agy, use the handoff-plus-commit
+`agent wait` is not a progress signal for an agy task. For agy, use the handoff-plus-commit
 terminal condition and the SQLite step-count check below; use `agent wait` only when you already
-have a terminal condition that makes the returned state meaningful. Native Agy does not remove
-this limitation: Herdr's Antigravity integration reports the conversation after the first prompt,
-but derives lifecycle state from screen output rather than a structured turn stream.
-
-### Standard task wait
-
-`herdr agent wait` is a bounded state wait, not a task-completion contract. Do not keep the planner
-in a foreground wait until a two-hour task finishes: the harness can time out the wrapper even
-while the agent is healthy. Use the repository helper for long delegated tasks:
-
-```bash
-mkdir -p /tmp/office/waits
-nohup office-core/scripts/herdr-wait.sh \
-  --name <unique-name> \
-  --kind <claude|codex|agy> \
-  --worktree <absolute-worktree> \
-  --base <base-commit> \
-  --handoff <absolute-handoff-path> \
-  --poll-seconds 60 \
-  --timeout-seconds 7200 \
-  > /tmp/office/waits/<unique-name>.log 2>&1 < /dev/null &
-echo "watch_pid=$! watch_log=/tmp/office/waits/<unique-name>.log"
-```
-
-The helper emits only state-change/heartbeat lines and exits on `done`, `blocked`, `pane-gone`,
-`never-started`, `stalled`, or `timeout`. **Done** requires the handoff and a commit after the
-captured base. Claude/Codex may use unchanged `state_change_seq` to distinguish a dropped prompt
-from a stalled run; Agy deliberately does not, because its status returns to idle between turns.
-The wait script is a monitor, not an agent launcher: the agent must already have a confirmed prompt
-receipt, and the planner must still read the handoff and run the actual verification commands.
+have a terminal condition that makes the returned state meaningful.
 
 ### Transcript monitoring is a diagnostic fallback
 
@@ -497,89 +430,13 @@ Overloaded`, unrelated to Herdr), and the agent simply continues at its prior co
 the run on it; proceed and retry at the next boundary. When to compact a delegated agent at all is
 the dispatching office's call (auto-office: auto-loop → *Compacting a resumed executor or reviewer*).
 
-### Compact police: the hook pair, and explicit pane reuse
+### Watching an agy agent: query its SQLite conversation, never its status
 
-**A pane compacts itself through hooks, not through a poller.** Two Stop hooks do it, and they are
-split because one has to run inside the turn and the other cannot:
-
-| Hook | Event | Job |
-|---|---|---|
-| `office-core/hooks/compact-advisor.mjs` | `Stop` | reads the pane's own transcript, decides, versions state/request for the boundary |
-| `office-core/hooks/compact-courier.mjs` | `Stop`, `async: true` | waits for the matching advisor boundary, maps session → pane, waits for `idle`/`done`, and sends the directed `/compact` |
-
-```bash
-node eval/hooks/install.mjs --with-auto-compact    # opt-in, Herdr-only
-```
-
-Why this shape and not a watcher:
-
-- **No hook can run a slash command.** The `SlashCommand` tool excludes built-ins like `/compact`,
-  so the command must arrive as pane input. `herdr agent prompt` is the only path, which is why a
-  courier exists at all.
-- **The courier must be `async`.** A pane's Herdr status still reads `working` while its own `Stop`
-  hook runs, so a synchronous courier would wait on the turn it is running inside. Detached, it
-  polls up to `OFFICE_COMPACT_SETTLE_MS` (default 30s) for `idle`/`done` and costs the session
-  nothing.
-- **Addressing its own pane is allowed here.** The rule against prompting your own agent name binds
-  a *model process*. The courier is a detached hook, in the same external-driver position this
-  helper occupies.
-- **The ledger is the authorization.** The courier acts only on a session recorded in
-  `/tmp/office/panes.jsonl` with kind `claude` or `codex`. A human's own session is not in the
-  ledger, so it is never sent anything: it gets the advisor's `systemMessage` and decides for
-  itself. Agy is skipped — no interactive `/compact`.
-- **The verdict is arithmetic, not a vibe, and it costs no tokens.** Held context against the
-- **Advisor→courier ordering is explicit.** Hook registration order is not a contract. Both hooks
-  derive a key from the same session/input/transcript boundary; the advisor writes the request before
-  the matching state marker, and the courier waits for that marker before it can act. State and
-  requests also carry a monotonic boundary sequence, so a later `no` invalidates an earlier `yes`.
-- **Automatic delivery keeps the in-flight-reasoning judgment.** The arithmetic still covers held
-  context against the window, tier-weighted re-read cost against turns saved, a state-file-on-disk
-  check, and sha-staleness. A pane model must additionally end its final response with the exact
-  `COMPACT-SAFE: yes` line before the advisor authorizes the courier; otherwise the advisor may say
-  `yes` for a human decision, but no `/compact` request is delivered.
-- **Window sizing is conservative.** The advisor uses a context-window value from the hook/transcript
-  metadata or an explicit environment hint when available. If the model/window is ambiguous, it uses
-  a 1M fallback rather than treating a 1M session below 190k as a 200k session.
-- **Delivery has two race guards.** Stale lock recovery atomically quarantines and reacquires the lock,
-  so only one courier owns a request. Immediately before prompting, the courier rechecks the current
-  boundary state and request. It invokes `herdr agent prompt <name> <prompt> --wait --until working
-  --timeout 20000` and only removes the retry request after the returned `agent_status: working`
-  receipt is present. CLI acceptance alone is not delivery evidence.
-- The advisor surfaces `compact: yes` as a `systemMessage` on the no→yes edge only; every verdict
-  lands in `compact-advisor.log` in the telemetry sink. `/compact-monitor` reads the current session's
-  `compact-state/<session>.json`, never a tail of the global log.
-- **A Codex pane cannot self-compact.** Codex has no turn-boundary hook event and its rollout files
-  are not the transcript format the advisor parses. Codex panes stay on `reuse`, below.
-
-When the planner has a completed Claude or Codex executor/reviewer handoff and intends to reuse that
-session, compact it before sending the next brief. The planner, not the pane, knows what the *next*
-brief needs kept:
-
-```bash
-office-core/scripts/compact-police.sh reuse <agent-name> \
-  --keep "the approved plan section 2, the handoff, EXECUTOR-STATE.md, and the next fix brief"
-```
-
-`reuse` refuses working or blocked panes, sends no command to Agy, and accepts no implicit reuse
-decision. The planner owns that decision. The prompt is directed and tells the resumed agent to
-reload its brief/state after compaction. Confirm success from the pane's compaction sequence and
-reset context display; a `done`/`idle` status alone is not proof — the same rule applies to a
-courier delivery, whose `systemMessage` reports a send, never a compaction.
-
-`compact-police.sh planner` and `watch` were removed in core `17.7.0`. They polled `agent get` every
-five seconds and inferred turn boundaries from a phase machine while discarding the
-`state_change_seq` in the same payload, and they spent a full planner turn on a qualitative check at
-every boundary. The `Stop` hook is that boundary, exactly, for free.
-
-### Watching an Agy agent: query its SQLite conversation, never its status
-
-**Agy stores no JSONL transcript**, so the `tail -f` recipe above has nothing to tail. Even when
-started natively by Herdr, its underlying conversation is stored in a per-conversation **SQLite**
-database at
+**Agy stores no JSONL transcript**, so the `tail -f` recipe above has nothing to tail. It keeps a
+per-conversation **SQLite** database at
 `~/.gemini/antigravity-cli/conversations/<uuid>.db` (plus `-wal`/`-shm`). The newest `.db` by
-mtime is the live conversation when no conversation id has been recorded. Herdr can still read the
-visible/recent terminal transcript; SQLite is the Agy-specific progress source, not a replacement
-for `herdr agent read`.
+mtime is the live conversation; the ledger's `session_id` is empty for `--kind agy`, so mtime is
+the only handle.
 
 The database is **readable while agy holds it open** (WAL mode) provided you open it read-only.
 Its `steps` table gains a row per step, so the row count is a live progress counter:
@@ -680,13 +537,10 @@ after `--`, then re-record the new pane id in the ledger:
 herdr pane split --current --direction right --cwd "<worktree>" --no-focus
 herdr agent start <name>-r2 --kind claude --pane <new-pane-id> -- --model <model> --effort <effort> --resume <session_id>   # claude
 herdr agent start <name>-r2 --kind codex  --pane <new-pane-id> -- -m <model> -c model_reasoning_effort="<effort>" resume <session_id>     # codex
-herdr agent start <name>-r2 --kind agy --pane <new-pane-id> -- --model <model> --effort <effort> --conversation <conversation_id>  # Agy
 ```
 
-`scripts/office-spawn.sh ... --resume <id>` does this same block and maps the id to the native
-resume flag for each kind. A resume still needs model and effort: a resumed session inherits its
-prior context, not its prior tier, so a resume that omits them is the same brand-only defect as the
-first spawn. Agy's native handle is a `conversation_id`, not a Claude/Codex `session_id`.
+`scripts/office-spawn.sh ... --resume <session_id>` does this same block. A resume still needs model and effort: a resumed session inherits its prior context, not its prior
+tier, so a resume that omits them is the same brand-only defect as the first spawn.
 
 ## The ledger
 
@@ -768,8 +622,8 @@ is not where the run keeps it.
 | Final closeout | every remaining pane in the ledger |
 
 **A pending next round is not a reason to keep a pane.** The round after a `CHANGES REQUIRED`, and
-the executor that will take those fixes, comes back through a fresh pane: `--resume <session_id>`
-for Claude/Codex, or `--conversation <conversation_id>` for native Agy. Close on the report.
+the executor that will take those fixes, both come back through `--resume <session_id>` in a fresh
+pane. Close on the report.
 
 **Keep open only these:** an agent that is `working` or `blocked`. `blocked` is a question to
 surface, not a pane to close.

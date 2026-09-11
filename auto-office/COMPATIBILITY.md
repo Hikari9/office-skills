@@ -2,9 +2,9 @@
 
 | Line | Value |
 |---|---|
-| Plugin version | `17.10.0` (see `.claude-plugin/plugin.json`) |
+| Plugin version | `17.6.0` (see `.claude-plugin/plugin.json`) |
 | Core protocol supported | `>=17.0.0 <18.0.0` |
-| Core protocol vendored | `17.8.0` (see `office-core/SNAPSHOT.json`) |
+| Core protocol vendored | `17.4.0` (see `office-core/SNAPSHOT.json`) |
 | Vendored snapshot | `office-core/SNAPSHOT.json`, written by `scripts/vendor-core.sh` |
 | Sibling plugins required | `codex-office`, `agy-office` — for the CLI, executor, and closeout mechanics of those two routes. The claude route ships in this plugin as of `4.0.0`. |
 
@@ -20,26 +20,22 @@ exceptions:
   - id: auto-orchestrator-selection
     owner: auto-office
     reason: >
-      The invoking model holds core's Planner role and is never selected by auto-office routing;
-      "orchestrator" names only its control-plane behavior. This legacy exception id is retained for
-      traceability while v2 adds only a separate, optional plan-drafter call — an added role, never a
-      reassignment of Planner: the Planner may invoke a dedicated plan drafter, consume its serialized
-      draft handoff, and retain all lifecycle, state, dispatch, approval, and closeout authority. This
-      is a runtime-mechanics choice, not an authority change; executor and reviewer routing remain
-      unchanged.
+      The orchestrator role is selected at plan time by a documented rubric (capability role, measured
+      codex weekly headroom, speed-vs-correctness) instead of being fixed by the plugin. This is a
+      runtime-mechanics choice about which process fills the orchestrator role, not an authority change:
+      every gate in roles-and-authority.md applies unchanged to whichever tool is selected, and the
+      review gate is held by a fresh reviewer that did not do the work in every case.
     widens_core_authority: false
   - id: auto-task-subdelegation
     owner: auto-office
     reason: >
-      The Planner (orchestrator) dispatches the dedicated plan drafter when selected, then one or
-      more executor lanes per repo and the existing reviewer/scout stages. Each lane receives an
-      approved graph slice and its own branch/worktree; the Planner collates eligible handoffs as
-      they arrive. The approved Executor may sub-delegate individual tasks to another tool
-      (typically agy for read-only recon and bulk mechanical work). When `HERDR_ENV=1`, every real
-      delegation uses the Herdr pane contract; otherwise same-brand fan-out may use the existing
-      in-session route and cross-brand fan-out uses CLI. No two implementation writers share a
-      worktree. The core Tester exception permits one Executor-owned Tester to write disjoint
-      test/config paths in the Executor's tree under the shared lock and pathspec contract.
+      The selected orchestrator may sub-delegate individual tasks to another tool (typically agy for
+      read-only recon and bulk mechanical work). When `HERDR_ENV=1`, every real sub-delegation uses
+      the Herdr pane contract; otherwise same-brand fan-out may use the existing in-session route
+      and cross-brand fan-out uses CLI. Ordinary sub-delegation never creates a second writer. The
+      core Tester exception permits one Executor-owned Tester to write disjoint test/config paths in
+      the orchestrator's tree under the shared lock and pathspec contract, and inherits the
+      orchestrator brief's file scope and constraints rather than a wider one.
     widens_core_authority: false
   - id: auto-goal-locked-autonomy
     owner: auto-office
@@ -54,9 +50,8 @@ exceptions:
   - id: auto-opus-reviewer-floor
     owner: auto-office
     reason: >
-      The code-review gate is a fresh reviewer independent of whoever executed: `codex-luna` xhigh by default, a fresh Opus subagent at low as the fallback.
-      The Codex Luna path is no longer conditional on who orchestrated (2026-09-10); it is the
-      standing default holder, and the reviewer is never the agent that wrote the diff. This is strictly narrower
+      The code-review floor is a fresh Opus subagent at low regardless of which brand executed.
+      The Codex Luna reviewer path applies only when Codex is the planner. This is strictly narrower
       than core, which permits any independent reviewer. Core 3.0.0 states that a declared floor
       binds the gate it was declared for, so this floor is the code-review gate's alone.
     widens_core_authority: false
@@ -68,7 +63,7 @@ exceptions:
       Opus-tier low effort, which then retires permanently. Core 3.0.0 explicitly permits an office
       to add a plan-review gate ahead of user approval, and this one adds a gate rather than
       absorbing any existing one — the code-review gate, its opus-low floor, and every verdict
-      are untouched. Its floor is declared separately (`codex-luna` xhigh, `opus` low fallback) and binds only itself. It runs
+      are untouched. Its floor is declared separately (opus low) and binds only itself. It runs
       exactly once and is never recalled, so it can never gate work it previously approved.
     widens_core_authority: false
   - id: auto-no-coordinator
@@ -84,12 +79,10 @@ exceptions:
   - id: auto-mandated-executor-tier
     owner: auto-office
     reason: >
-      Gemini 3.8 Flash medium is the standing executor default, with Claude Sonnet high and
-      Codex Luna xhigh as ordered fallbacks. The Planner weighs live usage, launchability, repeated
-      failures, task shape, and benchmark scores without a hardcoded percentage threshold. If usage
-      is UNKNOWN, Gemini remains the safe default. A malformed Planner tool call is retried at the
-      same rung; a real launch/quota/repeated-failure signal permits fallback. No self-escalation and
-      no model substitution without an explicit caller override. A worker's brand and tier are assigned by
+      Claude Sonnet high is the standing executor default. Every executor still runs at its
+      brand's fixed default tier when another brand is selected: `gpt-5.6-luna` high for codex,
+      Flash latest high for agy. No self-escalation and no model substitution without an explicit
+      caller override. A worker's brand and tier are assigned by
       the planner in the plan and may exceed the executor's tier — which core's delegation test
       anticipates, since a delegation is allowed to buy tier — but a worker is never promoted at run
       time. This narrows core rather than widening it: core sets no model policy, and every path
@@ -128,14 +121,12 @@ Core `2.0.0` absorbed three things this office would otherwise have had to decla
 The remaining exceptions were re-checked against core `2.0.0` and all remain
 `widens_core_authority: false`:
 
-- `auto-orchestrator-selection` — the legacy exception id now records that the invoking model holds
-  the Planner role and is not auto-selected. v2's dedicated plan-drafter call is a narrow
-  runtime-mechanics addition; it does not change authority, executor routing, or reviewer routing.
-- `auto-task-subdelegation` — the Planner (orchestrator) dispatches the dedicated plan-drafter/
-  executor stages when applicable; the approved Executor owns task-worker fan-out. Core 9.0.0's
-  Herdr override takes
-  precedence when `HERDR_ENV=1`; without Herdr, same-brand fan-out is in-session, cross-brand is CLI,
-  and neither creates a second writer.
+- `auto-orchestrator-selection` — still a runtime-mechanics choice about which brand fills the
+  executor role, with every gate applying unchanged. The exception id is kept as-is for traceability
+  even though this office's prose now says **Executor** rather than Orchestrator.
+- `auto-task-subdelegation` — unchanged, and core 9.0.0's Herdr override takes precedence when
+  `HERDR_ENV=1`; without Herdr, same-brand fan-out is in-session, cross-brand is CLI, and neither
+  creates a second writer.
 - `auto-goal-locked-autonomy` — unchanged. The loop still cannot raise a cap, remove a phase,
   downgrade a reviewer, or widen its blast radius, and it gained a stop (`BRIEF DEFECT`) rather than
   losing one.

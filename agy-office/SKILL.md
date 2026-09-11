@@ -1,6 +1,6 @@
 ---
 name: agy-office
-description: Use ONLY when explicitly invoked via /agy-office, for irreversible or production-facing work. Five-phase office — planner interviews to 95% clarity, the agy CLI executes, planner independently verifies, fresh Gemini Flash reviewer adversarially gates, planner closes loop. Never self-triggered.
+description: Use ONLY when explicitly invoked via /agy-office, for irreversible or production-facing work. Five-phase office — planner interviews to 95% clarity, the agy CLI executes, planner independently verifies, fresh Opus reviewer adversarially gates, planner closes loop. Never self-triggered.
 ---
 
 # Agy Office
@@ -10,8 +10,8 @@ description: Use ONLY when explicitly invoked via /agy-office, for irreversible 
 | Role | Who | Model | Job |
 |---|---|---|---|
 | **Planner** | The current agent (you) | session's own | Plan → approval; **independently verify**; fix/close out |
-| **Executor** | Native Herdr `agy` agent when HERDR_ENV=1; otherwise non-Herdr `agy --print` | **Flash latest**, resolved at dispatch | Bootstrap, implement ≤3 tasks, first-completion event, handoff |
-| **Reviewer** | Fresh Herdr pane when HERDR_ENV=1; otherwise existing fresh reviewer route | Gemini Flash latest high, currently `gemini-3.8-flash-high` | Adversarial review; holds the gate |
+| **Executor** | Herdr `agy` pane when HERDR_ENV=1; otherwise `agy --print` | **Flash latest**, resolved at dispatch | Bootstrap, implement ≤3 tasks, first-completion event, handoff |
+| **Reviewer** | Fresh Herdr pane when HERDR_ENV=1; otherwise existing fresh reviewer route | `gemini-3.7-flash-high` | Adversarial review; holds the gate |
 
 **Core principle:** the planner never implements the plan; the executor never approves its own
 work. Each gate is held by whoever did not do the work.
@@ -41,7 +41,7 @@ Anything after `/agy-office` overrides one default; honor it, echo it, keep the 
 | Tweak | Example | Effect |
 |---|---|---|
 | Executor model | `use gemini-3.1-pro-high` | Override the resolved Flash-latest slug |
-| Reviewer model | `reviewer: opus` | Change reviewer model (default: Gemini Flash latest high, currently `gemini-3.8-flash-high`) |
+| Reviewer model | `reviewer: opus` | Change reviewer model (default: `gemini-3.7-flash-high`) |
 | Skip a phase | `plan already approved: <path>` | Start at Phase 2 |
 | No closeout | `skip cleanup` | Stop after approval |
 | Extra gates | `reviewer must check a11y` | Add to rubric |
@@ -87,7 +87,7 @@ rule: `office-core/protocol/roles-and-authority.md` → *Fit test*.
   final reviewer approval, which gets one short summary comment; do not merge milestones independently.
 - Dispatch live-system work **with** its access: MCP/API tools named in the launch, production
   **reads** included, data shape pinned in the brief, read-back required.
-- Reviewer defaults to Gemini Flash latest high, currently `gemini-3.8-flash-high` (fresh reviewer separate from executor); escalate out of the tool, not to it.
+- Reviewer defaults to `gemini-3.7-flash-high` (fresh reviewer separate from executor); escalate out of the tool, not to it.
 - Irreversible work is `PLANNER-HELD`; explicit approval before dispatch, silence isn't approval.
 - Verdicts are `APPROVED`, `CHANGES REQUIRED`, `PLAN DEFECT`; 5-round cap; never self-approve.
 - A task needing Claude-level reasoning is recommended to `claude-office` out loud, never forced
@@ -143,7 +143,7 @@ named-branch push, one draft PR, and its approved-plan/execution-begins comment 
 defect before dispatching the reviewer. **Not review** — no spec judgement, no approving. →
 [`agy-verification`](skills/agy-verification/SKILL.md).
 
-**Phase 3 — Review (Reviewer).** Dispatch a fresh reviewer (Gemini Flash latest high, currently `gemini-3.8-flash-high`, or caller override) with the plan, Global
+**Phase 3 — Review (Reviewer).** Dispatch a fresh reviewer (`gemini-3.7-flash-high` by default, or caller override) with the plan, Global
 Constraints, handoff, diff, your Phase 2b evidence; triage/fix; re-run Phase 2b + the gate each
 round; cap 5. → [`agy-reviewer`](skills/agy-reviewer/SKILL.md).
 

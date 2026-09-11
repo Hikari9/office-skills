@@ -5,25 +5,6 @@ description: Phase 2–3 — the goal-locked autonomous loop that runs draft-PR 
 
 # Auto Loop
 
-## v2 Planner / plan-drafter boundary
-
-In `planner_mode=auto`, the detector and any user drafter-choice prompt have
-already resolved before this loop begins; the loop receives the resulting
-serialized handoff. In `planner_mode=dedicated`, the Planner (orchestrator) has
-already invoked the dedicated plan drafter and validated its serialized handoff
-before this loop begins. The plan-drafter call is an added role with no
-lifecycle, dispatch, approval, reviewer, or closeout state; it returns the
-draft artifact and exits. The Planner (orchestrator) is the control-plane
-owner for every step below, including planner-held actions and executor/
-reviewer dispatch. In `planner_mode=inline`, the same session drafts the plan
-directly, which is the existing v2 compatibility path.
-
-After the handoff, references to "the planner" in this loop mean the Planner's
-control-plane authority (the invoking session), never the plan drafter — the
-drafter has already exited and holds no further state. Executor and reviewer
-routing and the loop itself are otherwise unchanged. This is the v2 bridge to
-the more fundamental separation described for v3, not v3 implementation.
-
 After approval the run is **end-to-end**. No go-aheads, no "shall I continue," no summarizing and
 waiting. Report progress and keep moving until closeout or a stop condition.
 
@@ -33,16 +14,16 @@ waiting. Report progress and keep moving until closeout or a stop condition.
 before the loop:
     planner self-review of the plan               (auto-planning 7.4)
     full gear only: one adversarial plan-review, then it retires   (auto-planning 7.5)
-    ≥2 executor lanes? → the planner distributes, monitors, and collates arrivals. There is no PM.
+    ≥2 executors?  → the planner distributes and monitors. There is no PM.
 load GOAL block
-dispatch every READY EXECUTOR LANE, one or more per repo, with its approved graph slice
+dispatch ONE EXECUTOR per repo, with the WHOLE plan   ← the only work launch the planner makes
                           (CLI, own worktree; executor bootstraps draft PR; sibling office spoke)
-for each eligible lane handoff that arrives:
+for each task the executor completes and hands back:
     liveness check            (see below — no output means confirm dead before re-dispatch)
     verify independently      (mandatory extra pass if agy executed)
     executor returns BRIEF DEFECT → stop this task, do not implement, do not consume a round
                                     → planner (technical) or user (scope)
-    fresh Codex Luna xhigh review (Opus low fallback; resumed reviewer, same session across rounds)
+    fresh Opus review         (resumed reviewer, same session across rounds)
     while verdict == CHANGES REQUIRED and round < cap:
         planner disposition checkpoint
         if FIX_AND_REVIEW → triage → fix → re-review
@@ -60,12 +41,11 @@ re-read GOAL:
     caps exhausted?           → stop and report the deadlock
 ```
 
-**The loop iterates over lane returns, not over task-level launches.** The Planner engineers the
-graph, launches every declared ready lane, and then holds the gate — verify, review, triage, answer
-consults, collate whichever eligible handoff arrives first, and perform planner-held actions. If you
-find yourself launching a process for task *n* that was not declared as its own executor lane, stop:
-that is the executor's job and you have become a scheduler. The exceptions are the code reviewer
-(which an executor must never launch for itself) and, in Phase 1 only, read-only scouts.
+**The loop iterates over the executor's returns, not over your dispatches.** You launch the executor
+once per repo and then hold the gate — verify, review, triage, answer consults, perform the
+planner-held actions. If you find yourself launching a process for task *n*, stop: that is the
+executor's job and you have become a scheduler. The exceptions are the code reviewer (which the
+executor must never launch for itself) and, in Phase 1 only, read-only scouts.
 
 **The executor is expected to hand back per task, not per run.** Its brief requires it to stop at
 each task boundary, write `EXECUTOR-STATE.md`, and wait — so review happens per task, as it always
@@ -237,6 +217,7 @@ they are what keeps an autonomous run honest:
    failed, you stop for the user.
 5. **Which milestone does this task belong to, and did the previous one get recorded?** An
    unrecorded milestone behind you is a lost re-entry point.
+6. **Agy consecutive-task count** — at 3, re-brief with full context restated or re-route.
 7. **`git rev-parse --abbrev-ref HEAD` before every commit and every push.** Read it; do not assume
    the branch you created is still checked out.
 8. **Any finished pane still open?** Under `HERDR_ENV=1`, read `/tmp/office/panes.jsonl` and close
@@ -292,6 +273,7 @@ planner commits and a `git push … HEAD` landed there and deployed in 59 second
 | Cap | Value | On exhaustion |
 |---|---|---|
 | Review rounds per task | **5 full / 2 express** | Full: stop, the failure is structural — report the deadlock with the last verdict. Express: **promote the run to full** and re-plan the task with a plan-review pass. |
+| Agy consecutive tasks | 3 | Re-brief from scratch, or re-route the next task. |
 | Loop iterations | as set in GOAL | Stop and report which criteria are still red. |
 | Planner disposition after `CHANGES REQUIRED` | Every finding round | Record finding statuses, a recommendation, pre-fix reflection, and any mid-fix change of course before fixing or re-reviewing. |
 
@@ -453,17 +435,10 @@ spoke before acting. Compaction at a task boundary is the main way a run loses t
 keeping the run state, and a survivor that remembers the GOAL but not the gates is the exact shape of
 the failure. Same agent or fresh agent makes no difference; whoever holds the phase re-reads.
 
-### Compacting a delegate: the hooks do it, the planner covers what they can't
+### Compacting a delegate is the planner's job, not the delegate's
 
-**No pane agent can compact itself from inside a skill** — no tool invokes a built-in slash command.
-With `install.mjs --with-auto-compact`, a Claude pane's own `Stop` hooks do it instead: the advisor
-decides from the transcript for free, and the async courier delivers the directed `/compact` once
-the pane is `idle`. Mechanism and scope: [herdr](../../office-core/skills/herdr/SKILL.md) →
-*Compact police*.
-
-Two cases the hooks do not cover, and the planner owns both: a **Codex pane** (no turn-boundary hook
-event) and a pane being **reused for a different task**, where the next brief — not the finished
-one — defines what to keep. Drive those from outside:
+**A pane agent cannot compact itself.** No tool invokes a slash command in-session, so `compact: yes`
+prints to the one party unable to act on it. The planner drives it from outside:
 
 ```
 herdr agent prompt <name> "/compact Keep <what the next task needs>. Drop <what it does not>.
@@ -498,12 +473,10 @@ reload-across-a-boundary discipline applies to it, driven by the planner:
   context until its handoff is written; compacting there costs more re-derivation than it saves.
 - **Only at a boundary: handoff or verdict written, agent idle, next brief not yet sent.** The
   handoff, `EXECUTOR-STATE.md`, and `git log` then carry everything the next brief needs.
-- **Take the verdict from the advisor hook, not from a threshold you carry in your head.** It reads
-  the pane's real held context, weights the re-read by that pane's model tier, and requires a state
-  file that exists and is not behind `HEAD`. Its `no` for a missing or stale state file is a defect
-  report, not a wait instruction. On a Codex pane, where the advisor cannot read the transcript,
-  judge the boundary qualitatively before every round's brief — a written handoff, an idle agent, no
-  live per-item edit state — not from a token count.
+- **Only when the pane's live context reading is at or above roughly 100k tokens.** Below that the
+  summarization pass costs about what it saves and loses nuance for nothing. Read the pane's own
+  status line, not a token total from a compacted summary, and check it before every round's brief
+  to a resumed reviewer, not just at first spawn.
 - **The next brief after a compaction opens with a reload instruction** ("re-read the plan's section
   2 and your `EXECUTOR-STATE.md`"), for the same reason the planner reloads the hub and spoke: a
   compacted agent keeps the summary of what happened, not the constraints it was following.
@@ -518,8 +491,8 @@ surface, and split on surface boundaries, never on file count.
 ## Safety rules the loop cannot relax
 
 - One independent implementation writer per working tree. The only in-tree exception is one
-  Executor-owned Tester with disjoint test/config paths under the core contract; **every executor
-  lane gets its own worktree, including sibling lanes targeting the same repo.**
+  Executor-owned Tester with disjoint test/config paths under the core contract; **≥2 executors
+  means ≥2 worktrees, always.**
 - **The planner may implement and fix inline** — and it **still never approves its own work**. An
   inline fix goes back through the same fresh reviewer as everything else.
 - **Precondition on a planner inline write: no executor may be live in that tree.** Core already

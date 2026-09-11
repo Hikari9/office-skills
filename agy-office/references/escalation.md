@@ -10,10 +10,9 @@ This is not a discussion channel. Two axes, one line in a file the agent is alre
 stop and ask. Escalation is a small, deliberate minority; a ladder everyone climbs constantly is
 ceremony, and ceremony gets ignored.
 
-**Why this matters more with agy than with a Claude subagent:** non-Herdr `agy --print` runs headless
-and unsandboxed. It cannot interrupt you mid-run for a quick answer, its process exits when it's done,
-and its completion summary is not reliable. Native Herdr Agy has a visible prompt channel, but the
-written upline list is still the *only* channel between "it made a
+**Why this matters more with agy than with a Claude subagent:** `agy --print` runs headless and
+unsandboxed. It cannot interrupt you mid-run for a quick answer, its process exits when it's done, and
+its completion summary is not reliable. The written upline list is the *only* channel between "it made a
 judgement call" and "you find out" — and with this executor, judgement calls include inventing an
 interface it could have read.
 

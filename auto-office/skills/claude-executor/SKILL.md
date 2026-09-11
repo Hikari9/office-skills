@@ -1,6 +1,6 @@
 ---
 name: claude-executor
-description: Executor-lane packet contract — one writer per worktree, graph slice, handoff file, Upline handling. Loaded by the auto-office hub when the claude route is selected; not invoked directly.
+description: Executor packet contract — one per repo, non-conflicting prep, handoff file, Upline handling. Loaded by the auto-office hub when the claude route is selected; not invoked directly.
 ---
 
 # Claude Executor
@@ -13,21 +13,18 @@ The full, self-contained packet the executor receives is
 its `<…>` slots and passes the whole thing as the executor's prompt. This spoke states the
 contract around that brief; it does not duplicate the brief's content.
 
-## One executor per worktree; parallel lanes per repository
+## One executor per repository
 
-A plan gets one executor lane for each graph slice the Planner chooses to run independently. A
-repository may have multiple lanes in parallel; a lane never spans repositories, and no two lanes
-share a worktree. Each gets its own repo path, branch, BASE, dedicated worktree, exact `Touches:`
-set, dependency list, workspace, plan slice, and handoff path. The Planner collates the first
-eligible handoff, verifies and reviews it, then integrates it or unlocks its dependents; it does not
-wait for a slower sibling before processing ready evidence.
+A multi-repo plan gets **one executor per repo**, in parallel — never one executor spanning
+several repos, and never two executors sharing one repo. Each gets its own repo path, branch,
+BASE, workspace, plan slice, and handoff path. The planner consolidates every executor's handoff
+into one picture before Phase 3.
 
 ## The planner does not touch the executor's tree
 
-While any executor lane runs, the Planner does non-conflicting prep only — reading signatures,
-drafting reviewer dispatches, and collating returned handoffs. It never edits a live executor's
-worktree, never lets sibling lanes share a worktree, and never resolves a `Touches:` conflict by
-guessing; it repartitions or serializes the graph instead.
+While the executor runs, the planner does non-conflicting prep only — reading signatures,
+drafting the reviewer dispatch. It never edits the tree the executor is writing to, and never
+runs two writers against one working tree.
 
 ## Standing clauses on every brief
 
@@ -69,9 +66,8 @@ tree. The coordinated Tester exception allows one Tester to author tests/config 
 when `Touches:` paths are disjoint; it uses the core contract's Git lock, explicit pathspecs,
 staged-path audit, and result-report rules. No other peer writer may share the tree.
 
-A brief that prescribes *how* to fan out workers is overreaching — the mechanism belongs to this
-office — and a brief that is silent about worker fan-out is not forbidding it. A brief may not widen
-the executor's approved graph slice or touch a sibling lane's worktree.
+A brief that prescribes *how* to fan out is overreaching — the mechanism belongs to this office — and
+a brief that is silent about fan-out is not forbidding it.
 
 ## Self-review before the handoff, and require it from every worker
 

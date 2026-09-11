@@ -1,29 +1,5 @@
 # Changelog — agy-office
 
-## Unreleased
-
-- Core `17.9.0`: Herdr dispatch now starts Agy natively with `agent start --kind agy`, submits
-  briefs through `agent prompt`, and uses the bounded `herdr-wait.sh` task monitor instead of a
-  silent shell wrapper.
-
-## 16.5.0 — 2026-09-10
-
-Core `17.8.0`.
-
-- Core `17.8.0`: the Herdr skill's agent-watcher guidance gains the four-exit rule — a watcher that
-  only tests for success cannot tell a dropped dispatch from work still in progress, because both
-  look like an idle agent with no artifact. Watchers now distinguish **done**, **blocked**,
-  **never-started**, and **stalled**. Observed 2026-09-09: a review round was watched for an hour's
-  timeout after a `--text` misuse and the watcher emitted nothing the whole time.
-
-## 16.4.0 — 2026-09-10
-
-Core `17.7.0`.
-
-- Core `17.7.0`: vendored `compact-monitor`, the `compact-advisor`/`compact-courier` `Stop` hook
-  pair, and `compact-police.sh reuse`. Agy panes are intentionally not targeted by any of them
-  because they have no interactive `/compact` command.
-
 ## 16.3.0 — 2026-09-04
 
 Core `17.4.0`; see `auto-office/CHANGELOG.md` 17.4.0 for the core rationale.

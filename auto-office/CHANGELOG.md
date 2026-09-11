@@ -1,113 +1,5 @@
 # Changelog — auto-office
 
-## Unreleased — 2026-09-11
-
-- Core `17.9.0`: Herdr dispatch now starts Agy natively with `agent start --kind agy`, submits
-  briefs through `agent prompt`, and uses the bounded `herdr-wait.sh` task monitor instead of a
-  silent shell wrapper.
-
-**Maintainer decision: usage-aware v4.3 routing defaults** (issue #70 follow-through).
-
-- **Scouts:** Codex `gpt-5.6-luna` medium → Gemini `gemini-3.7-flash-low` → Claude `haiku` low.
-  Scouts now use the executor dispatch form: Herdr when available, same-brand in-session otherwise,
-  and cross-brand CLI otherwise; every scout is fresh and read-only.
-- **Executors:** Gemini `gemini-3.8-flash-medium` → Claude `sonnet` high → Codex
-  `gpt-5.6-luna` xhigh. Usage, launchability, and repeated failures outweigh task-shape scores;
-  there is no hardcoded quota threshold, and UNKNOWN usage prefers Gemini. Planner-caused malformed
-  calls are retried at the same rung.
-- **Review:** Codex Luna xhigh is the default for code and plan review; Claude Opus low is the only
-  fallback. Agy Office uses Gemini Flash latest high, currently `gemini-3.8-flash-high`.
-- **Executor topology:** removed the one-executor-per-repo narrowing. The Planner now engineers the
-  task graph and may dispatch multiple executor lanes for one repo, each in its own worktree and
-  branch; eligible handoffs are collated as they arrive. One writer per worktree remains binding.
-- **Benchmarks:** refreshed the snapshot from Intelligence Index v4.3 and current Coding Agent Index
-  methodology, with role-relevant component weights and explicit cross-version cautions.
-
-## 17.10.0 — 2026-09-10
-
-Core `17.8.0`.
-
-- Core `17.8.0`: the Herdr skill's agent-watcher guidance gains the four-exit rule — a watcher that
-  only tests for success cannot tell a dropped dispatch from work still in progress, because both
-  look like an idle agent with no artifact. Watchers now distinguish **done**, **blocked**,
-  **never-started**, and **stalled**. Observed 2026-09-09: a review round was watched for an hour's
-  timeout after a `--text` misuse and the watcher emitted nothing the whole time.
-
-## 17.9.0 — 2026-09-10
-
-**Maintainer decision: new standing defaults for the plan drafter, the executor, and the code-review
-gate** (issue #70 findings; fills the executor/reviewer picks issue #71 left out).
-
-- **Plan drafter is `claude/opus-5@medium`, unconditionally.** The orchestrator/headroom-conditional
-  `codex/gpt-6-astra@low` default is **revoked** — a claude orchestrator no longer diverts the draft
-  to Astra. Astra Low is the required fallback when Opus Medium is unavailable, nothing more. Codex
-  headroom is still probed for cost, and no longer selects the drafter. Candidate list (Opus medium,
-  Fable 5.1 low/medium/high, Astra low/medium) is unchanged. Canonical:
-  [`planner-handoff.md`](references/planner-handoff.md#v2-selection-policy).
-- **The executor is an availability ladder, not one default.** Rung 1 **agy Flash latest `medium`**
-  (resolved with `agy-model.sh medium`), capped at **3 tasks**; rung 2 **claude `sonnet` high**, any
-  number of tasks, and the rung to take the moment a plan exceeds 3; rung 3 **codex
-  `gpt-5.6-sol` `low`**, last pick and explicitly unvalidated in this office — record its first run
-  in `routing-outcomes.md`. **`gpt-5.6-luna` is no longer an executor**; it keeps its reviewer roles
-  and remains available as a declared worker.
-- **The code-review gate defaults to `codex-luna` `xhigh`, with fresh `opus` `low` as the fallback.**
-  The codex reviewer path is no longer conditional on Codex being the orchestrator. Blast-radius
-  pricing (`xhigh` default / `high` floor) is unchanged and now applies on the default path rather
-  than an exception. `agy` still never holds this gate; plan review is unchanged.
-- **A sub-agent never runs above its dispatcher's tier** — same tier or lower. Tier is bought at plan
-  time by the planner; a running agent buying itself a bigger child is self-escalation one level
-  down from where the ceiling rule was already looking.
-- **Orchestrator advice, explicitly not a route.** `auto-routing` now records the maintainer's entry
-  picks (Gemini 3.7 low by default; Luna xhigh, Astra low, or Sonnet high by need). The office does
-  not select the orchestrator.
-- Evals: 041 rewritten to assert the drafter default is unconditional; adds 044-046 (executor ladder
-  rungs and the 3-task cap), 047 (code-review default and fallback), 048 (sub-agent tier cap).
-
-## 17.8.0 — 2026-09-10
-
-Core `17.7.0`.
-
-- **Compaction is hook-driven per pane.** The advisor decides from the pane's own transcript at zero
-  token cost, and an `async` courier delivers a directed `/compact` only after a same-boundary
-  handshake, an explicit `COMPACT-SAFE: yes` authorization, and bounded Herdr prompt receipt. It acts
-  only on ledger-recorded `claude`/`codex` panes, never on a human's own session or Agy. The advisor
-  versions every state/request, invalidates stale requests on a later `no`, resets all post-compaction
-  accumulators, and uses metadata or a conservative window when the context size is ambiguous.
-
-- **`/compact-monitor` is session-scoped.** It reads the current session's advisor state rather than
-  tailing a global interleaved log, and retains the qualitative in-flight-reasoning judgment before
-  automatic delivery.
-
-- **Stale courier recovery is exclusive.** A stale lock is atomically quarantined and reacquired, so
-  only one courier can deliver a request. `compact-police.sh planner` and `watch` remain removed;
-  `reuse` is still the planner-owned path and the only path for Codex panes.
-
-## 17.7.0 — 2026-09-10
-
-**v2 can use a dedicated plan drafter without reassigning the Planner role or changing executor/reviewer
-routes.** The invoking model keeps core's Planner role throughout ("orchestrator" only describes its
-control-plane behavior). Dedicated drafting's default is conditional: Claude Opus 5 medium, except
-GPT-6 Astra low when the orchestrator's harness is claude and codex headroom is comfortably
-available — the other of the two is always the required fallback if the default is unavailable, so
-resolution never leaves a run with no drafter selected. *(Superseded in 17.8.0: the conditional
-default was revoked and Opus Medium is now unconditional.)* Accepts the explicit Fable 5.1 and Astra
-candidates. The
-plan drafter — an added role holding no gate — returns a serialized draft handoff; the Planner
-validates it before adopting it and continues the existing lifecycle. `planner_mode=auto` detects
-whether a plan is needed and whether the invoking triple is supported; unsupported orchestrators get an
-explicit choice of Opus Medium, Fable, Astra, or inline before planning, and `planner_isolation=required`
-without a prior choice resolves deterministically to the declared default rather than leaving no
-drafter selected. `planner_mode=inline` preserves the old same-call behavior, and identical
-canonicalized triples may reuse the orchestrator's own drafting step unless isolation is required.
-Drafter mode, triples, reuse, fallback, and reasons are recorded in the handoff, run report, and
-routing ledger. Adds the missing Planner → plan-drafter dispatch leg (worktree, brief shape, allowed
-tools, launch/read-back validation, retry semantics).
-
-Adds eval coverage for compatibility, separate handoff/lifecycle, defaults, fallback, all supported
-drafter efforts, deterministic reuse, protection of executor/reviewer routing, and both
-`planner_isolation=required` combinations (supported and unsupported orchestrator triple). v3
-adaptive routing remains out of scope.
-
 ## 17.6.0 — 2026-09-08
 
 **Claude Sonnet high is now the standing default executor.** The router still selects Codex Luna
@@ -115,11 +7,6 @@ for work whose fit calls for Codex, or when the caller explicitly overrides the 
 the default brand, not the per-brand executor settings or reviewer gates.
 
 ## Unreleased
-
-- **Phase 1 scouts are now explicitly low-effort and availability-routed.** When agy is available,
-  resolve its scout model with `agy-model.sh low` (currently `gemini-3.7-flash-low`); otherwise the
-  orchestrator chooses Codex `gpt-5.6-luna` at medium or Claude `haiku`/`sonnet` at low. Scouts may
-  not inherit planner settings or run at high effort or above.
 
 - **New core skill: `self-review-loop`.** One self-review pass is the first pass, not the gate.
   Review, fix, review the fix, until a pass finds nothing, executing every verify command at `BASE`
@@ -134,17 +21,6 @@ the default brand, not the per-brand executor settings or reviewer gates.
   the CLI echo the brief to stdout so the call looks successful while the agent sits idle at 0k
   context, having received nothing. Cost one wasted dispatch cycle on 2026-09-07. `send-keys` is
   positional too, but rejects the flag outright rather than failing silently.
-
-- **`agy-usage.py`'s model list is quota coverage, not a catalog.** The probe's "Model Breakdown"
-  only lists models the CloudCode quota endpoint returned a bucket for — models with recorded usage
-  or an assigned quota bucket on this account — not every valid agy model. `gemini-3.8-flash-low`
-  spawns and runs (`interactive_ready: true`) but never appeared in any `agy-usage.py` reading (18
-  buckets, none named 3.8), which made a valid model look non-existent to a pre-dispatch check. The
-  script's docstring, bare output header, and `--json` `note` field now say this explicitly, and
-  `references/quota-probe.md` documents it with the 3.8 case as the concrete example. Nothing was
-  added to any model list — an allowlist read from a quota probe was always going to miss the next
-  slug too; the fix is to stop reading the probe as one and point at `agy models` /
-  `agy-office/scripts/agy-model.sh` instead.
 
 ## 17.5.0 — 2026-09-07
 

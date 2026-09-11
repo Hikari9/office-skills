@@ -17,15 +17,6 @@ Exit codes:
 
 Note:
     Produces Gemini numbers by default, and never Claude numbers.
-
-    The model list below is NOT an exhaustive catalog of valid agy models. It only
-    contains models for which the CloudCode quota endpoint returned a bucket in
-    this response (i.e. models with recorded usage / an assigned quota bucket on
-    this account). A newly-released or rarely-used slug (observed: gemini-3.8-flash-low,
-    2026-09-08 — works fine via `agy --model`, absent from this probe) can be
-    completely valid and still not appear here. Do not conclude a model does not
-    exist because it is missing from this output — check `agy models` (or
-    `agy-office/scripts/agy-model.sh`) for the actual catalog instead.
 """
 
 import json
@@ -152,12 +143,7 @@ def process_quota(data, all_models=False):
     return {
         "tightest_remaining_percent": int(min_pct) if (found_target or models) else 100,
         "models": models,
-        "raw_buckets": filtered_buckets,
-        "note": (
-            "models lists only quota-tracked buckets returned by this response, not an "
-            "exhaustive catalog of valid agy models. A model's absence here does not mean "
-            "it does not exist — check `agy models` for the actual catalog."
-        )
+        "raw_buckets": filtered_buckets
     }
 
 
@@ -183,8 +169,7 @@ def main(argv):
     else:
         print("=== AGY (Antigravity/Gemini) Quota ===")
         print(f"Overall Tightest Headroom: {tightest_pct}% left")
-        print("\nModel Breakdown (quota-tracked models only — NOT an exhaustive catalog;")
-        print("a model missing here may still be valid, check `agy models` before ruling it out):")
+        print("\nModel Breakdown:")
         for model_id, info in processed["models"].items():
             pct = info["remaining_percent"]
             reset = info.get("reset_time", "N/A")
