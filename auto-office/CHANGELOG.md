@@ -8,6 +8,17 @@ the default brand, not the per-brand executor settings or reviewer gates.
 
 ## Unreleased
 
+- `references/review-gate.md`: the control-run rule now says to **aim the control at the deliverable,
+  not one of its attributes** — a suite can discriminate on every detail while never asserting the
+  feature exists (rsvp #319: deleting both charts from the page left all 875 tests green). Adds the
+  two corollaries that run hit: mutate what the test can actually observe when a stub sits in the
+  way, and read the committed diff before mutating a deliberately redundant fix, since no
+  single-layer mutation can go red against one.
+- `references/review-gate.md`: the fresh-reviewer digest rule now requires **re-verifying every
+  carried finding against `HEAD`** before it enters the digest — a finding from an earlier verdict
+  is a claim about the tree as it was then, and two such "open" minors had already been fixed two
+  tasks earlier.
+
 - **New core skill: `self-review-loop`.** One self-review pass is the first pass, not the gate.
   Review, fix, review the fix, until a pass finds nothing, executing every verify command at `BASE`
   rather than trusting it. Six detectors, the defect classes ranked by what they cost, and observed
