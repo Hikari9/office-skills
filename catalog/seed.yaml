@@ -1,0 +1,46 @@
+schema_version: 3
+kind: shipped-seed-catalog
+notes: >-
+  Identity-only cold-start rows for model names explicitly present in the v3 specification.
+  Benchmark indexes, prices, speed, release dates, and provider slugs are intentionally unknown
+  until refreshed from authoritative sources. These rows do not prove local harness support.
+models:
+  - model_id: opus
+    source_identifier: spec:planner-seed-opus
+    source_name: office-skills-v3-spec
+    effort: medium
+    source_effort: Medium
+    effort_confidence: mapped
+    benchmark_indexes: {}
+    price_fields: null
+    speed_fields: null
+    release_date: null
+    source_snapshot_metadata: {kind: normative-seed-preference}
+    content_hash: null
+    supersession_metadata: null
+  - model_id: astra
+    source_identifier: spec:planner-fallback-astra
+    source_name: office-skills-v3-spec
+    effort: low
+    source_effort: Low
+    effort_confidence: mapped
+    benchmark_indexes: {}
+    price_fields: null
+    speed_fields: null
+    release_date: null
+    source_snapshot_metadata: {kind: normative-seed-preference}
+    content_hash: null
+    supersession_metadata: null
+  - model_id: luna
+    source_identifier: spec:reviewer-seed-luna
+    source_name: office-skills-v3-spec
+    effort: xhigh
+    source_effort: XHigh
+    effort_confidence: mapped
+    benchmark_indexes: {}
+    price_fields: null
+    speed_fields: null
+    release_date: null
+    source_snapshot_metadata: {kind: normative-seed-preference}
+    content_hash: null
+    supersession_metadata: null

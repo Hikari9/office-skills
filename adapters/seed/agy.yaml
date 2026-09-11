@@ -1,0 +1,43 @@
+id: agy
+verified_state: valid-unverified
+version_fingerprint:
+  command: [agy, --version]
+  parser: first-line
+model_source:
+  type: cli
+  command: [agy, models]
+effort_mapping:
+  none: null
+  low: low
+  medium: medium
+  high: high
+  xhigh: null
+  max: null
+benchmark_slug_mapping: {}
+invocation:
+  executable: agy
+  argv: [--dangerously-skip-permissions, --print-timeout, 45m, --model, "{model}", --add-dir, "{cwd}", "--print={prompt}"]
+  prompt_transport: argv-bound
+  cwd_transport: add-dir-plus-prompt-pin
+safe_prompt_passing:
+  shell: false
+  supports_prompt_file: true
+  notes: Bind prompt value directly to --print; do not use stdin. Effort support is model-dependent and must be probed/mapped.
+dispatch_forms: [cli]
+trusted_for: [discovery, read-only-investigation, prototype, reversible-sandbox-worker, conformance]
+quota_probe:
+  type: external-primitive
+  command: null
+  unknown_is_unlimited: false
+shallow_review:
+  supported: true
+  minimum_effort: medium
+agentic_capability:
+  default: unknown
+failure_signatures:
+  - {id: swallowed-prompt, attribution: adapter, pattern: "greeting or --print consumed a flag"}
+  - {id: quota-stall, attribution: quota/account, pattern: "narration then no work/no writes"}
+conformance:
+  deterministic: pending
+  live: pending
+source_notes: Current office-skills Agy mechanics seeded for migration; exact model display names are dynamic and must come from local discovery.

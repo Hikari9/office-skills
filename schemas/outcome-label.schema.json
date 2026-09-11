@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "label"
+  ],
+  "properties": {
+    "label": {
+      "enum": [
+        "pending",
+        "verified_no_observed_failure",
+        "recurrence_failure",
+        "revert_failure",
+        "material_post_merge_defect",
+        "abandoned",
+        "environment_failure"
+      ]
+    },
+    "attribution": {
+      "enum": [
+        "model",
+        "harness",
+        "adapter",
+        "quota/account",
+        "environment/network",
+        "planner",
+        "brief",
+        "repository",
+        "verification",
+        "unknown"
+      ]
+    }
+  }
+}
