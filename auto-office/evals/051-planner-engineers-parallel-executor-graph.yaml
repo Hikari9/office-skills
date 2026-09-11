@@ -1,0 +1,16 @@
+name: Auto Office lets the Planner parallelize executor lanes within one repo
+prompt: |
+  /auto-office I have one repository with three mostly independent implementation slices. I want
+  the fastest wall-clock result and I am happy for multiple executors to work at once. Explain how
+  the Planner should design and dispatch the graph, what happens when one lane finishes first, and
+  what safety rule still applies to worktrees.
+expect_skill: true
+criteria:
+  - "Removes the one-executor-per-repo limit and allows multiple executor lanes for one repository"
+  - "Requires the Planner to engineer the task graph for wall-clock time, parallelism, dependencies, and effectiveness coverage before approval"
+  - "Requires each executor lane to have its own branch/worktree and one implementation writer per worktree"
+  - "Requires explicit lane slices, dependencies, Touches sets, validation, and handoff/integration targets"
+  - "Says the Planner collates the first eligible handoff without waiting for slower siblings, while respecting dependencies and independent review"
+  - "Keeps executors from editing sibling worktrees or merging lanes"
+allowed_tools: []
+timeout: 180

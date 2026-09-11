@@ -212,21 +212,41 @@ target it with agent prompt/get/wait.`), so self and other are never resolved fr
 and effort is a defect, not a shorthand: it silently inherits whatever tier the harness defaults
 to, not the tier the office priced for that role. Both values come from the dispatching office's
 routing table — never the harness default, never the agent's own judgement — passed as native
-arguments after `--`. `--model`/`--effort` are verified for the `claude` kind. For `codex`, effort
-is a config key, not a flag: `-c model_reasoning_effort="<effort>"` (see
-`codex-office/skills/codex-cli`), and a dispatch missing it falls back to whatever
-`~/.codex/config.toml` says. For `agy`, only `--model` is verified in `agy-office/skills/agy-cli`;
-no effort flag is confirmed there, so this skill does not assert one. The pane direction is the
-topology rule; it does not change the agent's role, worktree, scope, or authority.
+arguments after `--`. `--model`/`--effort` are native arguments for Gemini-backed Agy; Claude-backed
+Agy uses its model slug without effort. For `codex`, effort is a config key, not a flag:
+`-c model_reasoning_effort="<effort>"` (see `codex-office/skills/codex-cli`). The pane direction is
+the topology rule; it does not change the agent's role, worktree, scope, or authority.
 
-**`agent start --kind agy` is for an *interactive* agy session only.** For a one-shot `agy --print`
-script, skip `agent start`: split the pane, then `herdr pane run <pane-id> <absolute-script-path>`
-against the plain shell. `agent start --kind agy -- <script>` hands the trailing arguments to the
-`agy` binary as literal CLI flags, so a script path lands as an unexpected positional argument and
-errors, and the failed call still tags the pane as an idle `agy` agent that silently stops accepting
-`pane run` / `send-keys` input (text lands, Enter does nothing, `pgrep` shows no process). Recovery is
-`herdr pane close <id>` and a fresh split, never a retry into the same pane. Observed 2026-09-03 on
-four lane workers; nothing was lost because the retry happened before any output existed.
+### Native Agy launch
+
+Current Herdr supports Agy as a managed agent kind. Under `HERDR_ENV=1`, start Agy with
+`herdr agent start --kind agy`, pass the real Agy flags after `--`, and submit the brief through
+`herdr agent prompt`. This keeps Agy registered with Herdr and makes its terminal transcript
+available through `herdr agent read`.
+
+```bash
+MODEL=gemini-3.7-flash-low
+herdr agent start <unique-name> --kind agy --pane <pane-id> -- \
+  --dangerously-skip-permissions \
+  --print-timeout 45m \
+  --model "$MODEL" \
+  --effort low \
+  --add-dir "$PWD"
+
+herdr agent prompt <unique-name> "$(cat <absolute-brief-path>)" \
+  --wait --timeout 120000
+herdr agent read <unique-name> --source recent-unwrapped --lines 120
+```
+
+Do not pass `--print` for a managed interactive launch. `--print` is the one-shot Agy form and
+delays the response until the process exits; `agent prompt` is the safe multiline submission path
+and preserves the transcript inside the Herdr-managed pane. The native route was verified with
+Herdr 0.9.0 and `gemini-3.7-flash-low`, returning `HERDR_AGY_SMOKE_OK` through `agent read`.
+
+If `herdr agent start --kind agy` is unavailable or the `antigravity-cli` integration is not
+installed, report the capability failure and stop the Herdr dispatch. A plain `herdr pane run`
+wrapper is a deliberately degraded compatibility route, never the silent default under
+`HERDR_ENV=1`.
 
 **Observed 2026-09-03:** a planner dispatched `herdr agent start m1-rocksec --kind claude --pane
 w1J:p17` with no model or effort. The pane launched at the harness default (opus, medium) for a
@@ -365,9 +385,38 @@ When the wait returns:
 - `unknown` or `agent_not_found`: diagnose pane/session loss before considering a re-dispatch.
 
 **Agy is the explicit exception.** Agy's `agent_status` flaps to `idle`/`done` between turns, so
-`agent wait` is not a progress signal for an agy task. For agy, use the handoff-plus-commit
+`agent wait` is not a progress signal for an Agy task. For Agy, use the handoff-plus-commit
 terminal condition and the SQLite step-count check below; use `agent wait` only when you already
-have a terminal condition that makes the returned state meaningful.
+have a terminal condition that makes the returned state meaningful. Native Agy does not remove
+this limitation: Herdr's Antigravity integration reports the conversation after the first prompt,
+but derives lifecycle state from screen output rather than a structured turn stream.
+
+### Standard task wait
+
+`herdr agent wait` is a bounded state wait, not a task-completion contract. Do not keep the planner
+in a foreground wait until a two-hour task finishes: the harness can time out the wrapper even
+while the agent is healthy. Use the repository helper for long delegated tasks:
+
+```bash
+mkdir -p /tmp/office/waits
+nohup office-core/scripts/herdr-wait.sh \
+  --name <unique-name> \
+  --kind <claude|codex|agy> \
+  --worktree <absolute-worktree> \
+  --base <base-commit> \
+  --handoff <absolute-handoff-path> \
+  --poll-seconds 60 \
+  --timeout-seconds 7200 \
+  > /tmp/office/waits/<unique-name>.log 2>&1 < /dev/null &
+echo "watch_pid=$! watch_log=/tmp/office/waits/<unique-name>.log"
+```
+
+The helper emits only state-change/heartbeat lines and exits on `done`, `blocked`, `pane-gone`,
+`never-started`, `stalled`, or `timeout`. **Done** requires the handoff and a commit after the
+captured base. Claude/Codex may use unchanged `state_change_seq` to distinguish a dropped prompt
+from a stalled run; Agy deliberately does not, because its status returns to idle between turns.
+The wait script is a monitor, not an agent launcher: the agent must already have a confirmed prompt
+receipt, and the planner must still read the handoff and run the actual verification commands.
 
 ### Transcript monitoring is a diagnostic fallback
 
@@ -522,13 +571,15 @@ five seconds and inferred turn boundaries from a phase machine while discarding 
 `state_change_seq` in the same payload, and they spent a full planner turn on a qualitative check at
 every boundary. The `Stop` hook is that boundary, exactly, for free.
 
-### Watching an agy agent: query its SQLite conversation, never its status
+### Watching an Agy agent: query its SQLite conversation, never its status
 
-**Agy stores no JSONL transcript**, so the `tail -f` recipe above has nothing to tail. It keeps a
-per-conversation **SQLite** database at
+**Agy stores no JSONL transcript**, so the `tail -f` recipe above has nothing to tail. Even when
+started natively by Herdr, its underlying conversation is stored in a per-conversation **SQLite**
+database at
 `~/.gemini/antigravity-cli/conversations/<uuid>.db` (plus `-wal`/`-shm`). The newest `.db` by
-mtime is the live conversation; the ledger's `session_id` is empty for `--kind agy`, so mtime is
-the only handle.
+mtime is the live conversation when no conversation id has been recorded. Herdr can still read the
+visible/recent terminal transcript; SQLite is the Agy-specific progress source, not a replacement
+for `herdr agent read`.
 
 The database is **readable while agy holds it open** (WAL mode) provided you open it read-only.
 Its `steps` table gains a row per step, so the row count is a live progress counter:
@@ -629,10 +680,13 @@ after `--`, then re-record the new pane id in the ledger:
 herdr pane split --current --direction right --cwd "<worktree>" --no-focus
 herdr agent start <name>-r2 --kind claude --pane <new-pane-id> -- --model <model> --effort <effort> --resume <session_id>   # claude
 herdr agent start <name>-r2 --kind codex  --pane <new-pane-id> -- -m <model> -c model_reasoning_effort="<effort>" resume <session_id>     # codex
+herdr agent start <name>-r2 --kind agy --pane <new-pane-id> -- --model <model> --effort <effort> --conversation <conversation_id>  # Agy
 ```
 
-`scripts/office-spawn.sh ... --resume <session_id>` does this same block. A resume still needs model and effort: a resumed session inherits its prior context, not its prior
-tier, so a resume that omits them is the same brand-only defect as the first spawn.
+`scripts/office-spawn.sh ... --resume <id>` does this same block and maps the id to the native
+resume flag for each kind. A resume still needs model and effort: a resumed session inherits its
+prior context, not its prior tier, so a resume that omits them is the same brand-only defect as the
+first spawn. Agy's native handle is a `conversation_id`, not a Claude/Codex `session_id`.
 
 ## The ledger
 
@@ -714,8 +768,8 @@ is not where the run keeps it.
 | Final closeout | every remaining pane in the ledger |
 
 **A pending next round is not a reason to keep a pane.** The round after a `CHANGES REQUIRED`, and
-the executor that will take those fixes, both come back through `--resume <session_id>` in a fresh
-pane. Close on the report.
+the executor that will take those fixes, comes back through a fresh pane: `--resume <session_id>`
+for Claude/Codex, or `--conversation <conversation_id>` for native Agy. Close on the report.
 
 **Keep open only these:** an agent that is `working` or `blocked`. `blocked` is a question to
 surface, not a pane to close.

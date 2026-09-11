@@ -17,7 +17,12 @@ dispatch and do not reconstruct any of this from memory — append what you lear
 This spoke is the runtime contract this office depends on; the `agy` skill is the general
 reference for anyone invoking the CLI.
 
-## Launch form (exact)
+## Non-Herdr launch form (exact)
+
+This `agy --print` form applies only when `HERDR_ENV` is absent. When Herdr is present, use the
+native managed-agent recipe in [`herdr`](../../office-core/skills/herdr/SKILL.md): start
+`herdr agent start --kind agy`, then submit the brief with `herdr agent prompt`. Do not create or
+run a `run-executor.sh` wrapper under `HERDR_ENV=1`.
 
 ```bash
 agy --dangerously-skip-permissions --print-timeout 45m \
@@ -127,27 +132,9 @@ section describes.
 - [`../../references/executor-brief.md`](../../references/executor-brief.md) — what the prompt
   text itself must contain (this file only covers the launch, not the brief).
 
-## Launching agy inside a Herdr pane (learned 2026-09-03)
+## Launching Agy inside a Herdr pane
 
-`herdr agent start --kind agy` is not a thing; agy runs as a plain command in a pane. Three rules:
-
-1. **Never pass the brief inline through `herdr pane run`.** The pane types the command into a
-   live shell, so a multi-line brief with quotes leaves the shell stuck at `quote>` and nothing
-   runs. Write a wrapper script instead and run that:
-   ```bash
-   cat > /abs/work/run.sh <<'EOF2'
-   #!/bin/bash
-   cd /abs/work || exit 1
-   exec agy --dangerously-skip-permissions --print-timeout 10m \
-     --model "$(~/.claude/skills/agy-office/scripts/agy-model.sh high)" \
-     --add-dir /abs/work --print "$(cat /abs/work/brief.md)"
-   EOF2
-   herdr pane run <PANE_ID> bash /abs/work/run.sh
-   ```
-2. **Wait for the shell prompt before `pane run`.** A pane split moments earlier may still be
-   restoring its session; a command typed before the prompt appears is swallowed. Poll
-   `herdr pane read <PANE_ID>` for the prompt line first.
-3. **`--print` shows nothing until the run ends.** A pane that displays only the echoed command
-   is not stuck. Confirm liveness with `pgrep -f "<model slug>"`, then read the pane tail when the
-   process exits. A `quote>` line in the pane, by contrast, IS stuck: close the pane and relaunch
-   (`herdr pane send-keys` key names are limited; closing is faster).
+Use the native Herdr integration described in the shared `herdr` skill. Start the interactive Agy
+process with its non-prompt flags after `--`, then send the multiline brief with
+`herdr agent prompt`. This exposes the terminal transcript through `herdr agent read` and avoids
+shell quoting and the delayed output of `--print`.

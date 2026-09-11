@@ -1,6 +1,6 @@
 ---
 name: auto-office
-description: Use ONLY when explicitly invoked via /auto-office; never self-triggered by task shape. Router office — a fit test picks the gear, then ONE codex / agy / claude executor per repo runs the approved plan end to end.
+description: Use ONLY when explicitly invoked via /auto-office; never self-triggered by task shape. Router office — the Planner routes approved graph slices through parallel executors in isolated worktrees.
 ---
 
 # Auto Office
@@ -9,30 +9,31 @@ The office chooser. The invoking model always holds core's **Planner** role
 ([roles-and-authority.md](office-core/protocol/roles-and-authority.md)) — "orchestrator" below just
 names its control-plane behavior, not a second role. It drafts the plan itself for compatibility, or
 dispatches an optional dedicated **plan drafter** (an added role, never the Planner) that returns a
-serialized draft before the Planner continues the existing lifecycle. Executor/reviewer routing is
-unchanged.
+serialized draft before the Planner continues the existing lifecycle. Executor, scout, and reviewer
+routing follow the current usage-aware defaults in `auto-routing`.
 
 ```
 PLANNER / orchestrator (user's entry; owns state, dispatch, lifecycle, gates)
   ├─ drafts the plan: itself (compatibility) | dedicated plan drafter → serialized draft handoff
   ├─▶ Plan-reviewer ─▶ retires                         [full gear only]
-  └─▶ ONE Executor per repo ─▶ Workers → Reviewer → closeout
+  ├─▶ Executor lanes (one or more per repo, one worktree each)
+  └─▶ Planner collates ready arrivals → Reviewer → closeout
 ```
 
 | Role | Who | Job | Never does |
 |---|---|---|---|
 | **Planner (orchestrator)** | Invoking model | Intent, state, lifecycle, dispatch, monitoring, approval, review state, closeout | Auto-route itself or give up a gate to the plan drafter |
 | **Plan drafter** *(added role)* | Same session, or a dedicated call | Draft plan + serialized handoff | Ask user, dispatch executors, hold a gate, or change routing |
-| **Plan-reviewer** | Fresh, Planner's own control-plane route, Opus **low**; full only | One adversarial pass, then retires | A dedicated drafter's brand does not override this route |
-| **Executor** | One per repo; fixed sonnet-tier high | Whole approved plan end to end; bootstrap, commit, handoff | Self-approve, exceed ceiling, or merge |
+| **Plan-reviewer** | Fresh `gpt-5.6-luna` **xhigh**, Opus **low** fallback; full only | One adversarial pass, then retires | A dedicated drafter's brand does not override this route |
+| **Executor** | One per writer/worktree; one or more per repo when the graph benefits from parallel slices. Gemini Flash medium → Sonnet high → Codex Luna xhigh | Its approved graph slice end to end; bootstrap, commit, handoff | Self-approve, exceed ceiling, edit a sibling worktree, or merge |
 | **Worker** | Per task; declared triple | One task under Executor | Widen scope or self-promote |
-| **Reviewer** | Fresh Opus **low** (`codex-luna` only when Codex is the control-plane Planner) | Adversarial gate | Fix its own findings |
+| **Reviewer** | Fresh `gpt-5.6-luna` **xhigh**, Opus **low** fallback | Adversarial gate | Fix its own findings |
 
 Drafter contract/dispatch/boundary: [`references/planner-handoff.md`](references/planner-handoff.md).
 **Core:** no one gates their own work; inline work is still independently reviewed. The Planner
-designs dispatch and validates any draft before adopting it; one executor performs the whole plan
-per repo. No PM; ≥2 repos means ≥2 executors. Planner-implements is allowed only for a fix whose
-brief would exceed the edit — never for volume.
+engineers the graph for wall-clock time and effectiveness coverage, dispatches one or more lanes per
+repo when useful, and collates the first eligible handoff. Each lane owns a separate worktree. No PM.
+Planner-implements is allowed only for a fix whose brief would exceed the edit — never for volume.
 
 ## Invocation gate and caller overrides
 
@@ -72,8 +73,9 @@ See [`quota-probe.md`](references/quota-probe.md) and core's *Fit test*.
 
 ## Routing, in one screen
 
-Brand by fit — **claude** cross-cutting ambiguity (preferred default), **codex** backend/data/infra/long-horizon,
-**agy** frontend, recon, and bulk breadth. Rubric: [auto-routing](skills/auto-routing/SKILL.md).
+Brand by the ordered defaults — **Gemini Flash medium** first, **Claude Sonnet high** second, and
+**Codex Luna xhigh** third; frontend/fullstack/backend fit and benchmark scores remain weaker
+Planner inputs. Rubric: [auto-routing](skills/auto-routing/SKILL.md).
 
 **Dispatch form is derived, not priced:** Herdr when `HERDR_ENV=1`, otherwise the existing
 CLI/in-session/inline route. The Planner records drafter selection; the drafted plan records
@@ -85,27 +87,32 @@ its draft PR; the dedicated plan drafter keeps no run state and holds no gate. *
 executor may never amend** — `goal`, `done_criteria`, `blast_radius`, `named_actions`, `non_goals`;
 it amends the *how* freely, reporting hash + rationale.
 
-**Headroom is probed at fit-test and before dispatch; UNKNOWN is unavailable.** Agy has a three-task
-cap. Live-system delegation names its tools, pins shape, and requires read-back. Model/effort changes
-are caller-owned.
+**Headroom is probed at fit-test and before dispatch.** Usage is a planner input, not a hard threshold;
+when it cannot be measured, Gemini remains the default safe choice until a launch or quota failure
+forces a fallback. Live-system delegation names its tools, pins shape, and requires read-back.
+Model/effort changes are caller-owned.
 
 ## Non-bypassable safety rules
 
-- One executor per repo; one implementation writer per tree, except one Tester with disjoint
-  test/config paths and locked commits. A planner inline write never overlaps a live executor.
+- One or more executors per repo are allowed when the approved graph benefits from parallelism or
+  coverage. Each gets its own branch/worktree; the Planner collates the first eligible handoff,
+  subject to dependencies and review. One writer per tree remains mandatory, except one Tester with
+  disjoint test/config paths and locked commits. A planner inline write never overlaps a live executor.
 - With `HERDR_ENV=1`, read [`herdr`](office-core/skills/herdr/SKILL.md): delegated agents use visible
   panes (right, then below), never in-session; otherwise existing CLI/in-session routing remains.
-- **The Planner dispatches the dedicated plan drafter during Phase 1 when selected, then the
-  executor, code reviewer, and Phase 1 read-only scouts.** After bootstrap, the Executor may dispatch
-  task workers and Tester under the core contract. A Planner-launched numbered-task worker is a
+- **The Planner dispatches the dedicated plan drafter during Phase 1 when selected, then ready
+  executor lanes, the code reviewer, and Phase 1 scouts.** The graph names each lane's slice,
+  dependencies, `Touches:` set, worktree, branch, and handoff. After bootstrap, an Executor may
+  dispatch task workers and Tester under core; an undeclared Planner-launched task worker is a
   protocol violation.
 - **No self-approval, ever** — not the executor on its diff, not the Planner on its inline fix.
-- Executor is **sonnet-tier high** always; a worker's tier is the plan's call, never raised mid-run.
+- Executor selection follows the ordered, usage-aware Gemini → Sonnet → Codex ladder; a worker's tier
+  is the plan's call, never raised mid-run.
 - A delegation buys tier, isolation, parallelism, **or price** — and **every inline row states in a
   clause what a delegation would have bought.** File and task count are never the test.
 - One final plan approval after all Phase 1 gates and amendments, before dispatch — silence is not
   approval.
-- Fresh Opus code reviewer; resume vs. fresh per round is a cost call, not a default (see
+- Fresh Codex Luna xhigh code reviewer, with Opus low only as fallback; resume vs. fresh per round is a cost call, not a default (see
   `review-states.md`). **`CHANGES REQUIRED`** sends the planner to a disposition checkpoint; no
   approval without pasted evidence; **5-round cap** (2 in express).
 - `PLAN DEFECT` and `BRIEF DEFECT` exit the loop without consuming a round; two `CHANGES REQUIRED`

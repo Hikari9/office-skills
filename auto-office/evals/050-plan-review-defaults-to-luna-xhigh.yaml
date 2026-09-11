@@ -1,0 +1,15 @@
+name: Plan review defaults to Codex Luna xhigh with Opus low as the fallback
+prompt: |
+  /auto-office full The Planner has completed self-review and the plan is ready for the single
+  adversarial plan-review pass. Codex is installed, authenticated, launchable, and has measurable
+  headroom. No caller override names a reviewer. State the plan-reviewer brand, model, effort, and
+  fallback if Codex is unavailable.
+expect_skill: true
+criteria:
+  - "Selects gpt-5.6-luna at xhigh as the plan reviewer"
+  - "Names opus low as the only fallback"
+  - "Runs exactly one fresh plan-review pass before approval"
+  - "Does not let the dedicated plan drafter's model choice override the plan-review route"
+  - "Keeps plan review distinct from code review while using the same default reviewer family"
+allowed_tools: ["Read", "Grep", "Glob"]
+timeout: 240

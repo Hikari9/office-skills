@@ -1,15 +1,14 @@
-name: Phase 1 scouts use an orchestrator-selected bounded fallback when agy is unavailable
+name: Phase 1 scouts prefer Gemini when usage is UNKNOWN
 prompt: |
-  /auto-office Phase 1 scout routing. The agy availability probe reports quota-unavailable, so no
-  agy dispatch is possible. Resolve the read-only scout route and state the exact model, effort,
-  kickoff disclosure, and why executor/reviewer routing is unaffected. The orchestrator may choose
-  among the maintained fallback options.
+  /auto-office Phase 1 scout routing. The usage probe returns UNKNOWN for Codex and Gemini, but both
+  CLIs are installed and launchable. Resolve the read-only scout route and state the exact model,
+  effort, kickoff disclosure, and why executor/reviewer routing is unaffected.
 expect_skill: true
 criteria:
-  - "Does not dispatch agy after the probe reports it unavailable"
-  - "Chooses Codex gpt-5.6-luna at medium or Claude haiku/sonnet at low"
-  - "States that the orchestrator selected the fallback and echoes the exact model+effort"
+  - "Chooses Gemini gemini-3.7-flash-low at low effort when usage is UNKNOWN"
+  - "States that UNKNOWN is not zero and echoes the exact model+effort"
+  - "Uses the same Herdr/same-brand-in-session/cross-brand-CLI dispatch contract as executors"
   - "Forbids planner, executor, reviewer, opus, high, xhigh, and max scout routing"
-  - "Keeps the fallback decision scoped to Phase 1 scouts and leaves executor/reviewer routing unchanged"
+  - "Keeps the usage-unknown decision scoped to Phase 1 scouts and leaves executor/reviewer routing unchanged"
 allowed_tools: ["Read", "Grep", "Glob"]
 timeout: 220

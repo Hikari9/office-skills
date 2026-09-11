@@ -27,8 +27,8 @@ Announce before doing anything else:
 
 ```
 auto-office · gear: <express|full> (<the fit-test reason, one clause>)
-executors: <n> (<brand(s)>, <fit reason>) · milestones: <n>
-reviewer: codex-luna xhigh (opus low fallback) · plan-reviewer: <brand> <model> low   [full only]
+executor lanes: <n> (<repo count> repos, <brand(s)>, <graph/fit reason>) · milestones: <n>
+reviewer: codex-luna xhigh (opus low fallback) · plan-reviewer: codex-luna xhigh (opus low fallback)   [full only]
 plan drafter: <auto→prompt|orchestrator-as-drafter|dedicated <harness/model@effort>> · reuse: <yes|no> · fallback: <none|reason→triple>
 headroom: <per window, with reset times, UNKNOWN where a probe failed>
 loop: on · overrides: <none|…>
@@ -68,18 +68,14 @@ has. No v3 routing architecture is introduced.
 2. **File the tracking issue** by default, before exploring.
 3. **Interview to clarity.** Ask in batches, not one at a time. The floor below is not optional in
    full; in express, interview only until a remaining unknown would not change the implementation.
-4. **Recon with low-effort Phase 1 scouts, in parallel.** Probe agy immediately before dispatch.
-   When it is available (installed, authenticated, and launchable), use the low-effort model
-   resolved by `agy-office/scripts/agy-model.sh low` — currently `gemini-3.7-flash-low` — and
-   record the resolved slug plus `effort: low`. Agy remains the preferred scout brand because
-   breadth-first reading at ~340 tok/s lets N scouts finish before a deeper single pass starts
-   producing, and no evidence-authoring is involved (§18 of the ledger — a scout's deliverable is
-   locations).
-   **If agy is unavailable — quota, outage, or not installed — the orchestrator chooses an allowed
-   fallback before dispatch:** Codex `gpt-5.6-luna` at `medium`, or Claude `haiku` / `sonnet` at
-   `low`. Codex `medium` is the explicit Luna fallback ceiling; Claude must carry `--effort low`.
-   No scout may inherit planner settings or run at `high`, `xhigh`, or `max`. State in the kickoff
-   line that agy was unavailable, what replaced it, and the exact model+effort selected.
+4. **Recon with fresh Phase 1 scouts, in parallel.** Use the same dispatch form as executors:
+   Herdr when available, same-brand in-session otherwise, and cross-brand CLI otherwise. The
+   nominal scout order is Codex `gpt-5.6-luna` medium, Gemini `gemini-3.7-flash-low`, then Claude
+   `haiku` low. If usage cannot be measured, prefer Gemini as the safe default. Usage, launchability,
+   and repeated failures outweigh benchmark/task-fit scores; a single launch failure permits the
+   next rung, while a Planner-caused malformed call must be corrected and retried at the same rung.
+   No scout may inherit planner settings or run above medium effort. State the usage/availability
+   result and exact model+effort selected in the kickoff line.
    Every scout dispatch states, verbatim: *"Phase 1 is PLAN ONLY. `HEAD` must not move. Read and
    report locations; do not create, edit, or delete files."* Also name which worktree/checkout the
    scout is reading in — explicit ownership, not an assumption it will infer the right tree. Observed
@@ -153,21 +149,20 @@ do not write a plan until every item is answered or explicitly deferred by the u
 - **Speed vs correctness** — which one the user is buying here. This directly moves the route.
 - **Other work queued** — only if a probe came back thin and this run might drain a window the user
   needs later. Otherwise do not ask; weigh it yourself and state the call.
-- **How many executors this run needs** — one repo or several, one slice or several. More than one
-  also promotes an express run to full.
+- **How many executor lanes this run needs** — for each repo, decide whether the task graph benefits
+  from one lane or several parallel slices. More than one lane also promotes an express run to full.
 - **User-owned decisions** — anything you would otherwise guess. Recommend, never infer.
 
 ## The task assignment table
 
 Goes in the plan, next to the tasks. The planner fills every cell before approval.
 
-**Read this before you fill it in.** This table is the planner's **dispatch design, handed to the
-executor** — it is *not* a list of processes the planner will launch. In an approved run the
-orchestrator launches the dedicated plan drafter only during Phase 1 when that mode is selected; after
-that it launches exactly three kinds of process: **one executor per repo**, the code reviewer, and
-(Phase 1 only) read-only scouts. Every row below tells the executor how to run that task. The table
-exists because the planner has read the whole codebase and the executor should not have to re-derive
-which task deserves a subagent — not because the planner is the one dispatching.
+**Read this before you fill it in.** This table is the planner's **dispatch design** and the launch
+manifest. In an approved run the orchestrator launches the dedicated plan drafter only during Phase 1
+when that mode is selected; after that it launches the ready **executor lanes**, the code reviewer,
+and (Phase 1 only) read-only scouts. The planner may launch multiple lanes for the same repo when the
+graph warrants it. Every lane row gives its executor an exact slice; every task row tells that lane
+how to run the task. The executor should not have to re-derive the graph or invent parallelism.
 
 A per-task row therefore obliges a **reason**: why *that* task should be inline, `herdr`, in-session,
 or a CLI worker. A `Dispatch` cell with no justification in `Why` is an unreviewable cost and the
@@ -177,21 +172,27 @@ The example below assumes `HERDR_ENV` is absent. With Herdr detected, replace ev
 `cli`/`in-session` dispatch with `herdr`, place direct children right and further children below, and
 keep the same worker scope and review gates.
 
-**Row 0 is the executor, and it is the only process the planner launches for the work:**
+**Executor lane rows are the planner-launched implementation processes:**
 
-| Repo | Executor | Model+effort | Worktree | Scope |
-|---|---|---|---|---|
-| `acme-api` | codex | `gpt-5.6-luna` `high` | `../wt-retry-queue` @ `BASE` | **Tasks 1–5, end to end** |
+| Lane | Repo | Executor | Model+effort | Worktree / branch | Scope |
+|---|---|---|---|---|---|
+| `api-a` | `acme-api` | agy | `gemini-3.8-flash-medium` | `../wt-retry-schema` / `feat/retry-schema` @ `BASE` | **Tasks 1–2; handoff `workspace/api-a.md`** |
+| `api-b` | `acme-api` | agy | `gemini-3.8-flash-medium` | `../wt-retry-runtime` / `feat/retry-runtime` @ `BASE` | **Tasks 3–5; depends on `api-a` interface, handoff `workspace/api-b.md`** |
+
+The example shows two lanes for one repo. If `api-b` truly depends on `api-a`, dispatch `api-a`
+first and unlock `api-b` from its verified handoff; otherwise dispatch both immediately. When both
+are ready, the Planner collates whichever eligible handoff arrives first and preserves the other
+lane's evidence for its own review and integration.
 
 Then the per-task rows — **instructions to that executor**, not launches:
 
-| # | Task | Worker brand | Model+effort | Dispatch | Diagnosis | Why this dispatch form |
-|---|---|---|---|---|---|---|
-| 1 | Locate every call site of `sendReceipt` | agy | `gemini-3.7-flash-low` | **cli ×3** (different brand) | settled | Read-only breadth at low effort; 3 parallel scouts beat one deep read, and a different brand needs its own process |
-| 2 | Add the queue column + migration | — | executor itself | **inline** | settled | The executor is the backend specialist here; a brief would restate the whole task |
-| 3 | Wire the retry flag through the config | — | executor itself | **inline** | settled | Two files the executor already has loaded — a brief costs more than the edit |
-| 4 | Reconcile the two conflicting invariants | claude | `opus` high — **worker upgrade** | **in-session** | **unverified** | Arbitration, not implementation: a different *kind* of question. Declared here, recorded in telemetry |
-| 5 | Backfill + verify against staging | — | executor itself | **in-session `--bg`** | settled | Contains a blocking wait; must own an event loop or it returns mid-task |
+| Lane | # | Task | Worker brand | Model+effort | Dispatch | Diagnosis | Why this dispatch form |
+|---|---|---|---|---|---|---|---|
+| `api-a` | 1 | Locate every call site of `sendReceipt` | codex | `gpt-5.6-luna` medium | **same-brand in-session ×3** | settled | Read-only breadth at medium effort; fresh same-brand scouts may run in-session when Herdr is absent |
+| `api-a` | 2 | Add the queue column + migration | — | executor itself | **inline** | settled | The executor is the backend specialist here; a brief would restate the whole task |
+| `api-b` | 3 | Wire the retry flag through the config | — | executor itself | **inline** | settled | Two files the executor already has loaded — a brief costs more than the edit |
+| `api-b` | 4 | Reconcile the two conflicting invariants | claude | `opus` high — **worker upgrade** | **in-session** | **unverified** | Arbitration, not implementation: a different *kind* of question. Declared here, recorded in telemetry |
+| `api-b` | 5 | Backfill + verify against staging | — | executor itself | **in-session `--bg`** | settled | Contains a blocking wait; must own an event loop or it returns mid-task |
 
 Note what is **absent**: no row says "planner". Reviewer-finding fixes are not rows — they go back to
 the executor inside the fix loop. The planner appears in the plan only in `named_actions:`.
@@ -202,25 +203,19 @@ Draw it. The table says *what* each task gets; the tree shows the **shape** — 
 parallel, and where the barriers are. One glance should answer "how wide does this get, and when."
 
 ```
-PLANNER (opus, this session)
+PLANNER (current invoking session; owns graph + collation)
   │
-  ├─▶ EXECUTOR  sonnet high         ·  wt-retry-queue  ·  tasks 1-5 end to end
-  │     │
-  │     ├─ T1 ──┬─▶ worker agy (cli)   scan handlers/     ┐
-  │     │       ├─▶ worker agy (cli)   scan jobs/         ├ parallel, barrier before T2
-  │     │       └─▶ worker agy (cli)   scan legacy/       ┘
-  │     │
-  │     ├─ T2 ─── inline  (migration)          ─┐
-  │     ├─ T3 ─── inline  (config wiring)       ├ serial: T3 needs T2's column
-  │     ├─ T4 ─── worker claude opus (in-sess) ─┘  arbitration, runs alongside T3
-  │     └─ T5 ─── in-session --bg (blocking wait)
-  │
-  ├─▶ CODE REVIEWER  codex-luna xhigh / opus low fallback   (resume vs fresh per round — cost call, not a default)   ← planner-dispatched, per task
+  ├─▶ EXECUTOR api-a  Gemini Flash medium · wt-retry-schema  · tasks 1-2
+  │       └─ handoff ──┐
+  ├─▶ EXECUTOR api-b  Gemini Flash medium · wt-retry-runtime · tasks 3-5 (depends on api-a)
+  │       └─ handoff ──┤→ Planner verifies/reviews whichever eligible lane arrives first
+  │                     └→ integrates lane, then unlocks dependents
+  ├─▶ CODE REVIEWER  codex-luna xhigh / opus low fallback   (fresh per gate/round)
   └─▶ [Phase 1 only] read-only scouts
 ```
 
 - **`Model+effort` is pre-filled** from [auto-routing](../auto-routing/SKILL.md)'s table. The
-  **executor's** cell is fixed at sonnet-tier high; a non-default value there is a **caller override**
+  **executor's** cell is pre-filled at Gemini Flash medium; a non-default value there is a **caller override**
   and must be labelled as one, in the cell.
 - **A worker's cell is a real decision, and this table is where it is made.** The default is the
   executor's tier, but the planner may assign a higher tier or a different brand when the sub-task is
@@ -242,9 +237,11 @@ PLANNER (opus, this session)
   that return costs one read instead of a whole implementation.
 - **An inline row is a real row** and is reviewed like every other row. What nobody may do is take a
   row out of review.
-- **Before you approve your own table, count the launches.** If the number of processes *you* would
-  start is greater than (one executor per repo) + (one reviewer per task) + (Phase 1 scouts), you
-  have written a scheduler, not a plan. Go back and give the whole thing to the executor.
+- **Before approval, count the launches and barriers.** The executor-lane count is the number of
+  ready graph slices, not the number of repos. Record why each lane buys wall-clock parallelism or
+  independent effectiveness coverage, and record every dependency barrier. If a lane has no
+  distinct slice, worktree, or measurable coverage value, collapse it. The Planner may dispatch the
+  declared lanes; it must not invent extra numbered-task workers after approval.
 
 ## The GOAL block
 
@@ -280,7 +277,6 @@ blast_radius:
   environments: [...]     # name production or say "none"
 caps:
   review_rounds_per_task: 5   # 2 in express; planner decides whether to promote and continue
-  agy_consecutive_tasks: 3
   loop_iterations: <n>
 ```
 
@@ -355,8 +351,9 @@ the full gear.
 Between self-review and user approval. The plan-reviewer is a **fresh agent on the existing
 orchestrator/control-plane Planner's own route** (the invoking session's brand — never the plan
 drafter's), at that route's plan-review row in
-[auto-routing](../auto-routing/SKILL.md) — Opus-tier, **low** effort. A dedicated plan drafter's
-model choice never overrides this reviewer route. Spoke paths: [delegation-map.md](../../references/delegation-map.md).
+[auto-routing](../auto-routing/SKILL.md) — Codex `gpt-5.6-luna` **xhigh**, with Opus **low** as the
+only fallback. A dedicated plan drafter's model choice never overrides this reviewer route. Spoke
+paths: [delegation-map.md](../../references/delegation-map.md).
 
 **This gate stays because it is the best-value item in every run that has recorded one** — 14 vs 4,
 22 vs 8, 24 vs 6 findings against self-review, overlap near zero each time, blockers that were real.

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Core `17.9.0`: Herdr dispatch now starts Agy natively with `agent start --kind agy`, submits
+  briefs through `agent prompt`, and uses the bounded `herdr-wait.sh` task monitor instead of a
+  silent shell wrapper.
+
 ## 16.5.0 — 2026-09-10
 
 Core `17.8.0`.

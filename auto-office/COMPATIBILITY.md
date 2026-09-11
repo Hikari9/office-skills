@@ -31,14 +31,15 @@ exceptions:
   - id: auto-task-subdelegation
     owner: auto-office
     reason: >
-      The Planner (orchestrator) dispatches the dedicated plan drafter when selected, then one
-      executor per repo and the existing reviewer/scout stages. The approved Executor may sub-delegate
-      individual tasks to another tool (typically agy for read-only recon and bulk mechanical work).
-      When `HERDR_ENV=1`, every real delegation uses the Herdr pane contract; otherwise same-brand
-      fan-out may use the existing in-session route and cross-brand fan-out uses CLI. Ordinary
-      sub-delegation never creates a second writer. The core Tester exception permits one
-      Executor-owned Tester to write disjoint test/config paths in the Executor's tree under the
-      shared lock and pathspec contract.
+      The Planner (orchestrator) dispatches the dedicated plan drafter when selected, then one or
+      more executor lanes per repo and the existing reviewer/scout stages. Each lane receives an
+      approved graph slice and its own branch/worktree; the Planner collates eligible handoffs as
+      they arrive. The approved Executor may sub-delegate individual tasks to another tool
+      (typically agy for read-only recon and bulk mechanical work). When `HERDR_ENV=1`, every real
+      delegation uses the Herdr pane contract; otherwise same-brand fan-out may use the existing
+      in-session route and cross-brand fan-out uses CLI. No two implementation writers share a
+      worktree. The core Tester exception permits one Executor-owned Tester to write disjoint
+      test/config paths in the Executor's tree under the shared lock and pathspec contract.
     widens_core_authority: false
   - id: auto-goal-locked-autonomy
     owner: auto-office
@@ -67,7 +68,7 @@ exceptions:
       Opus-tier low effort, which then retires permanently. Core 3.0.0 explicitly permits an office
       to add a plan-review gate ahead of user approval, and this one adds a gate rather than
       absorbing any existing one — the code-review gate, its opus-low floor, and every verdict
-      are untouched. Its floor is declared separately (opus low) and binds only itself. It runs
+      are untouched. Its floor is declared separately (`codex-luna` xhigh, `opus` low fallback) and binds only itself. It runs
       exactly once and is never recalled, so it can never gate work it previously approved.
     widens_core_authority: false
   - id: auto-no-coordinator
@@ -83,10 +84,12 @@ exceptions:
   - id: auto-mandated-executor-tier
     owner: auto-office
     reason: >
-      Claude Sonnet high is the standing executor default. Every executor still runs at its
-      brand's fixed default tier when another brand is selected: `gpt-5.6-luna` high for codex,
-      Flash latest high for agy. No self-escalation and no model substitution without an explicit
-      caller override. A worker's brand and tier are assigned by
+      Gemini 3.8 Flash medium is the standing executor default, with Claude Sonnet high and
+      Codex Luna xhigh as ordered fallbacks. The Planner weighs live usage, launchability, repeated
+      failures, task shape, and benchmark scores without a hardcoded percentage threshold. If usage
+      is UNKNOWN, Gemini remains the safe default. A malformed Planner tool call is retried at the
+      same rung; a real launch/quota/repeated-failure signal permits fallback. No self-escalation and
+      no model substitution without an explicit caller override. A worker's brand and tier are assigned by
       the planner in the plan and may exceed the executor's tier — which core's delegation test
       anticipates, since a delegation is allowed to buy tier — but a worker is never promoted at run
       time. This narrows core rather than widening it: core sets no model policy, and every path
