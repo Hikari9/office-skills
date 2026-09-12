@@ -37,6 +37,9 @@ agentic_capability:
 failure_signatures:
   - {id: swallowed-prompt, attribution: adapter, pattern: "greeting or --print consumed a flag"}
   - {id: quota-stall, attribution: quota/account, pattern: "narration then no work/no writes"}
+  - {id: slug-vs-display-name-silent-fallback, attribution: adapter, pattern: "--model <slug> accepted without error but session silently launches on account default model"}
+  - {id: effort-unsupported-hard-fail, attribution: adapter, pattern: "--effort is not supported for model \"<slug>\" (Claude/gpt-oss routes)"}
+  - {id: stdin-pipe-ignored, attribution: adapter, pattern: "prompt piped on stdin is not consumed; must bind to --print/--prompt="}
 conformance:
   deterministic: pending
   live: pending

@@ -7,10 +7,29 @@ description: Directly invocable Auto Office v3 Claude CLI mechanics primitive. U
 
 Load `../../adapters/seed/claude.yaml` plus any current local override. The shipped seed is `valid-unverified`.
 
-Migration seed mechanics use background Remote Control with explicit `--model`, `--effort`, and `--add-dir`. Send the prompt on stdin; the current ecosystem observed positional prompts registering an idle agent without starting work.
+```bash
+echo "<brief>" | SHELL=/bin/bash claude --bg --remote-control "[ROLE] <repo> — <task>" \
+  --model <model> --effort <effort> --add-dir "<pre-created worktree>" \
+  --allowedTools "Read Write Edit Grep Glob Bash(git *) <task-specific tools>"
+```
 
-Pre-create an isolated worktree for mutable agents. `--add-dir` is access, not guaranteed workspace isolation; the packet must pin the workspace and protected paths. Generate a scoped tool allowlist from the packet/environment. MCP tools are not inherited merely because the parent agent can use them; name only the tools the delegated task requires.
+- **The prompt must be piped on stdin.** A positional prompt returns `idle — send a prompt to start`: the agent registers but never begins, and checking only the launch id (not `state`) makes you wait forever on an agent never given work.
+- **The allowlist carries no MCP tools unless you name them.** `--allowedTools` grants file/shell access and nothing else — every MCP server the parent can reach (Rock, Basecamp, Sheets, any connector) is absent unless listed explicitly as `mcp__<server>__<tool>`. A dispatch that never granted a tool reads back as "delegate can't do this system," when the truth is the launch never carried it. Read the real tool names off your own tool list before launching; a guessed name grants nothing and fails silently.
+- **`--add-dir` is not checkout isolation.** A dispatched agent can still `git checkout` the shared tree it was pointed at before adding its own worktree, moving the branch under you. Pre-create the agent's worktree and `--add-dir` that (or dispatch from a tree you are not using yourself); after any dispatch returns, check `git rev-parse --abbrev-ref HEAD` before writing anything.
+- **Never pre-emptively fall back to `--in-session`** because CLI "was blocked before" — that's stale evidence. Attempt the CLI launch and read the actual result; only a real refusal in the current run justifies the fallback.
 
-Never use `--resume <id> --bg` to steer a live writer on observed versions: it can fork into a second writer. For a blocked question, use a verified in-place message path; for real steering/recovery, reconcile holder/session identity first.
+## The fork gotcha
 
-Use the harness's session listing as primary liveness evidence; negative `pgrep` alone is not proof of death.
+`--resume <id> --bg` against a live session — busy or blocked — forks unconditionally: it returns a new session id and leaves the original running untouched, so your steering message never reaches it and you now have two writers on one tree. Never use it to steer a live writer.
+
+- For a **blocked question** (a raised menu or free-text prompt), answer in place via `claude attach` rather than forking — never combine digit-selection and text in one send, and never lead a free-text answer with `/` (it gets intercepted as a slash command).
+- If a fork already happened: keep the fork (it carries the transcript plus your message), `claude stop` the original, and confirm via `claude agents --json` that exactly one writer remains before continuing.
+- `/remote-control` sent into a session already at an input prompt enables Remote Control without forking; never send it into a busy/working turn.
+
+## Liveness — `claude agents --json` is the only read
+
+`pgrep -f "<worktree path>"` cannot see a Claude background agent — its command line is `claude bg-spare --bg-spare /tmp/cc-daemon-501/<id>/spare/....sock`, and the worktree never appears there. A miss is not evidence of death, it's evidence you searched for a string that was never going to be present. `ls /tmp/cc-daemon-501` from the Bash tool is equally blind — the tool runs with a private `/tmp`. Two independent-looking checks that share the one root cause (neither can observe a bg agent) agreeing with each other means nothing.
+
+The authoritative read is the `claude agents --json` row for that id — its `status`/`state`. Corroborate only with signals that actually can see it: `ps -eo pid,command | grep claude` matching that row's `pid`, and artifact mtimes moving in its tree. `claude logs <id>` works only for background sessions, and failing with `connect ENOENT .../control.sock` means the log channel is unreachable, not that the agent is dead.
+
+Attribute invocation/stdio bugs (idle-prompt, missing MCP tools, fork-on-resume) to adapter, checkout/liveness-observability gaps to harness, and logical implementation defects to the producer model/role only when evidence supports it.

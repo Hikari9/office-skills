@@ -37,6 +37,11 @@ agentic_capability:
 failure_signatures:
   - {id: positional-prompt-idle, attribution: adapter, pattern: "idle - send a prompt to start"}
   - {id: resume-bg-fork, attribution: harness, pattern: "resume against live session creates a new writer"}
+  - {id: allowlist-no-mcp-tools, attribution: adapter, pattern: "--allowedTools grants no MCP server tools unless named explicitly, read back as delegate cannot reach the system"}
+  - {id: add-dir-not-checkout-isolation, attribution: harness, pattern: "dispatched agent git checkout in the shared --add-dir tree moves the branch under the caller"}
+  - {id: pgrep-blind-to-bg-agent, attribution: false-negative-liveness, pattern: "bg agent cmdline is bg-spare socket path, never the worktree path"}
+  - {id: tmp-daemon-dir-sandboxed, attribution: false-negative-liveness, pattern: "ls /tmp/cc-daemon-501 fails from sandboxed Bash tool /tmp, not evidence the daemon is gone"}
+  - {id: logs-only-background-sessions, attribution: adapter, pattern: "claude logs <id> ENOENT/no-job-match for interactive sessions"}
 conformance:
   deterministic: pending
   live: pending

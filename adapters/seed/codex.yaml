@@ -37,6 +37,12 @@ agentic_capability:
 failure_signatures:
   - {id: stdin-deadlock, attribution: adapter, pattern: "background launch waiting on stdin"}
   - {id: resume-wrong-cwd, attribution: harness, pattern: "resume inherited caller cwd"}
+  - {id: resume-rejects-cd, attribution: adapter, pattern: "resume errors on --cd: unexpected argument"}
+  - {id: resume-drops-effort, attribution: adapter, pattern: "resume without -c model_reasoning_effort silently reverts to config default"}
+  - {id: pgrep-matches-wrapper-shell, attribution: false-positive-liveness, pattern: "pgrep -f 'codex exec' matches the harness wrapper shell, not the codex process"}
+  - {id: comm-codex-vs-node, attribution: false-negative-liveness, pattern: "nvm-installed codex reports comm==node, not comm==codex"}
+  - {id: harness-timeout-default-kill, attribution: harness, pattern: "backgrounded dispatch killed near 120s with no error when timeout was not set to 600000"}
+  - {id: piped-tail-head-buffers-output, attribution: harness, pattern: "output file reads 0 bytes for the whole run when piped through tail/head"}
 conformance:
   deterministic: pending
   live: pending

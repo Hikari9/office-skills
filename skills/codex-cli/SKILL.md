@@ -7,10 +7,45 @@ description: Directly invocable Auto Office v3 Codex CLI mechanics primitive. Us
 
 Load `../../adapters/seed/codex.yaml` and the current local adapter override. The shipped seed is `valid-unverified`; normal mutable/final-gate authority requires promotion by v3 conformance/evidence or explicit user override.
 
-Always pass explicit model and canonical effort. Current migration mechanics use `codex exec -m <model> -c model_reasoning_effort="<effort>"`; never rely on user config defaults. For mutable full-authority execution the legacy mechanic used `--yolo`, so blast radius/protected paths and adapter trust are the safety boundary.
+Always pass explicit model and canonical effort — `codex exec` has no `--effort` flag; effort is a config key. An invocation carrying only `-m` silently inherits `model_reasoning_effort` from `~/.codex/config.toml`, and an unrecognised value is not rejected at launch (the banner prints it and the session runs anyway). Read the effort back out of the launch banner; never infer it from the command you meant to type.
 
-Pass prompt text as one argv element without a shell. For background execution, close stdin (`< /dev/null` equivalent) to avoid the observed wait-on-stdin deadlock. Verify the launch banner's model and reasoning effort.
+```bash
+codex exec --yolo -m <model> -c model_reasoning_effort="<effort>" \
+  --cd "<abs worktree path>" "$(cat <brief>)" < /dev/null 2>&1
+# run_in_background: true, timeout: 600000
+```
 
-Fresh `exec` may target a worktree with `--cd`; `resume` can inherit the caller cwd and cannot accept `--cd` on observed versions. Read back `workdir` before allowing resumed mutation. If wrong, terminate and start a fresh dispatch in the correct tree rather than creating a duplicate writer.
+- `--yolo` removes the sandbox and every approval stop; the prompt's stated blast-radius ceiling is the entire safety boundary.
+- `< /dev/null` is mandatory — `codex exec` reads stdin even with a positional prompt, and without this it blocks forever in the background.
+- Pass an explicit `timeout: 600000` on every backgrounded dispatch. The Bash tool's default (`120000`) kills a codex run mid-work — long enough to look like real work, too short for a build plus test suite. Do not misattribute a killed-at-~180s run to an external process cap or a context limit; measure with a throwaway sleep loop before believing that.
+- Never pipe through `tail`/`head` — both buffer the entire stream until exit, so the harness's output file reads empty the whole run.
 
-Attribute invocation/stdio bugs to adapter, resume/workdir behavior to harness, quota walls to quota/account, and logical implementation defects to the producer model/role only when evidence supports it.
+## Liveness — do not trust `pgrep -f "codex exec"` or `comm == "codex"` alone
+
+`pgrep -f "codex exec …"` matches the harness's wrapper shell (the Bash tool runs it inside `/bin/zsh -c …`), which can outlive its codex child by tens of minutes. A hit is not evidence of life.
+
+`ps -eo pid,comm | awk '$2=="codex"'` is not universal either — on an nvm-installed CLI the process shows as `node`, so this filter can read empty while the executor is actively working. Safe only in the positive direction: a hit means alive, a miss means nothing.
+
+**Match on the worktree path instead**, and require two independent signals before declaring death:
+
+```bash
+pgrep -f "<abs worktree path>" | wc -l    # 0 => dead; >0 => alive
+```
+
+the process count must be zero **and** the output file's size must be static across two samples. Never use `pgrep -fl` on a codex dispatch — the entire brief lives in the command line and gets dumped into context.
+
+## Resume
+
+`resume` takes a different flag set from `exec` — `--cd` is rejected, and it inherits the *caller's* cwd, not the session's:
+
+```bash
+codex exec resume --dangerously-bypass-approvals-and-sandbox --model <model> \
+  -c model_reasoning_effort="<effort>" <session-id> "<continuation prompt>" < /dev/null 2>&1
+# run_in_background: true, timeout: 600000
+```
+
+Read the resume banner's `workdir:` line before letting it run — a resume issued from a planner sitting in a different repo lands a full-authority writer in the wrong tree, and there is no flag to correct it in place. If wrong, kill it (`pkill -f "<session-id>"`, confirm with `pgrep -f "<session-id>" | wc -l` => 0) and relaunch a fresh `exec --cd` instead of continuing.
+
+`-c model_reasoning_effort=` is required on resume too — a resume inherits the session's context but **not** its effort, and silently degrades to the config default without it.
+
+Attribute invocation/stdio bugs and false liveness reads to adapter, resume/workdir inheritance to harness, quota walls to quota/account, and logical implementation defects to the producer model/role only when evidence supports it.
