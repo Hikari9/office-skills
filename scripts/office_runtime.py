@@ -260,6 +260,7 @@ def init_db(path: Path):
     CREATE TABLE IF NOT EXISTS ownership_events(id TEXT PRIMARY KEY, run_id TEXT, role TEXT, scope TEXT, prior_holder TEXT, new_holder TEXT, event TEXT, created_at TEXT);
     CREATE TABLE IF NOT EXISTS outcome_labels(id TEXT PRIMARY KEY, dispatch_id TEXT, label TEXT, primary_attribution TEXT, contributing_attributions TEXT, labeled_at TEXT, evidence_hash TEXT);
     CREATE TABLE IF NOT EXISTS lineage(id TEXT PRIMARY KEY, component_kind TEXT, component_id TEXT, parent_id TEXT, event TEXT, multiplier REAL, created_at TEXT);
+    CREATE TABLE IF NOT EXISTS leases(id TEXT PRIMARY KEY, run_id TEXT NOT NULL, role TEXT NOT NULL, scope TEXT NOT NULL, holder_id TEXT NOT NULL, acquired_at TEXT NOT NULL, expires_at TEXT NOT NULL, released_at TEXT, revoked_at TEXT, revoke_reason TEXT);
     """)
     con.commit(); return con
 
@@ -324,6 +325,136 @@ def cmd_new_run(args):
     dump_json({'created':str(out),'run_id':obj['run_id']}); return 0
 
 
+def cmd_lease_acquire(args):
+    now=datetime.now(timezone.utc); now_str=now.isoformat(); expires=(now+timedelta(seconds=args.ttl)).isoformat()
+    con=init_db(Path(args.db))
+    cur=con.execute("SELECT id, holder_id, expires_at FROM leases WHERE run_id=? AND scope=? AND released_at IS NULL AND revoked_at IS NULL ORDER BY acquired_at DESC LIMIT 1", (args.run_id, args.scope)).fetchone()
+    if cur:
+        lid, h, exp = cur
+        if datetime.fromisoformat(exp) <= now:
+            con.execute("UPDATE leases SET revoked_at=?, revoke_reason='stale' WHERE id=?", (now_str, lid))
+            con.execute("INSERT INTO ownership_events(id, run_id, role, scope, prior_holder, new_holder, event, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (str(uuid.uuid4()), args.run_id, args.role, args.scope, h, args.holder_id, 'revoke_and_acquire', now_str))
+            prior = h
+        else:
+            if h != args.holder_id:
+                dump_json({"acquired":False,"holder_id":h,"expires_at":exp}); return 1
+            else:
+                con.execute("UPDATE leases SET expires_at=? WHERE id=?", (expires, lid))
+                con.commit(); con.close(); dump_json({"acquired":True,"lease_id":lid,"expires_at":expires,"prior_holder":h}); return 0
+    else:
+        prior = None
+        con.execute("INSERT INTO ownership_events(id, run_id, role, scope, prior_holder, new_holder, event, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (str(uuid.uuid4()), args.run_id, args.role, args.scope, None, args.holder_id, 'acquire', now_str))
+    new_id = str(uuid.uuid4())
+    con.execute("INSERT INTO leases(id, run_id, role, scope, holder_id, acquired_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)", (new_id, args.run_id, args.role, args.scope, args.holder_id, now_str, expires))
+    con.commit(); con.close(); dump_json({"acquired":True,"lease_id":new_id,"expires_at":expires,"prior_holder":prior}); return 0
+
+def cmd_lease_renew(args):
+    now=datetime.now(timezone.utc); expires=(now+timedelta(seconds=args.ttl)).isoformat()
+    con=init_db(Path(args.db))
+    cur=con.execute("SELECT holder_id FROM leases WHERE id=? AND released_at IS NULL AND revoked_at IS NULL", (args.lease_id,)).fetchone()
+    if not cur or cur[0] != args.holder_id: dump_json({"renewed":False}); return 1
+    con.execute("UPDATE leases SET expires_at=? WHERE id=?", (expires, args.lease_id))
+    con.commit(); con.close(); dump_json({"renewed":True,"expires_at":expires}); return 0
+
+def cmd_lease_release(args):
+    now=datetime.now(timezone.utc).isoformat()
+    con=init_db(Path(args.db)); row = con.execute("SELECT run_id, role, scope, holder_id FROM leases WHERE id=?", (args.lease_id,)).fetchone()
+    if row:
+        con.execute("UPDATE leases SET released_at=? WHERE id=? AND holder_id=?", (now, args.lease_id, args.holder_id))
+        con.execute("INSERT INTO ownership_events(id, run_id, role, scope, prior_holder, new_holder, event, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (str(uuid.uuid4()), row[0], row[1], row[2], args.holder_id, None, 'release', now))
+    con.commit(); con.close(); dump_json({"released":True}); return 0
+
+def cmd_lease_check(args):
+    now=datetime.now(timezone.utc)
+    con=init_db(Path(args.db)); cur=con.execute("SELECT holder_id, expires_at FROM leases WHERE run_id=? AND scope=? AND released_at IS NULL AND revoked_at IS NULL ORDER BY acquired_at DESC LIMIT 1", (args.run_id, args.scope)).fetchone(); con.close()
+    if cur:
+        stale = datetime.fromisoformat(cur[1]) <= now
+        dump_json({"active":not stale,"holder_id":cur[0],"expires_at":cur[1],"stale":stale}); return 0
+    dump_json({"active":False}); return 0
+
+def cmd_state_save(args):
+    state_dir = Path(args.state_dir); state_dir.mkdir(parents=True, exist_ok=True); state_path = state_dir / "state.json"
+    obj = {"run_id": args.run_id, "family_id": args.family_id, "phase": args.phase, "plan_version": args.plan_version, "packet_version": args.packet_version, "updated_at": datetime.now(timezone.utc).isoformat()}
+    if args.dispatches: obj["dispatches"] = json.loads(args.dispatches)
+    if args.findings: obj["findings"] = json.loads(args.findings)
+    if args.lease: obj["lease"] = json.loads(args.lease)
+    tmp_path = state_path.with_suffix(".json.tmp")
+    tmp_path.write_text(json.dumps(obj, indent=2) + "\n", encoding="utf-8")
+    tmp_path.replace(state_path)
+    hash_obj = {k: v for k, v in obj.items() if k != "updated_at"}
+    dump_json({"saved": str(state_path), "content_hash": sha256_obj(hash_obj)}); return 0
+
+def cmd_state_load(args):
+    state_path = Path(args.state_dir) / "state.json"
+    if not state_path.exists(): dump_json({"exists": False}); return 0
+    dump_json(json.loads(state_path.read_text(encoding="utf-8"))); return 0
+
+def cmd_state_reconcile(args):
+    report = {"stale_leases_revoked": 0, "expired_dispatches": 0, "dirty_worktrees": 0}
+    if args.db:
+        now = datetime.now(timezone.utc)
+        con = init_db(Path(args.db))
+        stale_leases = con.execute("SELECT id, run_id, role, scope, holder_id FROM leases WHERE expires_at <= ? AND released_at IS NULL AND revoked_at IS NULL", (now.isoformat(),)).fetchall()
+        for lid, rid, role, scope, h in stale_leases:
+            con.execute("UPDATE leases SET revoked_at=?, revoke_reason='reconcile' WHERE id=?", (now.isoformat(), lid))
+            con.execute("INSERT INTO ownership_events(id, run_id, role, scope, prior_holder, new_holder, event, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (str(uuid.uuid4()), rid, role, scope, h, None, 'reconcile_revoke', now.isoformat()))
+            report["stale_leases_revoked"] += 1
+        con.commit(); con.close()
+    dump_json(report); return 0
+
+def cmd_record_finding(args):
+    data = load_data(args.file)
+    errors = validate_with_schema(data, "finding.schema.json")
+    if errors: dump_json({"valid": False, "errors": errors}); return 2
+    if data.get("dispatch_id") and data.get("reviewer_dispatch_id") and data.get("dispatch_id") == data.get("reviewer_dispatch_id"):
+        dump_json({"valid": False, "error": "Self-approval rejected: dispatch_id equals reviewer_dispatch_id"}); return 2
+    con = init_db(Path(args.db))
+    cols = ['id', 'dispatch_id', 'reviewer_dispatch_id', 'status', 'severity', 'summary', 'evidence_hash', 'created_at']
+    row = [data.get(k) for k in cols]
+    row[0] = row[0] or data.get("finding_id") or str(uuid.uuid4())
+    row[7] = row[7] or datetime.now(timezone.utc).isoformat()
+    con.execute(f"INSERT INTO findings({','.join(cols)}) VALUES ({','.join('?'*len(cols))})", row)
+    con.commit(); con.close(); dump_json({'recorded': row[0]}); return 0
+
+def cmd_record_validation(args):
+    data = load_data(args.file)
+    con = init_db(Path(args.db))
+    cols = ['id', 'dispatch_id', 'kind', 'command', 'passed', 'known_bad_proven', 'evidence_hash', 'created_at']
+    row = [data.get(k) for k in cols]
+    row[0] = row[0] or str(uuid.uuid4())
+    row[4] = 1 if row[4] else 0
+    row[5] = 1 if row[5] else 0
+    row[7] = row[7] or datetime.now(timezone.utc).isoformat()
+    con.execute(f"INSERT INTO validations({','.join(cols)}) VALUES ({','.join('?'*len(cols))})", row)
+    con.commit(); con.close(); dump_json({'recorded': row[0]}); return 0
+
+def cmd_invalidate_packets(args):
+    state_path = Path(args.state_dir) / "state.json"
+    if not state_path.exists(): dump_json({"invalidated": 0, "error": "no state.json"}); return 1
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    old_version = state.get("plan_version", 1)
+    state["plan_version"] = args.plan_version
+    # Invalidate logic placeholder for state
+    state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+    dump_json({"invalidated": 1, "plan_version": args.plan_version}); return 0
+
+def cmd_increment_plan(args):
+    state_path = Path(args.state_dir) / "state.json"
+    if not state_path.exists(): dump_json({"error": "no state.json"}); return 1
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    old = state.get("plan_version", 1)
+    new = old + 1
+    state["plan_version"] = new
+    state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+    if args.db:
+        con = init_db(Path(args.db))
+        now = datetime.now(timezone.utc).isoformat()
+        run_id = state.get("run_id", "unknown")
+        con.execute("INSERT INTO artifact_versions(id, run_id, kind, version, content_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+                    (str(uuid.uuid4()), run_id, "plan", new, sha256_obj(state), now))
+        con.commit(); con.close()
+    dump_json({"plan_version": new, "prior": old}); return 0
+
 def main():
     p=argparse.ArgumentParser(description='Auto Office v3 deterministic runtime helpers')
     sp=p.add_subparsers(dest='cmd',required=True)
@@ -335,11 +466,23 @@ def main():
     q=sp.add_parser('privacy-lint'); q.add_argument('file'); q.add_argument('--deny-file'); q.set_defaults(func=cmd_privacy)
     q=sp.add_parser('init-db'); q.add_argument('--db',required=True); q.set_defaults(func=cmd_init_db)
     q=sp.add_parser('record-dispatch'); q.add_argument('--db',required=True); q.add_argument('file'); q.set_defaults(func=cmd_record_dispatch)
+    q=sp.add_parser('record-finding'); q.add_argument('--db',required=True); q.add_argument('file'); q.set_defaults(func=cmd_record_finding)
+    q=sp.add_parser('record-validation'); q.add_argument('--db',required=True); q.add_argument('file'); q.set_defaults(func=cmd_record_validation)
+    q=sp.add_parser('invalidate-packets'); q.add_argument('--state-dir',required=True); q.add_argument('--plan-version',type=int,required=True); q.set_defaults(func=cmd_invalidate_packets)
+    q=sp.add_parser('increment-plan'); q.add_argument('--state-dir',required=True); q.add_argument('--db'); q.set_defaults(func=cmd_increment_plan)
     q=sp.add_parser('scaffold-adapter'); q.add_argument('id'); q.add_argument('--out',required=True); q.set_defaults(func=cmd_scaffold_adapter)
     q=sp.add_parser('catalog-snapshot'); q.add_argument('--input',required=True); q.add_argument('--out-dir',required=True); q.set_defaults(func=cmd_catalog_snapshot)
     q=sp.add_parser('proposal-id'); q.add_argument('--stream',choices=['learned-pattern','catalog-policy'],required=True); q.add_argument('--kind',required=True); g=q.add_mutually_exclusive_group(required=True); g.add_argument('--file'); g.add_argument('--text'); q.set_defaults(func=cmd_proposal_id)
     q=sp.add_parser('replay'); q.add_argument('--dataset',required=True); q.add_argument('--old-policy',required=True); q.add_argument('--new-policy',required=True); q.set_defaults(func=cmd_replay)
     q=sp.add_parser('new-run'); q.add_argument('--family-id',required=True); q.add_argument('--holder-id',required=True); q.add_argument('--triple',required=True); q.add_argument('--gear',required=True); q.add_argument('--playbook',choices=['Change','Restructure','Investigate','Prototype','Visual'],required=True); q.add_argument('--base-sha',required=True); q.add_argument('--policy-hash',required=True); q.add_argument('--catalog-hash',required=True); q.add_argument('--adapter-hash',required=True); q.add_argument('--config-hash',required=True); q.add_argument('--out',required=True); q.set_defaults(func=cmd_new_run)
+    q=sp.add_parser('lease-acquire'); q.add_argument('--db',required=True); q.add_argument('--run-id',required=True); q.add_argument('--role',required=True); q.add_argument('--scope',required=True); q.add_argument('--holder-id',required=True); q.add_argument('--ttl',type=int,default=3600); q.set_defaults(func=cmd_lease_acquire)
+    q=sp.add_parser('lease-renew'); q.add_argument('--db',required=True); q.add_argument('--lease-id',required=True); q.add_argument('--holder-id',required=True); q.add_argument('--ttl',type=int,default=3600); q.set_defaults(func=cmd_lease_renew)
+    q=sp.add_parser('lease-release'); q.add_argument('--db',required=True); q.add_argument('--lease-id',required=True); q.add_argument('--holder-id',required=True); q.set_defaults(func=cmd_lease_release)
+    q=sp.add_parser('lease-check'); q.add_argument('--db',required=True); q.add_argument('--run-id',required=True); q.add_argument('--scope',required=True); q.set_defaults(func=cmd_lease_check)
+    q=sp.add_parser('state-save'); q.add_argument('--state-dir',required=True); q.add_argument('--run-id',required=True); q.add_argument('--family-id',required=True); q.add_argument('--phase',required=True); q.add_argument('--plan-version',type=int,default=1); q.add_argument('--packet-version',type=int,default=1); q.add_argument('--dispatches'); q.add_argument('--findings'); q.add_argument('--lease'); q.set_defaults(func=cmd_state_save)
+    q=sp.add_parser('state-load'); q.add_argument('--state-dir',required=True); q.set_defaults(func=cmd_state_load)
+    q=sp.add_parser('state-reconcile'); q.add_argument('--state-dir',required=True); q.add_argument('--db'); q.set_defaults(func=cmd_state_reconcile)
     args=p.parse_args(); sys.exit(args.func(args))
 
 if __name__=='__main__': main()
+

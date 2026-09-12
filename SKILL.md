@@ -78,7 +78,18 @@ Never lower an absolute floor for cost or quota. Public benchmark data is a cold
 
 Load `skills/auto-execution/SKILL.md`. Validate every packet before dispatch. One mutable holder owns a write scope at a time. A holder change is a takeover requiring lease acquisition and stale-state reconciliation.
 
-Use the harness primitive selected by the adapter (`skills/codex-cli`, `skills/claude-cli`, `skills/agy-cli`, or another conforming primitive). Harness primitives are mechanics only; they never redefine lifecycle authority.
+Use the harness primitive selected by the adapter (`skills/codex-cli`, `skills/claude-cli`, `skills/agy-cli`, `skills/hermes-cli`, or another conforming primitive). `auto-office` owns the lifecycle; adapters own harness execution. Runs are durable across interruptions via SQLite-backed leases and atomic state snapshots. Harness primitives are mechanics only; they never redefine lifecycle authority.
+
+## Operational tooling
+
+- `scripts/office_spawn.sh` — adapter-driven agent spawner supporting stdin/flag/file prompt transport, process logging, and PID management.
+- `scripts/office_liveness.sh` — process liveness, silence timeout, and output stream health monitoring.
+- `scripts/office_readback.sh` — completion readback, exit code classification, and adapter failure signature attribution.
+- `scripts/office_worktree.sh` — git worktree creation, diff snapshots, and cleanup for dispatches.
+- `scripts/verify.sh` — ordered verification gate runner (lint, typecheck, test, runtime).
+- `scripts/review_loop.sh` — multi-round verify/review/fix orchestrator enforcing no-self-approval and defect exits.
+- `scripts/review_finding.sh` — structured review finding recording and telemetry persistence.
+- `scripts/hooks/` — lifecycle hooks (`session_end.sh`, `pre_compact.sh`, `compact_advisor.sh`, `close_panes.sh`, `install_hooks.sh`) ensuring runs remain durable across interruptions and context compaction.
 
 ## Review and verification
 
