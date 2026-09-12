@@ -27,6 +27,7 @@ A stall after a few narration lines with nothing in `git status`/`git log` is qu
 - Clarifying-question stall or focused correction: `agy --continue` or `--conversation <id>`, same flag-ordering rules apply.
 - Greeting/swallowed prompt: fix the flag form (prefer `--prompt=`) and relaunch; nothing was done.
 - Quota stall: relaunch fresh or fall back to another brand for the remainder.
+- **Feedback-survey stall:** agy interrupts a turn with an interactive survey ("How's the CLI experience so far? [1] Good [2] Fine [3] Bad [0] Skip"). Observed 2026-09-12 on 1.2.2: it appears mid-turn, the agent stops having written nothing, and the harness reports `done` rather than `blocked`, so a status poll reads as success. Dismiss with `send-keys 0`, then re-prompt explicitly ("nothing was written, resume from where you left off") — the model does not resume on its own. Confirm progress against the worktree with `git status --porcelain`, never against the reported status.
 
 Launch as a background task with no pipes on stdout (never `tail`/`head` — both buffer until exit and defeat live tailing); read only the tail of the output file after completion. Never edit the tree it is writing to while it runs.
 
