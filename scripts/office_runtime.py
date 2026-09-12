@@ -84,6 +84,24 @@ def _num(v, default=float("inf")):
     return default if v is None else float(v)
 
 
+def preferred_rank(c, preferred_seed):
+    """Index of the first roles.<role>.preferred_seed entry c matches, or None.
+
+    An entry matches on model_id (required) plus effort/harness when the entry
+    specifies them, so a config seed of {model_id, effort} without harness
+    matches that model/effort on any harness.
+    """
+    for i, p in enumerate(preferred_seed or []):
+        if p.get("model_id") != c.get("model_id"):
+            continue
+        if p.get("effort") and p.get("effort") != c.get("effort"):
+            continue
+        if p.get("harness") and p.get("harness") != c.get("harness"):
+            continue
+        return i
+    return None
+
+
 def route(request: dict) -> dict:
     role = request["role"]
     playbook = request.get("playbook")
@@ -93,6 +111,7 @@ def route(request: dict) -> dict:
     cost_policy = request.get("cost_policy", policy.get("cost_policy", "balanced"))
     allow_override = bool(request.get("allow_unverified_override", False))
     allow_advisory_undercut = bool(request.get("allow_advisory_undercut", True))
+    preferred_seed = request.get("preferred_seed") or policy.get("preferred_seed")
     rejected = []
     stage = []
 
@@ -165,7 +184,11 @@ def route(request: dict) -> dict:
                 "action":"choose a smaller/cheaper valid strategy, propose another route, or obtain explicit user authority"}
 
     # 7 advisory quality anchor
-    advisory=[c for c in stage if c.get("advisory_pass", True)]
+    if preferred_seed:
+        matched=[c for c in stage if preferred_rank(c, preferred_seed) is not None]
+        advisory=matched if matched else stage
+    else:
+        advisory=[c for c in stage if c.get("advisory_pass", True)]
     if advisory and not allow_advisory_undercut:
         for c in stage:
             if c not in advisory: rejected.append({"candidate":candidate_id(c),"stage":7,"reason":"advisory anchor retained by gear/policy"})
@@ -177,7 +200,15 @@ def route(request: dict) -> dict:
     def wall(c): return _num(c.get("cost",{}).get("wall_clock_seconds"))
     def reward(c): return -float(c.get("local_reward",0))
 
-    if cost_policy == "quota_saver":
+    if preferred_seed:
+        # preferred_seed is an ordered fallback chain (first entry = first
+        # choice): the chain itself already encodes the user's cost/quality
+        # tradeoff, so rank outranks cost_policy's money-band elimination;
+        # cost only breaks ties between candidates matching the same entry.
+        default_rank=len(preferred_seed)
+        stage.sort(key=lambda c:(preferred_rank(c, preferred_seed) if preferred_rank(c, preferred_seed) is not None else default_rank,
+                                  quota_burn(c), money(c), wall(c), reward(c), candidate_id(c)))
+    elif cost_policy == "quota_saver":
         stage.sort(key=lambda c:(quota_burn(c), money(c), wall(c), reward(c), candidate_id(c)))
     elif cost_policy == "money_saver":
         stage.sort(key=lambda c:(money(c), quota_burn(c), wall(c), reward(c), candidate_id(c)))

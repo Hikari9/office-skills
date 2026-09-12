@@ -16,3 +16,5 @@ Never lower an absolute floor to save money/quota. Unknown quota is not unlimite
 Public benchmark data is cold-start evidence. Enough comparable local evidence for the exact routable triple outranks generic priors. Keep runtime reliability evidence harness-specific even when two harnesses expose the same underlying model.
 
 Use `python3 ../../scripts/office_runtime.py route <request.yaml>` for deterministic selection. Record the request/decision hashes with the run.
+
+When the resolved config sets `roles.<role>.preferred_seed`, pass it through in the request as `preferred_seed` (same ordered list of `{model_id, effort, harness?}`). `route` uses it at the advisory-anchor stage: candidates matching an entry pass; if none match, the anchor imposes no restriction. Among passing candidates it then ranks by chain position first (first entry wins if it clears every earlier stage) and cost only as a tie-break within the same rank — so an explicit preference chain overrides `cost_policy`'s money-band elimination for its own entries.

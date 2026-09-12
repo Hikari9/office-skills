@@ -5,8 +5,8 @@ ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('office_runtime', ROOT/'scripts/office_runtime.py')
 rt=importlib.util.module_from_spec(spec); spec.loader.exec_module(rt)
 
-def cand(name, money=1, quota=1, reward=0, state='proven', caps=('builder',), floor=True, remaining=80, advisory=True):
-    return {'harness':name,'harness_version':'1','model_id':'m','effort':'high','adapter_state':state,'capabilities':list(caps),'absolute_floor_pass':floor,'supported_playbooks':['Change'],'advisory_pass':advisory,'local_reward':reward,'quota':{'status':'ok','tightest_remaining_percent':remaining,'projected_burn_percent':quota},'cost':{'money_estimate':money,'quota_burn':quota,'wall_clock_seconds':10}}
+def cand(name, money=1, quota=1, reward=0, state='proven', caps=('builder',), floor=True, remaining=80, advisory=True, model_id='m', effort='high'):
+    return {'harness':name,'harness_version':'1','model_id':model_id,'effort':effort,'adapter_state':state,'capabilities':list(caps),'absolute_floor_pass':floor,'supported_playbooks':['Change'],'advisory_pass':advisory,'local_reward':reward,'quota':{'status':'ok','tightest_remaining_percent':remaining,'projected_burn_percent':quota},'cost':{'money_estimate':money,'quota_burn':quota,'wall_clock_seconds':10}}
 
 class RuntimeTests(unittest.TestCase):
     def test_floor_before_cost(self):
@@ -29,6 +29,26 @@ class RuntimeTests(unittest.TestCase):
         a=cand('a',reward=1); b=cand('b',reward=5)
         r=rt.route({'role':'executor','playbook':'Change','candidates':[a,b]})
         self.assertTrue(r['selected'].startswith('b@'))
+    def test_preferred_seed_picks_first_choice_even_if_pricier(self):
+        first=cand('agy',model_id='gemini-3.8-flash',effort='medium',money=5)
+        second=cand('claude',model_id='claude-sonnet-5',effort='high',money=1)
+        seed=[{'harness':'agy','model_id':'gemini-3.8-flash','effort':'medium'},
+              {'harness':'claude','model_id':'claude-sonnet-5','effort':'high'}]
+        r=rt.route({'role':'executor','playbook':'Change','preferred_seed':seed,'candidates':[second,first]})
+        self.assertTrue(r['selected'].startswith('agy@'))
+    def test_preferred_seed_falls_back_when_first_choice_excluded(self):
+        first=cand('agy',model_id='gemini-3.8-flash',effort='medium',floor=False)
+        second=cand('claude',model_id='claude-sonnet-5',effort='high')
+        seed=[{'harness':'agy','model_id':'gemini-3.8-flash','effort':'medium'},
+              {'harness':'claude','model_id':'claude-sonnet-5','effort':'high'}]
+        r=rt.route({'role':'executor','playbook':'Change','preferred_seed':seed,'candidates':[first,second]})
+        self.assertTrue(r['selected'].startswith('claude@'))
+    def test_preferred_seed_ignores_unmatched_candidates_when_a_match_exists(self):
+        matched=cand('agy',model_id='gemini-3.8-flash',effort='medium',money=5)
+        unmatched=cand('other',model_id='other-model',effort='high',money=.01)
+        seed=[{'harness':'agy','model_id':'gemini-3.8-flash','effort':'medium'}]
+        r=rt.route({'role':'executor','playbook':'Change','preferred_seed':seed,'candidates':[unmatched,matched]})
+        self.assertTrue(r['selected'].startswith('agy@'))
     def test_maturity_curve(self):
         self.assertAlmostEqual(rt.maturity_age(0),0)
         self.assertGreater(rt.maturity_age(60),60)

@@ -8,4 +8,6 @@ Quota reserve defaults to 20%. Unknown quota is not unlimited. Exclude a candida
 
 Balanced cost policy: eliminate quota-unsafe; estimate money; among candidates within 20% of the cheapest money estimate prefer lower quota burn; then lower wall clock; then stronger local reward. Support `money_saver`, `quota_saver`, `balanced`.
 
+Advisory quality anchor: when the resolved role config has a `preferred_seed` (an ordered `{model_id, effort, harness?}` chain), it drives the anchor directly. A candidate matching an entry passes; with no match the anchor imposes no restriction. Passing candidates are then ordered by chain position before cost — the first entry wins whenever it clears every earlier stage, with cost/quota/wall/reward only breaking ties within the same chain position. This intentionally overrides the balanced money-band elimination for the chain's own entries, since the chain already encodes the user's explicit cost/quality tradeoff.
+
 Exploration is limited to workers, Investigate/Prototype, reversible sandbox, non-production. Default maximum one exploratory dispatch/run, max 10% over rolling 20 eligible workers, and <=125% of cheapest qualifying projected cost without explicit user approval.
