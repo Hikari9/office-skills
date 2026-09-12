@@ -19,7 +19,24 @@ class TestHooks(unittest.TestCase):
 
     def test_install_and_uninstall_hooks(self):
         install_script = ROOT / 'scripts' / 'hooks' / 'install_hooks.sh'
-        env = {**os.environ, 'OFFICE_STATE_DIR': str(self.state_dir)}
+        fake_home = self.repo / 'home'
+        (fake_home / '.claude').mkdir(parents=True)
+        (fake_home / '.codex').mkdir(parents=True)
+        (fake_home / '.gemini' / 'config').mkdir(parents=True)
+        (fake_home / '.claude' / 'settings.json').write_text(json.dumps({
+            'hooks': {}
+        }))
+        (fake_home / '.codex' / 'hooks.json').write_text(json.dumps({
+            'hooks': {
+                'SessionStart': [{'hooks': [{'type': 'command', 'command': 'node /old/office-skills/eval/hooks/catch-up.mjs --brand codex'}]}]
+            }
+        }))
+        (fake_home / '.gemini' / 'config' / 'hooks.json').write_text(json.dumps({
+            'office-skills': {
+                'Stop': [{'hooks': [{'type': 'command', 'command': 'node /old/office-skills/eval/hooks/catch-up.mjs --brand gemini'}]}]
+            }
+        }))
+        env = {**os.environ, 'HOME': str(fake_home), 'OFFICE_STATE_DIR': str(self.state_dir)}
         
         # Test install
         r = subprocess.run([str(install_script)], cwd=self.repo, env=env, capture_output=True, text=True)
@@ -35,7 +52,20 @@ class TestHooks(unittest.TestCase):
         validator = Draft202012Validator(schema)
         errors = list(validator.iter_errors(manifest_data))
         self.assertEqual(errors, [])
-        
+
+        for config_path in [fake_home / '.codex' / 'hooks.json', fake_home / '.gemini' / 'config' / 'hooks.json']:
+            config = json.loads(config_path.read_text())
+            self.assertNotIn('catch-up.mjs', json.dumps(config))
+            self.assertIn(str(self.state_dir / 'hooks'), json.dumps(config))
+
+        # Claude Code requires hooks.<Event> to be an array of matchers, not a bare
+        # command string (a bare string is silently ignored by Claude Code).
+        claude_config = json.loads((fake_home / '.claude' / 'settings.json').read_text())
+        for event in ('SessionEnd', 'PreCompact', 'Stop'):
+            self.assertIsInstance(claude_config['hooks'][event], list,
+                                   f'hooks.{event} must be a matcher array, not a bare string')
+            self.assertIn(str(self.state_dir / 'hooks'), json.dumps(claude_config['hooks'][event]))
+
         # Test uninstall
         r = subprocess.run([str(install_script), '--uninstall'], cwd=self.repo, env=env, capture_output=True, text=True)
         self.assertEqual(r.returncode, 0)

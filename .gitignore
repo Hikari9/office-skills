@@ -1,4 +1,5 @@
 .auto-office/
+.office/
 *.db
 *.db-wal
 *.db-shm

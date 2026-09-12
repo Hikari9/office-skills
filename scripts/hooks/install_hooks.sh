@@ -2,6 +2,7 @@
 set -euo pipefail
 
 OFFICE_STATE_DIR="${OFFICE_STATE_DIR:-.office}"
+OFFICE_STATE_DIR="$(cd "$(dirname "$OFFICE_STATE_DIR")" && pwd)/$(basename "$OFFICE_STATE_DIR")"
 HOOKS_DEST="${OFFICE_STATE_DIR}/hooks"
 MANIFEST="${OFFICE_STATE_DIR}/hook-manifest.json"
 
@@ -62,13 +63,37 @@ cat > "$MANIFEST" << EOF
 EOF
 
 python3 -c "
-import json, os, glob
+import json, os
 h = '${HOOKS_DEST}'
 configured = []
+
+def remove_stale_telemetry_hooks(value):
+    if isinstance(value, dict):
+        if 'command' in value and 'catch-up.mjs' in str(value['command']):
+            return None
+        cleaned = {}
+        for key, item in value.items():
+            result = remove_stale_telemetry_hooks(item)
+            if result is not None:
+                cleaned[key] = result
+        return cleaned
+    if isinstance(value, list):
+        return [result for item in value
+                if (result := remove_stale_telemetry_hooks(item)) is not None]
+    return value
+
+def configure(path, updates):
+    if not os.path.exists(path):
+        return False
+    with open(path, 'r') as f: d = remove_stale_telemetry_hooks(json.load(f))
+    d.update(updates)
+    with open(path, 'w') as f: json.dump(d, f, indent=2)
+    return True
+
 def configure_codex(path):
     if not os.path.exists(path):
         return False
-    with open(path, 'r') as f: d = json.load(f)
+    with open(path, 'r') as f: d = remove_stale_telemetry_hooks(json.load(f))
     hooks = d.setdefault('hooks', {})
     hooks.update({
         'SessionStart': [{'hooks': [{'type': 'command', 'command': h+'/session_end.sh', 'timeout': 30000}]}],
@@ -78,10 +103,14 @@ def configure_codex(path):
     return True
 # Claude
 p = os.path.expanduser('~/.claude/settings.json')
-if os.path.exists(p):
+if configure(p, {}):
     with open(p, 'r') as f: d = json.load(f)
     d.setdefault('hooks', {})
-    d['hooks'].update({'SessionEnd': h+'/session_end.sh', 'PreCompact': h+'/pre_compact.sh', 'Stop': h+'/close_panes.sh'})
+    d['hooks'].update({
+        'SessionEnd': [{'hooks': [{'type': 'command', 'command': h+'/session_end.sh', 'timeout': 30000}]}],
+        'PreCompact': [{'hooks': [{'type': 'command', 'command': h+'/pre_compact.sh', 'timeout': 30000}]}],
+        'Stop': [{'hooks': [{'type': 'command', 'command': h+'/close_panes.sh', 'timeout': 30000}]}]
+    })
     with open(p, 'w') as f: json.dump(d, f, indent=2)
     configured.append('Claude')
 
@@ -92,10 +121,7 @@ if configure_codex(p):
 
 # Gemini
 p = os.path.expanduser('~/.gemini/config/hooks.json')
-if os.path.exists(p):
-    with open(p, 'r') as f: d = json.load(f)
-    d.update({'SessionEnd': h+'/session_end.sh', 'Stop': h+'/close_panes.sh'})
-    with open(p, 'w') as f: json.dump(d, f, indent=2)
+if configure(p, {'SessionEnd': h+'/session_end.sh', 'Stop': h+'/close_panes.sh'}):
     configured.append('Gemini')
 
 if configured:
