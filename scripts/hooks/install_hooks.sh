@@ -65,6 +65,17 @@ python3 -c "
 import json, os, glob
 h = '${HOOKS_DEST}'
 configured = []
+def configure_codex(path):
+    if not os.path.exists(path):
+        return False
+    with open(path, 'r') as f: d = json.load(f)
+    hooks = d.setdefault('hooks', {})
+    hooks.update({
+        'SessionStart': [{'hooks': [{'type': 'command', 'command': h+'/session_end.sh', 'timeout': 30000}]}],
+        'PreCompact': [{'hooks': [{'type': 'command', 'command': h+'/pre_compact.sh', 'timeout': 30000}]}]
+    })
+    with open(path, 'w') as f: json.dump(d, f, indent=2)
+    return True
 # Claude
 p = os.path.expanduser('~/.claude/settings.json')
 if os.path.exists(p):
@@ -76,10 +87,7 @@ if os.path.exists(p):
 
 # Codex
 p = os.path.expanduser('~/.codex/hooks.json')
-if os.path.exists(p):
-    with open(p, 'r') as f: d = json.load(f)
-    d.update({'SessionStart': h+'/session_end.sh', 'PreCompact': h+'/pre_compact.sh'})
-    with open(p, 'w') as f: json.dump(d, f, indent=2)
+if configure_codex(p):
     configured.append('Codex')
 
 # Gemini
