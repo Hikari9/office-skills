@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Auto Office v3 execution packet",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "base_sha",
+    "task_scope",
+    "observable_outcome",
+    "blast_radius",
+    "allowed_mutations",
+    "protected_paths",
+    "validation_commands",
+    "known_bad_behavior_to_exclude",
+    "self_review",
+    "rollback_or_restore_notes"
+  ],
+  "properties": {
+    "base_sha": {
+      "type": "string",
+      "minLength": 4
+    },
+    "task_scope": {
+      "type": [
+        "string",
+        "array"
+      ]
+    },
+    "observable_outcome": {
+      "type": "string",
+      "minLength": 1
+    },
+    "blast_radius": {
+      "type": [
+        "string",
+        "object",
+        "array"
+      ]
+    },
+    "allowed_mutations": {
+      "type": "array"
+    },
+    "protected_paths": {
+      "type": "array"
+    },
+    "validation_commands": {
+      "type": "array"
+    },
+    "known_bad_behavior_to_exclude": {
+      "type": [
+        "string",
+        "array"
+      ]
+    },
+    "self_review": {
+      "type": [
+        "string",
+        "object",
+        "array"
+      ]
+    },
+    "rollback_or_restore_notes": {
+      "type": [
+        "string",
+        "object",
+        "array"
+      ]
+    }
+  }
+}
